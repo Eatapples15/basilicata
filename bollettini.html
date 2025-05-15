@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seleziona Colori Criticità</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        select {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #message {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        .base-color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>Seleziona Colori Criticità</h2>
+
+    <form id="color-form">
+        <div id="base-color-pickers">
+            <label>Colori per Base:</label>
+            <div class="base-color-picker">
+                <label for="color-A1">A1:</label>
+                <select id="color-A1" name="color-A1">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-A2">A2:</label>
+                <select id="color-A2" name="color-A2">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-B">B:</label>
+                <select id="color-B" name="color-B">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-C">C:</label>
+                <select id="color-C" name="color-C">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-D">D:</label>
+                <select id="color-D" name="color-D">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-E1">E1:</label>
+                <select id="color-E1" name="color-E1">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-E2">E2:</label>
+                <select id="color-E2" name="color-E2">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            </div>
+
+        <button type="submit">Salva Colori</button>
+    </form>
+
+    <div id="message"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration (IDENTICO A visualizza.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const colorForm = document.getElementById('color-form');
+        const messageDiv = document.getElementById('message');
+        const baseColorPickers = document.querySelectorAll('.base-color-picker');
+
+        colorForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const coloriBase = {};
+            baseColorPickers.forEach(picker => {
+                const base = picker.querySelector('label').textContent.slice(0, -1); // Rimuove i due punti
+                const color = picker.querySelector('select').value;
+                coloriBase[base] = color;
+            });
+
+            const datiColori = {
+                coloriBase: coloriBase,
+                dataCreazione: new Date().toISOString() // Aggiungi la data/ora
+            };
+
+            database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
+                .then(() => {
+                    messageDiv.textContent = 'Colori salvati con successo!';
+                    colorForm.reset();
+                })
+                .catch(error => {
+                    console.error("Errore nel salvataggio dei colori:", error);
+                    messageDiv.textContent = 'Errore nel salvataggio dei colori.';
+                });
+        });
+    </script>
+
+</body>
+
+</html>

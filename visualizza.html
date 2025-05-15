@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizza Mappa Criticità</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-eYNu0lbxh1gw6agBYSwnJVmoUpvsoxqD4F1luRr/tjhQ==" crossorigin="" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        #leaflet-map {
+            flex: 2;
+            min-width: 300px;
+            height: 500px;
+        }
+
+        #info-container {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #last-updated {
+            font-style: italic;
+            color: #777;
+        }
+
+        #save-pdf-button {
+            padding: 10px 15px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        #save-pdf-button:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="leaflet-map"></div>
+
+    <div id="info-container">
+        <h3>Ultimo Aggiornamento</h3>
+        <p id="last-updated"></p>
+        <button id="save-pdf-button">Scarica come PDF</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20vOOebnrvATKyznhQHHgzUIJJZJBYeoJxKzHcfJwA==" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration (IDENTICO A index.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
+
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const savePdfButton = document.getElementById('save-pdf-button');
+
+        let criticitàMap = {};
+        let coloriBase = {};
+
+        // Carica il file GeoJSON (Assicurati che sia disponibile!)
+        fetch('path/to/basilicata_comuni.geojson') // Sostituisci con il percorso corretto
+            .then(response => response.json())
+            .then(geojsonData => {
+
+                // Funzione per recuperare e applicare i colori
+                function applyColorsAndDisplay() {
+                    database.ref('colori').once('value', snapshot => {
+                        if (snapshot.exists()) {
+                            const datiColori = snapshot.val();
+                            coloriBase = datiColori.coloriBase || {};
+                            const timestamp = new Date(datiColori.dataCreazione);
+                            const formattedDate = timestamp.toLocaleString();
+                            lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
+
+                            // Qui dovresti avere una logica per ottenere la configurazione della criticità
+                            // Ad esempio, da un altro endpoint, da un file locale, o da una variabile globale
+                            // Per ora, userò un esempio statico per dimostrare il funzionamento
+                            const configurazioneCriticità = {
+                                'A1': ["Montemilone", "Atella"],
+                                'B': ["Potenza", "Matera"],
+                                'C': ["Aliano", "Tursi"]
+                            };
+
+                            for (const base in configurazioneCriticità) {
+                                const comuni = configurazioneCriticità[base];
+                                comuni.forEach(comune => {
+                                    criticitàMap[comune] = base;
+                                });
+                            }
+
+                            L.geoJSON(geojsonData, {
+                                style: styleComune
+                            }).addTo(leafletMap);
+
+                        } else {
+                            lastUpdatedElement.textContent = 'Nessun dato colore disponibile.';
+                        }
+                    }, error => {
+                        console.error("Errore nel recupero dei colori:", error);
+                        lastUpdatedElement.textContent = 'Errore nel caricamento dei colori.';
+                    });
+                }
+
+                applyColorsAndDisplay(); // Chiama la funzione per iniziare il processo
+
+                function styleComune(feature) {
+                    const comuneNome = feature.properties.NOME; // **IMPORTANTE: Usa la proprietà corretta!**
+                    const criticità = getCriticità(comuneNome);
+
+                    let fillColor = '#ccc'; // Colore di default
+                    if (criticità && coloriBase[criticità]) {
+                        fillColor = coloriBase[criticità];
+                    }
+
+                    // Mappa i nomi dei colori alle esadecimali
+                    let hexColor = fillColor;
+                    switch (fillColor) {
+                        case 'green':
+                            hexColor = '#008000';
+                            break;
+                        case 'yellow':
+                            hexColor = '#FFFF00';
+                            break;
+                        case 'orange':
+                            hexColor = '#FFA500';
+                            break;
+                        case 'red':
+                            hexColor = '#FF0000';
+                            break;
+                        default:
+                            hexColor = '#ccc';
+                    }
+
+                    return {
+                        fillColor: hexColor,
+                        weight: 1,
+                        opacity: 1,
+                        color: '#333',
+                        fillOpacity: 0.7
+                    };
+                }
+
+                function getCriticità(comuneNome) {
+                    return criticitàMap[comuneNome];
+                }
+
+                function getTargetIdsForBase(base, configurazione) {
+                    switch (base) {
+                        case 'A1':
+                            return configurazione['A1'];
+                        case 'A2':
+                            return configurazione['A2'];
+                        case 'B':
+                            return configurazione['B'];
+                        case 'C':
+                            return configurazione['C'];
+                        case 'D':
+                            return configurazione['D'];
+                        case 'E1':
+                            return configurazione['E1'];
+                        case 'E2':
+                            return configurazione['E2'];
+                        default:
+                            return null;
+                    }
+                }
+
+                savePdfButton.addEventListener('click', function () {
+                    leafletImage(leafletMap, function (err, canvas) {
+                        const imgData = canvas.toDataURL('image/png');
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('landscape');
+                        const imgWidth = pdf.internal.pageSize.getWidth() - 20;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                        pdf.setFontSize(10);
+                        pdf.text(lastUpdatedElement.textContent, 10, pdf.internal.pageSize.getHeight() - 10);
+                        pdf.save(`bollettino_criticità_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+                    });
+                });
+            });
+    </script>
+
+</body>
+
+</html>
