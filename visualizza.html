@@ -1,3 +1,98 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visualizza Mappa Criticità</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<style>
+body {
+font-family: sans-serif;
+display: flex;
+flex-wrap: wrap;
+gap: 20px;
+padding: 20px;
+}
+
+#leaflet-map {
+flex: 2;
+min-width: 300px;
+height: 500px;
+}
+
+#info-container {
+flex: 1;
+min-width: 200px;
+display: flex;
+flex-direction: column;
+gap: 10px;
+}
+
+#last-updated {
+font-style: italic;
+color: #777;
+}
+
+#save-pdf-button {
+padding: 10px 15px;
+background-color: #dc3545;
+color: white;
+border: none;
+border-radius: 5px;
+cursor: pointer;
+font-size: 16px;
+margin-top: 20px;
+}
+
+#save-pdf-button:hover {
+background-color: #c82333;
+}
+
+.leaflet-popup-content-wrapper {
+background-color: white;
+color: #333;
+border-radius: 5px;
+padding: 10px;
+box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-popup-content {
+margin: 0;
+}
+
+.leaflet-popup-tip-container {
+width: 20px;
+height: 10px;
+}
+
+.leaflet-popup-tip {
+background: white;
+border: 1px solid #aaa;
+border-top-color: transparent;
+border-left-color: transparent;
+}
+</style>
+</head>
+
+<body>
+
+<div id="leaflet-map"></div>
+
+<div id="info-container">
+<h3>Ultimo Aggiornamento</h3>
+<p id="last-updated"></p>
+<button id="save-pdf-button">Scarica come PDF</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
+
 <script>
         // Your web app's Firebase configuration (IDENTICO A index.html)
         const firebaseConfig = {
