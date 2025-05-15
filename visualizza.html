@@ -98,10 +98,10 @@
         let coloriBase = {};
 
         // Carica il file GeoJSON (Assicurati che sia disponibile!)
-        fetch('path/to/basilicata_comuni.geojson') // Sostituisci con il percorso corretto
-            .then(response => response.json())
-            .then(geojsonData => {
-
+       fetch('limits_R_17_municipalities.geojson') // Percorso relativo
+    .then(response => response.json())
+    .then(geojsonData => {
+      
                 // Funzione per recuperare e applicare i colori
                 function applyColorsAndDisplay() {
                     database.ref('colori').once('value', snapshot => {
