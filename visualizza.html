@@ -93,7 +93,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
 
-    <script>
+  <script>
         // Your web app's Firebase configuration (IDENTICO A index.html)
         const firebaseConfig = {
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
@@ -157,7 +157,7 @@
                             for (const base in configurazioneCriticità) {
                                 const comuni = configurazioneCriticità[base];
                                 comuni.forEach(comune => {
-                                    criticitàMap[normalizeComuneName(comune)] = base;
+                                    criticitàMap[normalizeComuneName(comune)] = base; // APPLICA LA NORMALIZZAZIONE QUI
                                     console.log(`Comune: ${normalizeComuneName(comune)}, Base: ${base}`);
                                 });
                             }
@@ -179,7 +179,7 @@
                 applyColorsAndDisplay();
 
                 function styleComune(feature) {
-                    const comuneNome = normalizeComuneName(feature.properties.name);
+                    const comuneNome = normalizeComuneName(feature.properties.name); // APPLICA LA NORMALIZZAZIONE QUI
                     const criticità = getCriticità(comuneNome);
 
                     console.log(`Comune: ${comuneNome}, Criticità Trovata: ${criticità}`);
@@ -219,37 +219,13 @@
                 }
 
                 function getCriticità(comuneNome) {
-                    const criticità = criticitàMap[comuneNome];
-                    console.log(`Ricerca Criticità per ${comuneNome}: ${criticità}`);
-                    return criticità;
+                    return criticitàMap[normalizeComuneName(comuneNome)]; // APPLICA LA NORMALIZZAZIONE QUI
                 }
 
-                function getTargetIdsForBase(base, configurazione) {
-                    switch (base) {
-                        case 'A1':
-                            return configurazione['A1'];
-                        case 'A2':
-                            return configurazione['A2'];
-                        case 'B':
-                            return configurazione['B'];
-                        case 'C':
-                            return configurazione['C'];
-                        case 'D':
-                            return configurazione['D'];
-                        case 'E1':
-                            return configurazione['E1'];
-                        case 'E2':
-                            return configurazione['E2'];
-                        default:
-                            return null;
-                    }
-                }
-
-                // Funzione per aggiungere popup
                 function onEachFeature(feature, layer) {
                     if (feature.properties && feature.properties.name) {
                         const comuneNome = normalizeComuneName(feature.properties.name);
-                        const criticità = getCriticità(comuneNome) || 'Non disponibile'; // Gestisci il caso in cui la criticità è undefined
+                        const criticità = getCriticità(comuneNome) || 'Non disponibile';
                         layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
                     }
                 }
