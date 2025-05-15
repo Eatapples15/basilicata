@@ -1,99 +1,4 @@
-<!DOCTYPE html>
-<html lang="it">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizza Mappa Criticità</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            padding: 20px;
-        }
-
-        #leaflet-map {
-            flex: 2;
-            min-width: 300px;
-            height: 500px;
-        }
-
-        #info-container {
-            flex: 1;
-            min-width: 200px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        #last-updated {
-            font-style: italic;
-            color: #777;
-        }
-
-        #save-pdf-button {
-            padding: 10px 15px;
-            background-color: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-
-        #save-pdf-button:hover {
-            background-color: #c82333;
-        }
-
-        .leaflet-popup-content-wrapper {
-            background-color: white;
-            color: #333;
-            border-radius: 5px;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .leaflet-popup-content {
-            margin: 0;
-        }
-
-        .leaflet-popup-tip-container {
-            width: 20px;
-            height: 10px;
-        }
-
-        .leaflet-popup-tip {
-            background: white;
-            border: 1px solid #aaa;
-            border-top-color: transparent;
-            border-left-color: transparent;
-        }
-    </style>
-</head>
-
-<body>
-
-    <div id="leaflet-map"></div>
-
-    <div id="info-container">
-        <h3>Ultimo Aggiornamento</h3>
-        <p id="last-updated"></p>
-        <button id="save-pdf-button">Scarica come PDF</button>
-    </div>
-
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
-
-  <script>
+<script>
         // Your web app's Firebase configuration (IDENTICO A index.html)
         const firebaseConfig = {
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
@@ -124,8 +29,7 @@
         // Normalizzazione dei nomi dei comuni
         function normalizeComuneName(nome) {
             if (!nome) return "";
-            let normalized = nome.toLowerCase().trim().replace(/\s+/g, ' ');
-            console.log(`Normalizzato "${nome}" a "${normalized}"`); // LOG
+            let normalized = nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             return normalized;
         }
 
@@ -133,11 +37,13 @@
         fetch('limits_R_17_municipalities.geojson')
             .then(response => response.json())
             .then(geojsonData => {
-                // Log dei nomi dei comuni dal GeoJSON
-                console.log("Nomi dei Comuni nel GeoJSON:");
+                // Log dei nomi dei comuni dal GeoJSON (NORMALIZZATI)
+                console.log("Nomi dei Comuni nel GeoJSON (NORMALIZZATI):");
                 geojsonData.features.forEach(feature => {
                     if (feature.properties && feature.properties.name) {
-                        console.log(`  - ${feature.properties.name}`);
+                        let normalizedName = normalizeComuneName(feature.properties.name);
+                        console.log(`  - Originale: "${feature.properties.name}", Normalizzato: "${normalizedName}"`);
+                        feature.properties.normalizedName = normalizedName; // Aggiungi il nome normalizzato all'oggetto feature
                     }
                 });
 
@@ -153,7 +59,7 @@
                             const formattedDate = timestamp.toLocaleString();
                             lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
 
-                           const configurazioneCriticità = {
+                            const configurazioneCriticità = {
                                 'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
                                 'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
                                 'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
@@ -190,11 +96,10 @@
                 applyColorsAndDisplay();
 
                 function styleComune(feature) {
-                    let comuneNome = feature.properties.name;
-                    let normalizedComuneNome = normalizeComuneName(comuneNome); // Normalizza qui
+                    let normalizedComuneNome = feature.properties.normalizedName; // Usa il nome normalizzato
                     const criticità = getCriticità(normalizedComuneNome);
 
-                    console.log(`styleComune - Comune Originale: "${comuneNome}", Normalizzato: "${normalizedComuneNome}", Criticità: ${criticità}`);
+                    console.log(`styleComune - Comune Normalizzato: "${normalizedComuneNome}", Criticità: ${criticità}`);
 
                     let fillColor = '#ccc';
                     if (criticità && coloriBase[criticità]) {
@@ -226,7 +131,7 @@
                         weight: 1,
                         opacity: 1,
                         color: '#333',
-                        fillOpacity: 0.7
+                        fillOpacity: 0.7 // Mantieni la trasparenza per la visualizzazione nella pagina
                     };
                 }
 
@@ -238,30 +143,74 @@
 
                 function onEachFeature(feature, layer) {
                     if (feature.properties && feature.properties.name) {
-                        const comuneNome = feature.properties.name;
-                        const normalizedComuneNome = normalizeComuneName(comuneNome);
+                        const normalizedComuneNome = feature.properties.normalizedName; // Usa il nome normalizzato
                         const criticità = getCriticità(normalizedComuneNome) || 'Non disponibile';
                         layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
                     }
                 }
 
                 savePdfButton.addEventListener('click', function () {
-                    leafletImage(leafletMap, function (err, canvas) {
-                        const imgData = canvas.toDataURL('image/png');
-                        const { jsPDF } = window.jspdf;
-                        const pdf = new jsPDF('landscape');
-                        const imgWidth = pdf.internal.pageSize.getWidth() - 20;
-                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+                    console.log("Inizio generazione PDF...");
 
-                        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                        pdf.setFontSize(10);
-                        pdf.text(lastUpdatedElement.textContent, 10, pdf.internal.pageSize.getHeight() - 10);
-                        pdf.save(`bollettino_criticità_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+                    // Stili semplificati per il PDF
+                    const pdfStyles = {
+                        fillColor: '#000', // Colore pieno per i poligoni nel PDF
+                        weight: 1,
+                        color: '#333',
+                        fillOpacity: 1 // Nessuna trasparenza per il PDF
+                    };
+
+                    // Applica gli stili semplificati temporaneamente
+                    leafletMap.eachLayer(layer => {
+                        if (layer instanceof L.GeoJSON) {
+                            layer.setStyle(pdfStyles);
+                        }
                     });
+
+                    // Forzare il reflow
+                    leafletMap.getContainer().style.display;
+
+                    // Aumenta l'attesa
+                    setTimeout(function() {
+                        console.log("Chiamata leafletImage...");
+
+                        leafletImage(leafletMap, function (err, canvas) {
+                            console.log("Callback di leafletImage eseguito.");
+
+                            if (err) {
+                                console.error("Errore in leafletImage:", err);
+                                return;
+                            }
+
+                            const imgData = canvas.toDataURL('image/png');
+                            console.log("Dati immagine ottenuti:", imgData.substring(0, 100) + "..."); // Log parziale
+
+                            // Visualizza l'immagine (DEBUG)
+                            // const img = document.createElement('img');
+                            // img.src = imgData;
+                            // document.body.appendChild(img);
+
+                            const { jsPDF } = window.jspdf;
+                            const pdf = new jsPDF('landscape');
+                            const imgWidth = pdf.internal.pageSize.getWidth() - 20;
+                            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                            pdf.setFontSize(10);
+                            pdf.text(lastUpdatedElement.textContent, 10, pdf.internal.pageSize.getHeight() - 10);
+                            pdf.save(`bollettino_criticità_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+
+                            console.log("PDF generato e salvato.");
+
+                            // Ripristina gli stili originali
+                            leafletMap.eachLayer(layer => {
+                                if (layer instanceof L.GeoJSON) {
+                                    layer.setStyle(styleComune);
+                                }
+                            });
+
+                        });
+                    }, 1000); // Aumenta l'attesa a 1 secondo
                 });
             });
     </script>
-
-</body>
-
-</html>
