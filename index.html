@@ -218,7 +218,7 @@
             }
 
             // Clear existing layer if any
-            if (leafletMap.hasLayer(geojsonLayer)) {
+            if (geojsonLayer !== null && leafletMap.hasLayer(geojsonLayer)) { // Check for null!
                 leafletMap.removeLayer(geojsonLayer);
             }
 
