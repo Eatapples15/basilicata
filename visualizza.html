@@ -49,6 +49,30 @@
         #save-pdf-button:hover {
             background-color: #c82333;
         }
+
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
     </style>
 </head>
 
@@ -99,12 +123,12 @@
 
         // Normalizzazione dei nomi dei comuni
         function normalizeComuneName(nome) {
-            if (!nome) return ""; // Gestisci i casi in cui nome è nullo o indefinito
-            return nome.toLowerCase().trim().replace(/\s+/g, ' '); // Minuscolo, trim, e rimuovi spazi multipli
+            if (!nome) return "";
+            return nome.toLowerCase().trim().replace(/\s+/g, ' ');
         }
 
         // Carica il file GeoJSON (Assicurati che sia disponibile!)
-        fetch('limits_R_17_municipalities.geojson') // Percorso relativo
+        fetch('limits_R_17_municipalities.geojson')
             .then(response => response.json())
             .then(geojsonData => {
 
@@ -114,14 +138,11 @@
                         if (snapshot.exists()) {
                             const datiColori = snapshot.val();
                             coloriBase = datiColori.coloriBase || {};
-                            console.log("Colori Base:", JSON.stringify(coloriBase, null, 2)); // DEBUG - Mostra l'oggetto completo
+                            console.log("Colori Base:", JSON.stringify(coloriBase, null, 2));
                             const timestamp = new Date(datiColori.dataCreazione);
                             const formattedDate = timestamp.toLocaleString();
                             lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
 
-                            // Qui dovresti avere una logica per ottenere la configurazione della criticità
-                            // Ad esempio, da un altro endpoint, da un file locale, o da una variabile globale
-                            // Per ora, userò un esempio statico per dimostrare il funzionamento
                             const configurazioneCriticità = {
                                 'A1': ["Montemilone", "Atella", "PalazzoSanGervasio", "Pescopagano", "Rapolla", "Rapone", "RioneroinVulture", "Ripacandida", "RuvodelMonte", "SanFele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
                                 'A2': ["MuroLucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "SantAngeloLeFratte", "SassodiCastalda", "SatrianodiLucania", "SavoiadiLucania", "Tito", "VietridiPotenza"],
@@ -137,12 +158,13 @@
                                 const comuni = configurazioneCriticità[base];
                                 comuni.forEach(comune => {
                                     criticitàMap[normalizeComuneName(comune)] = base;
-                                    console.log(`Comune: ${normalizeComuneName(comune)}, Criticità: ${base}`); // DEBUG
+                                    console.log(`Comune: ${normalizeComuneName(comune)}, Criticità: ${base}`);
                                 });
                             }
 
                             L.geoJSON(geojsonData, {
-                                style: styleComune
+                                style: styleComune,
+                                onEachFeature: onEachFeature // Aggiunta la funzione per i popup
                             }).addTo(leafletMap);
 
                         } else {
@@ -154,22 +176,21 @@
                     });
                 }
 
-                applyColorsAndDisplay(); // Chiama la funzione per iniziare il processo
+                applyColorsAndDisplay();
 
                 function styleComune(feature) {
-                    const comuneNome = normalizeComuneName(feature.properties.name); // **IMPORTANTE: Usa la proprietà corretta!**
+                    const comuneNome = normalizeComuneName(feature.properties.name);
                     const criticità = getCriticità(comuneNome);
 
-                    console.log(`Comune: ${comuneNome}, Criticità Trovata: ${criticità}`); // DEBUG
+                    console.log(`Comune: ${comuneNome}, Criticità Trovata: ${criticità}`);
 
-                    let fillColor = '#ccc'; // Colore di default
+                    let fillColor = '#ccc';
                     if (criticità && coloriBase[criticità]) {
                         fillColor = coloriBase[criticità];
                     }
 
-                    console.log(`Colore da Applicare: ${fillColor}`); // DEBUG
+                    console.log(`Colore da Applicare: ${fillColor}`);
 
-                    // Mappa i nomi dei colori alle esadecimali
                     let hexColor = fillColor;
                     switch (fillColor) {
                         case 'green':
@@ -199,7 +220,7 @@
 
                 function getCriticità(comuneNome) {
                     const criticità = criticitàMap[comuneNome];
-                    console.log(`Ricerca Criticità per ${comuneNome}: ${criticità}`); // DEBUG
+                    console.log(`Ricerca Criticità per ${comuneNome}: ${criticità}`);
                     return criticità;
                 }
 
@@ -221,6 +242,15 @@
                             return configurazione['E2'];
                         default:
                             return null;
+                    }
+                }
+
+                // Funzione per aggiungere popup
+                function onEachFeature(feature, layer) {
+                    if (feature.properties && feature.properties.name) {
+                        const comuneNome = normalizeComuneName(feature.properties.name);
+                        const criticità = getCriticità(comuneNome) || 'Non disponibile'; // Gestisci il caso in cui la criticità è undefined
+                        layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
                     }
                 }
 
