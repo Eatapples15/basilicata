@@ -97,6 +97,12 @@
         let criticitàMap = {};
         let coloriBase = {};
 
+        // Normalizzazione dei nomi dei comuni
+        function normalizeComuneName(nome) {
+            if (!nome) return ""; // Gestisci i casi in cui nome è nullo o indefinito
+            return nome.toLowerCase().trim().replace(/\s+/g, ' '); // Minuscolo, trim, e rimuovi spazi multipli
+        }
+
         // Carica il file GeoJSON (Assicurati che sia disponibile!)
         fetch('limits_R_17_municipalities.geojson') // Percorso relativo
             .then(response => response.json())
@@ -126,11 +132,12 @@
                                 'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
                             };
 
+                            // Costruisci la mappa delle criticità (NORMALIZZATA)
                             for (const base in configurazioneCriticità) {
                                 const comuni = configurazioneCriticità[base];
                                 comuni.forEach(comune => {
-                                    criticitàMap[comune] = base;
-                                    console.log(`Comune: ${comune}, Criticità: ${base}`); // DEBUG
+                                    criticitàMap[normalizeComuneName(comune)] = base;
+                                    console.log(`Comune: ${normalizeComuneName(comune)}, Criticità: ${base}`); // DEBUG
                                 });
                             }
 
@@ -150,7 +157,7 @@
                 applyColorsAndDisplay(); // Chiama la funzione per iniziare il processo
 
                 function styleComune(feature) {
-                    const comuneNome = feature.properties.name; // **IMPORTANTE: Usa la proprietà corretta!**
+                    const comuneNome = normalizeComuneName(feature.properties.name); // **IMPORTANTE: Usa la proprietà corretta!**
                     const criticità = getCriticità(comuneNome);
 
                     console.log(`Comune: ${comuneNome}, Criticità Trovata: ${criticità}`); // DEBUG
