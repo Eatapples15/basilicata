@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Visualizza Mappa Criticità</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-eYNu0lbxh1gw6agBYSwnJVmoUpvsoxqD4F1luRr/tjhQ==" crossorigin="" />
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
         body {
             font-family: sans-serif;
@@ -65,7 +65,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20vOOebnrvATKyznhQHHgzUIJJZJBYeoJxKzHcfJwA==" crossorigin=""></script>
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
 
@@ -98,10 +98,10 @@
         let coloriBase = {};
 
         // Carica il file GeoJSON (Assicurati che sia disponibile!)
-       fetch('limits_R_17_municipalities.geojson') // Percorso relativo
-    .then(response => response.json())
-    .then(geojsonData => {
-      
+        fetch('limits_R_17_municipalities.geojson') // Percorso relativo
+            .then(response => response.json())
+            .then(geojsonData => {
+
                 // Funzione per recuperare e applicare i colori
                 function applyColorsAndDisplay() {
                     database.ref('colori').once('value', snapshot => {
