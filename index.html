@@ -4,142 +4,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seleziona Colori Criticità</title>
+    <title>Visualizza Mappa Criticità</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
         body {
             font-family: sans-serif;
-            margin: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
         }
 
-        h2 {
-            margin-bottom: 20px;
+        #leaflet-map {
+            flex: 2;
+            min-width: 300px;
+            height: 500px;
         }
 
-        form {
+        #info-container {
+            flex: 1;
+            min-width: 200px;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            margin-bottom: 20px;
         }
 
-        label {
-            font-weight: bold;
+        #last-updated {
+            font-style: italic;
+            color: #777;
         }
 
-        select {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        button {
+        #save-pdf-button {
             padding: 10px 15px;
-            background-color: #007bff;
+            background-color: #dc3545;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
         }
 
-        button:hover {
-            background-color: #0056b3;
+        #save-pdf-button:hover {
+            background-color: #c82333;
         }
 
-        #message {
-            margin-top: 10px;
-            font-weight: bold;
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
-        .base-color-picker {
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
         }
     </style>
 </head>
 
 <body>
 
-    <h2>Seleziona Colori Criticità</h2>
+    <div id="leaflet-map"></div>
 
-    <form id="color-form">
-        <div id="base-color-pickers">
-            <label>Colori per Base:</label>
-            <div class="base-color-picker">
-                <label for="color-A1">A1:</label>
-                <select id="color-A1" name="color-A1">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-A2">A2:</label>
-                <select id="color-A2" name="color-A2">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-B">B:</label>
-                <select id="color-B" name="color-B">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-C">C:</label>
-                <select id="color-C" name="color-C">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-D">D:</label>
-                <select id="color-D" name="color-D">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-E1">E1:</label>
-                <select id="color-E1" name="color-E1">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-E2">E2:</label>
-                <select id="color-E2" name="color-E2">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            </div>
-
-        <button type="submit">Salva Colori</button>
-    </form>
-
-    <div id="message"></div>
+    <div id="info-container">
+        <h3>Ultimo Aggiornamento</h3>
+        <p id="last-updated"></p>
+        <button id="save-pdf-button">Scarica come PDF</button>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
 
     <script>
-        // Your web app's Firebase configuration (IDENTICO A visualizza.html)
+        // Your web app's Firebase configuration (IDENTICO A index.html)
         const firebaseConfig = {
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
             authDomain: "bollettinoregionale.firebaseapp.com",
@@ -155,35 +110,165 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
-        const colorForm = document.getElementById('color-form');
-        const messageDiv = document.getElementById('message');
-        const baseColorPickers = document.querySelectorAll('.base-color-picker');
+        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
 
-        colorForm.addEventListener('submit', function (e) {
-            e.preventDefault();
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const savePdfButton = document.getElementById('save-pdf-button');
 
-            const coloriBase = {};
-            baseColorPickers.forEach(picker => {
-                const base = picker.querySelector('label').textContent.slice(0, -1); // Rimuove i due punti
-                const color = picker.querySelector('select').value;
-                coloriBase[base] = color;
-            });
+        let criticitàMap = {};
+        let coloriBase = {};
 
-            const datiColori = {
-                coloriBase: coloriBase,
-                dataCreazione: new Date().toISOString() // Aggiungi la data/ora
-            };
+        // Normalizzazione dei nomi dei comuni
+        function normalizeComuneName(nome) {
+            if (!nome) return "";
+            return nome.toLowerCase().trim().replace(/\s+/g, ' ');
+        }
 
-            database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
-                .then(() => {
-                    messageDiv.textContent = 'Colori salvati con successo!';
-                    colorForm.reset();
-                })
-                .catch(error => {
-                    console.error("Errore nel salvataggio dei colori:", error);
-                    messageDiv.textContent = 'Errore nel salvataggio dei colori.';
+        // Carica il file GeoJSON (Assicurati che sia disponibile!)
+        fetch('limits_R_17_municipalities.geojson')
+            .then(response => response.json())
+            .then(geojsonData => {
+
+                // Funzione per recuperare e applicare i colori
+                function applyColorsAndDisplay() {
+                    database.ref('colori').once('value', snapshot => {
+                        if (snapshot.exists()) {
+                            const datiColori = snapshot.val();
+                            coloriBase = datiColori.coloriBase || {};
+                            console.log("Colori Base:", JSON.stringify(coloriBase, null, 2));
+                            const timestamp = new Date(datiColori.dataCreazione);
+                            const formattedDate = timestamp.toLocaleString();
+                            lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
+
+                            const configurazioneCriticità = {
+                                'A1': ["Montemilone", "Atella", "PalazzoSanGervasio", "Pescopagano", "Rapolla", "Rapone", "RioneroinVulture", "Ripacandida", "RuvodelMonte", "SanFele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
+                                'A2': ["MuroLucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "SantAngeloLeFratte", "SassodiCastalda", "SatrianodiLucania", "SavoiadiLucania", "Tito", "VietridiPotenza"],
+                                'B': ["Abriola", "Accettura", "Acerenza", "AlbanodiLucania", "Anzi", "Avigliano", "Banzi", "BrindisiMontagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "GenzanodiLucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "OlivetoLucano", "OppidoLucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "SanChiricoNuovo", "SanMauroForte", "Tito", "Tolve", "Tricarico", "Trivigno", "VaglioBasilicata", "Matera"],
+                                'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "CastronuovodiSantAndrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "CorletoPerticara", "Episcopia", "Fardella", "FrancavillainSinni", "Gallicchio", "Gorgoglione", "GrumentoNova", "GuardiaPerticara", "MarsicoNuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "SanChiricoRaparo", "SanCostantinoAlbanese", "SanGiorgioLucano", "SanMartinodAgri", "SanPaoloAlbanese", "SanSeverinoLucano", "SantArcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "TerranovadiPollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
+                                'D': ["Nemoli", "CastelluccioInferiore", "CastelluccioSuperiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
+                                'E1': ["NovaSiri", "Policoro", "Rotondella", "ScanzanoJonico", "Tursi", "MontalbanoJonico", "Craco"],
+                                'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
+                            };
+
+                            // Costruisci la mappa delle criticità (NORMALIZZATA)
+                            for (const base in configurazioneCriticità) {
+                                const comuni = configurazioneCriticità[base];
+                                comuni.forEach(comune => {
+                                    criticitàMap[normalizeComuneName(comune)] = base;
+                                    console.log(`Comune: ${normalizeComuneName(comune)}, Criticità: ${base}`);
+                                });
+                            }
+
+                            L.geoJSON(geojsonData, {
+                                style: styleComune,
+                                onEachFeature: onEachFeature // Aggiunta la funzione per i popup
+                            }).addTo(leafletMap);
+
+                        } else {
+                            lastUpdatedElement.textContent = 'Nessun dato colore disponibile.';
+                        }
+                    }, error => {
+                        console.error("Errore nel recupero dei colori:", error);
+                        lastUpdatedElement.textContent = 'Errore nel caricamento dei colori.';
+                    });
+                }
+
+                applyColorsAndDisplay();
+
+                function styleComune(feature) {
+                    const comuneNome = normalizeComuneName(feature.properties.name);
+                    const criticità = getCriticità(comuneNome);
+
+                    console.log(`Comune: ${comuneNome}, Criticità Trovata: ${criticità}`);
+
+                    let fillColor = '#ccc';
+                    if (criticità && coloriBase[criticità]) {
+                        fillColor = coloriBase[criticità];
+                    }
+
+                    console.log(`Colore da Applicare: ${fillColor}`);
+
+                    let hexColor = fillColor;
+                    switch (fillColor) {
+                        case 'green':
+                            hexColor = '#008000';
+                            break;
+                        case 'yellow':
+                            hexColor = '#FFFF00';
+                            break;
+                        case 'orange':
+                            hexColor = '#FFA500';
+                            break;
+                        case 'red':
+                            hexColor = '#FF0000';
+                            break;
+                        default:
+                            hexColor = '#ccc';
+                    }
+
+                    return {
+                        fillColor: hexColor,
+                        weight: 1,
+                        opacity: 1,
+                        color: '#333',
+                        fillOpacity: 0.7
+                    };
+                }
+
+                function getCriticità(comuneNome) {
+                    const criticità = criticitàMap[comuneNome];
+                    console.log(`Ricerca Criticità per ${comuneNome}: ${criticità}`);
+                    return criticità;
+                }
+
+                function getTargetIdsForBase(base, configurazione) {
+                    switch (base) {
+                        case 'A1':
+                            return configurazione['A1'];
+                        case 'A2':
+                            return configurazione['A2'];
+                        case 'B':
+                            return configurazione['B'];
+                        case 'C':
+                            return configurazione['C'];
+                        case 'D':
+                            return configurazione['D'];
+                        case 'E1':
+                            return configurazione['E1'];
+                        case 'E2':
+                            return configurazione['E2'];
+                        default:
+                            return null;
+                    }
+                }
+
+                // Funzione per aggiungere popup
+                function onEachFeature(feature, layer) {
+                    if (feature.properties && feature.properties.name) {
+                        const comuneNome = normalizeComuneName(feature.properties.name);
+                        const criticità = getCriticità(comuneNome) || 'Non disponibile'; // Gestisci il caso in cui la criticità è undefined
+                        layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
+                    }
+                }
+
+                savePdfButton.addEventListener('click', function () {
+                    leafletImage(leafletMap, function (err, canvas) {
+                        const imgData = canvas.toDataURL('image/png');
+                        const { jsPDF } = window.jspdf;
+                        const pdf = new jsPDF('landscape');
+                        const imgWidth = pdf.internal.pageSize.getWidth() - 20;
+                        const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                        pdf.setFontSize(10);
+                        pdf.text(lastUpdatedElement.textContent, 10, pdf.internal.pageSize.getHeight() - 10);
+                        pdf.save(`bollettino_criticità_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+                    });
                 });
-        });
+            });
     </script>
 
 </body>
