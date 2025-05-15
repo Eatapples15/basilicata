@@ -174,15 +174,23 @@ coloriBase: coloriBase,
 dataCreazione: new Date().toISOString() // Aggiungi la data/ora
 };
 
-database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
-.then(() => {
-messageDiv.textContent = 'Colori salvati con successo!';
-colorForm.reset();
-})
-.catch(error => {
-console.error("Errore nel salvataggio dei colori:", error);
-messageDiv.textContent = 'Errore nel salvataggio dei colori.';
-});
+ database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
+                .then(() => {
+                    messageDiv.textContent = 'Colori salvati con successo!';
+                    messageDiv.style.cursor = 'pointer'; // Rendi il testo cliccabile
+                    messageDiv.style.color = 'green';
+                    messageDiv.onclick = function() {
+                        window.location.href = 'https://eatapples15.github.io/basilicata/visualizza.html';
+                    };
+                    colorForm.reset();
+                })
+                .catch(error => {
+                    console.error("Errore nel salvataggio dei colori:", error);
+                    messageDiv.textContent = 'Errore nel salvataggio dei colori.';
+                    messageDiv.style.cursor = 'default'; // Rimuovi il cursore cliccabile in caso di errore
+                    messageDiv.style.color = 'red';
+                    messageDiv.onclick = null; // Rimuovi qualsiasi handler di click in caso di errore
+                });
 });
 </script>
 
