@@ -124,13 +124,23 @@
         // Normalizzazione dei nomi dei comuni
         function normalizeComuneName(nome) {
             if (!nome) return "";
-            return nome.toLowerCase().trim().replace(/\s+/g, ' ');
+            let normalized = nome.toLowerCase().trim().replace(/\s+/g, ' ');
+            console.log(`Normalizzato "${nome}" a "${normalized}"`); // LOG
+            return normalized;
         }
 
         // Carica il file GeoJSON (Assicurati che sia disponibile!)
         fetch('limits_R_17_municipalities.geojson')
             .then(response => response.json())
             .then(geojsonData => {
+                // Log dei nomi dei comuni dal GeoJSON
+                console.log("Nomi dei Comuni nel GeoJSON:");
+                geojsonData.features.forEach(feature => {
+                    if (feature.properties && feature.properties.name) {
+                        console.log(`  - ${feature.properties.name}`);
+                    }
+                });
+
 
                 // Funzione per recuperare e applicare i colori
                 function applyColorsAndDisplay() {
@@ -157,8 +167,9 @@
                             for (const base in configurazioneCriticità) {
                                 const comuni = configurazioneCriticità[base];
                                 comuni.forEach(comune => {
-                                    criticitàMap[normalizeComuneName(comune)] = base; // APPLICA LA NORMALIZZAZIONE QUI
-                                    console.log(`Comune: ${normalizeComuneName(comune)}, Base: ${base}`);
+                                    const normalizedComune = normalizeComuneName(comune);
+                                    criticitàMap[normalizedComune] = base; // APPLICA LA NORMALIZZAZIONE QUI
+                                    console.log(`CriticitàMap: "${normalizedComune}" -> ${base}`); // LOG
                                 });
                             }
 
@@ -179,10 +190,11 @@
                 applyColorsAndDisplay();
 
                 function styleComune(feature) {
-                    const comuneNome = normalizeComuneName(feature.properties.name); // APPLICA LA NORMALIZZAZIONE QUI
-                    const criticità = getCriticità(comuneNome);
+                    let comuneNome = feature.properties.name;
+                    let normalizedComuneNome = normalizeComuneName(comuneNome); // Normalizza qui
+                    const criticità = getCriticità(normalizedComuneNome);
 
-                    console.log(`Comune: ${comuneNome}, Criticità Trovata: ${criticità}`);
+                    console.log(`styleComune - Comune Originale: "${comuneNome}", Normalizzato: "${normalizedComuneNome}", Criticità: ${criticità}`);
 
                     let fillColor = '#ccc';
                     if (criticità && coloriBase[criticità]) {
@@ -219,13 +231,16 @@
                 }
 
                 function getCriticità(comuneNome) {
-                    return criticitàMap[normalizeComuneName(comuneNome)]; // APPLICA LA NORMALIZZAZIONE QUI
+                    const criticità = criticitàMap[comuneNome];
+                    console.log(`getCriticità - Ricerca Criticità per "${comuneNome}": ${criticità}`); // LOG
+                    return criticità;
                 }
 
                 function onEachFeature(feature, layer) {
                     if (feature.properties && feature.properties.name) {
-                        const comuneNome = normalizeComuneName(feature.properties.name);
-                        const criticità = getCriticità(comuneNome) || 'Non disponibile';
+                        const comuneNome = feature.properties.name;
+                        const normalizedComuneNome = normalizeComuneName(comuneNome);
+                        const criticità = getCriticità(normalizedComuneNome) || 'Non disponibile';
                         layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
                     }
                 }
