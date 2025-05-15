@@ -240,7 +240,7 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                     if (feature.properties && feature.properties.name) {
                         const normalizedComuneNome = feature.properties.normalizedName; // Usa il nome normalizzato
                         const criticità = getCriticità(normalizedComuneNome) || 'Non disponibile';
-                        layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
+                        layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
                     }
                 }
 
