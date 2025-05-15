@@ -4,276 +4,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestione Mappa Criticità</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<title>Seleziona Colori Criticità</title>
 <style>
 body {
 font-family: sans-serif;
-display: flex;
-flex-wrap: wrap;
-gap: 20px;
-padding: 20px;
+margin: 20px;
 }
 
-#leaflet-map {
-flex: 2;
-min-width: 500px;
-height: 500px;
+h2 {
+margin-bottom: 20px;
 }
 
-#color-controls {
-flex: 1;
-min-width: 300px;
+form {
 display: flex;
 flex-direction: column;
 gap: 10px;
-padding: 20px;
+margin-bottom: 20px;
+}
+
+label {
+font-weight: bold;
+}
+
+select {
+padding: 8px;
 border: 1px solid #ccc;
+border-radius: 4px;
 }
 
-.color-input-group {
-display: flex;
-align-items: center;
-gap: 10px;
-}
-
-.color-input-group label {
-width: 50px;
-}
-
-#save-map {
+button {
 padding: 10px 15px;
-background-color: #4CAF50;
+background-color: #007bff;
 color: white;
 border: none;
 border-radius: 5px;
 cursor: pointer;
-font-size: 16px;
-margin-top: 20px;
 }
 
-#save-map:hover {
-background-color: #45a049;
+button:hover {
+background-color: #0056b3;
 }
 
-.error-message {
-color: red;
-font-size: 0.8em;
+#message {
+margin-top: 10px;
+font-weight: bold;
+}
+
+.base-color-picker {
+display: flex;
+align-items: center;
+gap: 10px;
 }
 </style>
 </head>
 
 <body>
 
-<div id="leaflet-map"></div>
+<h2>Seleziona Colori Criticità</h2>
 
-<div id="color-controls">
-<h2>Imposta Colori Criticità</h2>
-
-<div class="color-input-group">
+<form id="color-form">
+<div id="base-color-pickers">
+<label>Colori per Base:</label>
+<div class="base-color-picker">
 <label for="color-A1">A1:</label>
-<select id="color-A1">
+<select id="color-A1" name="color-A1">
 <option value="green">Verde</option>
 <option value="yellow">Giallo</option>
 <option value="orange">Arancione</option>
 <option value="red">Rosso</option>
 </select>
-<span class="error-message" id="error-A1"></span>
 </div>
-<div class="color-input-group">
+<div class="base-color-picker">
 <label for="color-A2">A2:</label>
-<select id="color-A2">
+<select id="color-A2" name="color-A2">
 <option value="green">Verde</option>
 <option value="yellow">Giallo</option>
 <option value="orange">Arancione</option>
 <option value="red">Rosso</option>
 </select>
-<span class="error-message" id="error-A2"></span>
 </div>
-<div class="color-input-group">
+<div class="base-color-picker">
 <label for="color-B">B:</label>
-<select id="color-B">
+<select id="color-B" name="color-B">
 <option value="green">Verde</option>
 <option value="yellow">Giallo</option>
 <option value="orange">Arancione</option>
 <option value="red">Rosso</option>
 </select>
-<span class="error-message" id="error-B"></span>
 </div>
-<div class="color-input-group">
+<div class="base-color-picker">
 <label for="color-C">C:</label>
-<select id="color-C">
+<select id="color-C" name="color-C">
 <option value="green">Verde</option>
 <option value="yellow">Giallo</option>
 <option value="orange">Arancione</option>
 <option value="red">Rosso</option>
 </select>
-<span class="error-message" id="error-C"></span>
 </div>
-<div class="color-input-group">
+<div class="base-color-picker">
 <label for="color-D">D:</label>
-<select id="color-D">
+<select id="color-D" name="color-D">
 <option value="green">Verde</option>
 <option value="yellow">Giallo</option>
 <option value="orange">Arancione</option>
 <option value="red">Rosso</option>
 </select>
-<span class="error-message" id="error-D"></span>
 </div>
-<div class="color-input-group">
+<div class="base-color-picker">
 <label for="color-E1">E1:</label>
-<select id="color-E1">
+<select id="color-E1" name="color-E1">
 <option value="green">Verde</option>
 <option value="yellow">Giallo</option>
 <option value="orange">Arancione</option>
 <option value="red">Rosso</option>
 </select>
-<span class="error-message" id="error-E1"></span>
 </div>
-<div class="color-input-group">
+<div class="base-color-picker">
 <label for="color-E2">E2:</label>
-<select id="color-E2">
+<select id="color-E2" name="color-E2">
 <option value="green">Verde</option>
 <option value="yellow">Giallo</option>
 <option value="orange">Arancione</option>
 <option value="red">Rosso</option>
 </select>
-<span class="error-message" id="error-E2"></span>
+</div>
 </div>
 
-<button id="save-map">Genera Mappa</button>
-</div>
+<button type="submit">Salva Colori</button>
+</form>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+<div id="message"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+
 <script>
-const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(leafletMap);
+// Your web app's Firebase configuration (IDENTICO A visualizza.html)
+const firebaseConfig = {
+apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+authDomain: "bollettinoregionale.firebaseapp.com",
+projectId: "bollettinoregionale",
+databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+storageBucket: "bollettinoregionale.appspot.com",
+messagingSenderId: "765538370497",
+appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+// measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
+};
 
-let geojsonData; // Store GeoJSON data globally
-let criticitàMap = {}; // Store criticità mapping
-let coloriBase = {};  // Store color mappings
-        let geojsonLayer; // Store the GeoJSON layer
-        let geojsonLayer = null; // Store the GeoJSON layer - INITIALIZED!
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-// Fetch GeoJSON data
-fetch('limits_R_17_municipalities.geojson')
-.then(response => response.json())
-.then(data => {
-geojsonData = data;  // Store the data
-// Initialize the map when data is loaded
-initializeMap();
+const colorForm = document.getElementById('color-form');
+const messageDiv = document.getElementById('message');
+const baseColorPickers = document.querySelectorAll('.base-color-picker');
+
+colorForm.addEventListener('submit', function (e) {
+e.preventDefault();
+
+const coloriBase = {};
+baseColorPickers.forEach(picker => {
+const base = picker.querySelector('label').textContent.slice(0, -1); // Rimuove i due punti
+const color = picker.querySelector('select').value;
+coloriBase[base] = color;
+});
+
+const datiColori = {
+coloriBase: coloriBase,
+dataCreazione: new Date().toISOString() // Aggiungi la data/ora
+};
+
+database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
+.then(() => {
+messageDiv.textContent = 'Colori salvati con successo!';
+colorForm.reset();
 })
-.catch(error => console.error("Errore nel caricamento del GeoJSON:", error));
-
-// Function to initialize the map and controls
-function initializeMap() {
-// Setup criticitàMap (you'll need to adapt this to your data)
-const configurazioneCriticità = {
-'A1': ["Montemilone", "Atella", "PalazzoSanGervasio", "Pescopagano", "Rapolla", "Rapone", "RioneroinVulture", "Ripacandida", "RuvodelMonte", "SanFele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
-'A2': ["MuroLucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "SantAngeloLeFratte", "SassodiCastalda", "SatrianodiLucania", "SavoiadiLucania", "Tito", "VietridiPotenza"],
-'B': ["Abriola", "Accettura", "Acerenza", "AlbanodiLucania", "Anzi", "Avigliano", "Banzi", "BrindisiMontagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "GenzanodiLucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "OlivetoLucano", "OppidoLucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "SanChiricoNuovo", "SanMauroForte", "Tito", "Tolve", "Tricarico", "Trivigno", "VaglioBasilicata", "Matera"],
-'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "CastronuovodiSantAndrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "CorletoPerticara", "Episcopia", "Fardella", "FrancavillainSinni", "Gallicchio", "Gorgoglione", "GrumentoNova", "GuardiaPerticara", "MarsicoNuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "SanChiricoRaparo", "SanCostantinoAlbanese", "SanGiorgioLucano", "SanMartinodAgri", "SanPaoloAlbanese", "SanSeverinoLucano", "SantArcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "TerranovadiPollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
-'D': ["Nemoli", "CastelluccioInferiore", "CastelluccioSuperiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
-'E1': ["NovaSiri", "Policoro", "Rotondella", "ScanzanoJonico", "Tursi", "MontalbanoJonico", "Craco"],
-'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
-};
-
-for (const base in configurazioneCriticità) {
-const comuni = configurazioneCriticità[base];
-comuni.forEach(comune => {
-criticitàMap[comune] = base;
+.catch(error => {
+console.error("Errore nel salvataggio dei colori:", error);
+messageDiv.textContent = 'Errore nel salvataggio dei colori.';
 });
-}
-
-// Add event listener to save button
-document.getElementById('save-map').addEventListener('click', generateMap);
-}
-
-function validateColors() {
-let isValid = true;
-const colors = ['green', 'yellow', 'orange', 'red'];
-
-document.querySelectorAll('select').forEach(select => {
-const color = select.value;
-const errorSpan = document.getElementById(`error-${select.id.split('-')[1]}`);
-if (!colors.includes(color)) {
-errorSpan.textContent = "Colore non valido";
-isValid = false;
-} else {
-errorSpan.textContent = "";
-}
 });
-
-return isValid;
-}
-
-function generateMap() {
-if (!validateColors()) {
-alert("Correggi gli errori nei colori!");
-return;
-}
-
-// Clear existing layer if any
-if (leafletMap.hasLayer(geojsonLayer)) {
-leafletMap.removeLayer(geojsonLayer);
-}
-
-// Collect colors from select elements
-coloriBase = {};
-document.querySelectorAll('select').forEach(select => {
-const base = select.id.split('-')[1];
-coloriBase[base] = select.value;
-});
-
-// Add the GeoJSON layer with the styles
-geojsonLayer = L.geoJSON(geojsonData, {
-style: styleComune
-}).addTo(leafletMap);
-}
-
-function styleComune(feature) {
-const comuneNome = feature.properties.name;
-const criticità = getCriticità(comuneNome);
-let fillColor = '#ccc'; // Default color
-if (criticità && coloriBase[criticità]) {
-fillColor = coloriBase[criticità];
-}
-
-// Convert color names to hex codes
-let hexColor = fillColor;
-switch (fillColor) {
-case 'green':
-hexColor = '#008000';
-break;
-case 'yellow':
-hexColor = '#FFFF00';
-break;
-case 'orange':
-hexColor = '#FFA500';
-break;
-case 'red':
-hexColor = '#FF0000';
-break;
-}
-
-return {
-fillColor: hexColor,
-weight: 1,
-opacity: 1,
-color: '#333',
-fillOpacity: 0.7
-};
-}
-
-function getCriticità(comuneNome) {
-return criticitàMap[comuneNome];
-}
 </script>
+
 </body>
 
+</html>
 </html>
