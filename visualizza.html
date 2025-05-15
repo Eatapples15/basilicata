@@ -108,6 +108,7 @@
                         if (snapshot.exists()) {
                             const datiColori = snapshot.val();
                             coloriBase = datiColori.coloriBase || {};
+                            console.log("Colori Base:", coloriBase); // DEBUG
                             const timestamp = new Date(datiColori.dataCreazione);
                             const formattedDate = timestamp.toLocaleString();
                             lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
@@ -125,6 +126,7 @@
                                 const comuni = configurazioneCriticità[base];
                                 comuni.forEach(comune => {
                                     criticitàMap[comune] = base;
+                                    console.log(`Comune: ${comune}, Criticità: ${base}`); // DEBUG
                                 });
                             }
 
@@ -144,13 +146,17 @@
                 applyColorsAndDisplay(); // Chiama la funzione per iniziare il processo
 
                 function styleComune(feature) {
-                    const comuneNome = feature.properties.NOME; // **IMPORTANTE: Usa la proprietà corretta!**
+                    const comuneNome = feature.properties.name; // **IMPORTANTE: Usa la proprietà corretta!**
                     const criticità = getCriticità(comuneNome);
+
+                    console.log(`Comune: ${comuneNome}, Criticità Trovata: ${criticità}`); // DEBUG
 
                     let fillColor = '#ccc'; // Colore di default
                     if (criticità && coloriBase[criticità]) {
                         fillColor = coloriBase[criticità];
                     }
+
+                    console.log(`Colore da Applicare: ${fillColor}`); // DEBUG
 
                     // Mappa i nomi dei colori alle esadecimali
                     let hexColor = fillColor;
@@ -181,7 +187,9 @@
                 }
 
                 function getCriticità(comuneNome) {
-                    return criticitàMap[comuneNome];
+                    const criticità = criticitàMap[comuneNome];
+                    console.log(`Ricerca Criticità per ${comuneNome}: ${criticità}`); // DEBUG
+                    return criticità;
                 }
 
                 function getTargetIdsForBase(base, configurazione) {
