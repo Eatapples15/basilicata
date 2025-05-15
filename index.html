@@ -157,7 +157,7 @@
         let geojsonData; // Store GeoJSON data globally
         let criticitàMap = {}; // Store criticità mapping
         let coloriBase = {};  // Store color mappings
-        let geojsonLayer; // Store the GeoJSON layer
+        let geojsonLayer = null; // Store the GeoJSON layer - INITIALIZED!
 
         // Fetch GeoJSON data
         fetch('limits_R_17_municipalities.geojson')
