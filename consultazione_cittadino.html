@@ -463,20 +463,37 @@
             // Aggiungi altri comuni qui se necessario
         };
 
-        // Criticità inventate per la sezione di riepilogo (da aggiornare in base a dati reali se disponibili)
-        const currentRiskSituations = {
-            "policoro": {
-                "Rischio Idrogeologico": "Giallo",
-                "Rischio Sismico": "Verde",
-                "Rischio Maremoto": "Verde"
-            },
-            // Puoi aggiungere qui la situazione per altri comuni
-            "potenza": {
-                "Rischio Idrogeologico": "Verde",
-                "Rischio Sismico": "Giallo",
-                "Rischio Maremoto": "Non applicabile"
+       // Funzione per visualizzare la situazione attuale dei rischi
+        function displayCurrentRiskSituation(normalizedComuneName) {
+            risksSituationDisplay.innerHTML = '';
+            const risks = currentRiskSituations[normalizedComuneName];
+
+            if (risks) {
+                const ul = document.createElement('ul');
+                ul.id = 'current-risk-list';
+                for (const riskType in risks) {
+                    const riskLevel = risks[riskType];
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${riskType}:</span> <span class="risk-level level-${riskLevel.toLowerCase()}">${riskLevel}</span>`;
+
+                    // Aggiungi il collegamento esterno solo per "Rischio Maremoto"
+                    if (riskType === "Rischio Maremoto") {
+                        const link = document.createElement('a');
+                        link.href = "https://studio--tsunamisafe.us-central1.hosted.app/";
+                        link.textContent = "Dettagli TsunamiSafe";
+                        link.target = "_blank"; // Apre il link in una nuova scheda
+                        link.style.marginLeft = '10px'; // Spaziatura per il link
+                        li.appendChild(link);
+                    }
+
+                    ul.appendChild(li);
+                }
+                risksSituationDisplay.appendChild(ul);
+            } else {
+                risksSituationDisplay.innerHTML = '<p>Nessuna situazione di rischio specifica definita per questo comune.</p>';
             }
-        };
+        }
+
 
         // **NUOVO: Dati per i marker di Policoro**
         const policoroLocations = [
