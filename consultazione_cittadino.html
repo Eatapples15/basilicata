@@ -228,7 +228,7 @@
             if (feature.properties && feature.properties.name) {
                 const normalizedComuneNome = feature.properties.normalizedName;
                 const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
-                layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
             }
         }
 
@@ -307,7 +307,7 @@
                 // Aggiorna le informazioni testuali
                 comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
                 const criticità = criticitàMap[foundFeature.properties.normalizedName] || 'Non disponibile';
-                comuneCriticityDisplay.textContent = `Criticità: ${criticità}`;
+                comuneCriticityDisplay.textContent = `Base: ${criticità}`;
 
                 // Centra la mappa sul comune trovato
                 leafletMap.fitBounds(L.geoJSON(foundFeature).getBounds());
