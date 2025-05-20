@@ -221,7 +221,13 @@
         let geojsonDataGlobal = null;
         let criticitàMap = {};
         let coloriBase = {};
-        let currentMarkersLayer = new L.LayerGroup().addTo(leafletMap); // Nuovo LayerGroup per i marker
+
+        // Layer per i controlli
+        let baseLayers = {};
+        let overlays = {};
+        let comuneOutlineLayer = null; // Layer per il perimetro del comune
+        let criticitàFillLayer = null; // Layer per il riempimento colorato del comune
+        let emergencyMarkersLayer = new L.LayerGroup(); // Layer per i marker di emergenza/accoglienza
 
         // Normalizzazione dei nomi dei comuni
         function normalizeComuneName(nome) {
@@ -240,22 +246,33 @@
             }
         }
 
-        // Funzione per definire lo stile di un comune sulla mappa
-        function styleComune(feature) {
+        // Funzione per definire lo stile di un comune sulla mappa (solo bordo per il layer "confine")
+        function styleComuneOutline(feature) {
+            return {
+                fillColor: 'transparent', // Nessun riempimento per il confine
+                weight: 3,
+                opacity: 1,
+                color: 'black',
+                fillOpacity: 0
+            };
+        }
+
+        // Funzione per definire lo stile del riempimento di criticità
+        function styleCriticitàFill(feature) {
             let normalizedComuneNome = feature.properties.normalizedName;
             const criticità = criticitàMap[normalizedComuneNome];
             const fillColor = coloriBase[criticità] || '#ccc';
 
             return {
                 fillColor: getHexColor(fillColor),
-                weight: 3, // Bordo più spesso per il comune evidenziato
-                opacity: 1,
-                color: 'black',
-                fillOpacity: 0.9 // Leggermente meno trasparente per evidenziare
+                weight: 0, // Nessun bordo per il riempimento, solo il riempimento
+                opacity: 0,
+                color: 'transparent',
+                fillOpacity: 0.9
             };
         }
 
-        // Funzione per gestire i popup
+        // Funzione per gestire i popup (applicabile a entrambi i layer GeoJSON se necessario)
         function onEachFeature(feature, layer) {
             if (feature.properties && feature.properties.name) {
                 const normalizedComuneNome = feature.properties.normalizedName;
@@ -317,19 +334,19 @@
         // Le icone sono nella directory /ico/
         const shelterIcon = L.icon({
             iconUrl: 'ico/cluster_shelter_32px_icon_bluebox.png',
-            iconSize: [32, 32], // Dimensione delle icone 32x32px
-            iconAnchor: [16, 32], // Punta inferiore centrale
-            popupAnchor: [0, -32], // Offset per il popup
-            shadowUrl: 'ico/marker-shadow.png', // Assicurati di avere un'ombra se desideri
+            iconSize: [32, 32],
+            iconAnchor: [16, 32],
+            popupAnchor: [0, -32],
+            shadowUrl: 'ico/marker-shadow.png',
             shadowSize: [41, 41]
         });
 
         const emergencyIcon = L.icon({
-            iconUrl: 'ico/disaster_earthquake_32px_icon_bluebox.png', // O scegli un'altra icona appropriata per "raccolta"
+            iconUrl: 'ico/disaster_earthquake_32px_icon_bluebox.png',
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32],
-            shadowUrl: 'ico/marker-shadow.png', // Assicurati di avere un'ombra se desideri
+            shadowUrl: 'ico/marker-shadow.png',
             shadowSize: [41, 41]
         });
 
@@ -400,30 +417,49 @@
                 feature.properties.normalizedName === normalizedComuneName
             );
 
-            // Pulisci tutti i layer precedenti (comune e marker)
-            leafletMap.eachLayer(layer => {
-                if (layer instanceof L.GeoJSON || layer instanceof L.Marker) {
-                    leafletMap.removeLayer(layer);
-                }
-            });
-            currentMarkersLayer.clearLayers(); // Rimuovi tutti i marker dal LayerGroup
+            // Rimuovi tutti i layer dal controllo e dalla mappa
+            if (comuneOutlineLayer) leafletMap.removeLayer(comuneOutlineLayer);
+            if (criticitàFillLayer) leafletMap.removeLayer(criticitàFillLayer);
+            emergencyMarkersLayer.clearLayers(); // Pulisce solo i marker dal suo LayerGroup
+
+            // Rimuovi il controllo layer esistente se presente per ricrearlo
+            if (leafletMap.attributionControl._container && leafletMap.attributionControl._container.nextSibling && leafletMap.attributionControl._container.nextSibling.classList.contains('leaflet-control-layers')) {
+                // Questo è un modo approssimativo per trovare e rimuovere il controllo.
+                // Una gestione più robusta potrebbe salvare un riferimento al controllo layers.
+                leafletMap.removeControl(L.control.layers(baseLayers, overlays)); // Rimuove il vecchio controllo se presente
+            }
+            baseLayers = {};
+            overlays = {};
+
 
             if (foundFeature) {
-                // Aggiorna il titolo della pagina
                 pageTitle.textContent = `Criticità del Comune di ${foundFeature.properties.name}`;
                 comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
 
                 const criticità = criticitàMap[foundFeature.properties.normalizedName] || 'Non disponibile';
                 comuneCriticityDisplay.textContent = `Criticità: ${criticità}`;
 
-                // Aggiungi il layer GeoJSON del comune specifico
-                const comuneLayer = L.geoJSON(foundFeature, {
-                    style: styleComune,
+                // Creo i layer GeoJSON per il comune specifico
+                comuneOutlineLayer = L.geoJSON(foundFeature, {
+                    style: styleComuneOutline,
                     onEachFeature: onEachFeature
-                }).addTo(leafletMap);
+                });
 
-                // Centra la mappa sul comune trovato e imposta uno zoom appropriato
-                leafletMap.fitBounds(comuneLayer.getBounds().pad(0.5)); // Aggiungi un po' di padding
+                criticitàFillLayer = L.geoJSON(foundFeature, {
+                    style: styleCriticitàFill,
+                    onEachFeature: onEachFeature
+                });
+
+
+                // Aggiungo i layer agli overlays e li attivo di default
+                overlays["Confine Comunale"] = comuneOutlineLayer;
+                overlays["Criticità"] = criticitàFillLayer;
+
+                comuneOutlineLayer.addTo(leafletMap); // Attivato di default
+                criticitàFillLayer.addTo(leafletMap); // Attivato di default
+
+                // Centra la mappa sul comune trovato
+                leafletMap.fitBounds(comuneOutlineLayer.getBounds().pad(0.5));
 
                 // Carica e visualizza le informazioni aggiuntive
                 const comuneInfo = infoComuni[normalizedComuneName];
@@ -431,23 +467,25 @@
                     riskInfoElement.textContent = comuneInfo.rischi;
                     shelterInfoElement.textContent = comuneInfo.accoglienza;
 
-                    // Aggiungi i marker solo se ci sono puntiMappa
                     if (comuneInfo.puntiMappa && comuneInfo.puntiMappa.length > 0) {
                         comuneInfo.puntiMappa.forEach(punto => {
                             let markerIcon;
                             if (punto.tipo === 'raccolta') {
-                                markerIcon = emergencyIcon; // Usa l'icona di emergenza
+                                markerIcon = emergencyIcon;
                             } else if (punto.tipo === 'accoglienza') {
-                                markerIcon = shelterIcon; // Usa l'icona di shelter
+                                markerIcon = shelterIcon;
                             } else {
-                                markerIcon = L.Icon.Default; // Icona di default se il tipo non è riconosciuto
+                                markerIcon = L.Icon.Default;
                             }
 
                             const marker = L.marker([punto.lat, punto.lon], { icon: markerIcon })
                                 .bindPopup(`<b>${punto.nome}</b><br>Tipo: ${punto.tipo}`);
-                            currentMarkersLayer.addLayer(marker); // Aggiungi il marker al LayerGroup
+                            emergencyMarkersLayer.addLayer(marker);
                         });
-                        currentMarkersLayer.addTo(leafletMap); // Aggiungi il LayerGroup di marker alla mappa
+                        // Aggiungo il layer dei marker agli overlays
+                        overlays["Aree di Emergenza/Accoglienza"] = emergencyMarkersLayer;
+                        emergencyMarkersLayer.addTo(leafletMap); // Attivato di default
+
                     } else {
                         shelterInfoElement.textContent += " (Nessun punto specifico su mappa disponibile).";
                     }
@@ -456,6 +494,9 @@
                     riskInfoElement.textContent = "Informazioni sui rischi non disponibili per questo comune.";
                     shelterInfoElement.textContent = "Informazioni sulle aree di accoglienza non disponibili per questo comune.";
                 }
+
+                // Aggiungi il controllo layer alla mappa
+                L.control.layers(baseLayers, overlays).addTo(leafletMap);
 
             } else {
                 infoMessage.textContent = `Comune "${comuneOriginalName}" non trovato nella mappa. Verifica il nome.`;
