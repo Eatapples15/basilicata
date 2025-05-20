@@ -21,7 +21,8 @@
         }
 
         #controls-container,
-        #risk-info-container {
+        #risk-info-container,
+        #current-risk-summary-container { /* Aggiunto il nuovo ID qui */
             flex: 1;
             min-width: 250px;
             max-width: 350px;
@@ -204,6 +205,45 @@
         }
 
         /* Rosso */
+
+        /* Stili per la nuova sezione di riepilogo */
+        #current-risk-summary-container {
+            margin-top: 20px;
+            width: 100%; /* Occupa tutta la larghezza disponibile sotto gli altri elementi */
+            max-width: calc(100% - 40px); /* Regola per i padding del body */
+            order: 4; /* Assicura che vada sotto gli altri elementi flex */
+        }
+
+        #risk-summary-list {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .risk-summary-item {
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .risk-summary-item h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .risk-summary-item .alert-status-small {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
     </style>
 </head>
 
@@ -232,6 +272,13 @@
         <div id="comune-risks-display">
             <p>Seleziona un comune per visualizzare i rischi e le allerte.</p>
         </div>
+    </div>
+
+    <div id="current-risk-summary-container">
+        <h2>Situazione Attuale dei Rischi</h2>
+        <ul id="risk-summary-list">
+            <li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>
+        </ul>
     </div>
 
 
@@ -269,7 +316,8 @@
         const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
         const infoMessage = document.getElementById('info-message');
         const lastUpdatedElement = document.getElementById('last-updated');
-        const comuneRisksDisplay = document.getElementById('comune-risks-display'); // Nuovo elemento per i rischi
+        const comuneRisksDisplay = document.getElementById('comune-risks-display'); // Elemento per i rischi dettagliati
+        const riskSummaryList = document.getElementById('risk-summary-list'); // Nuovo elemento per il riepilogo
 
         let geojsonDataGlobal = null; // Memorizza i dati GeoJSON una volta caricati
         let criticitàMap = {};
@@ -323,7 +371,7 @@
             }
         }
 
-      // Dati di esempio per i rischi dei comuni (aggiunta per Policoro)
+        // Dati di esempio per i rischi dei comuni (aggiunta per Policoro)
         const comuneRisksData = {
             "policoro": {
                 risks: [{
@@ -411,6 +459,23 @@
             // Aggiungi altri comuni qui se necessario
         };
 
+
+        // Criticità inventate per la sezione di riepilogo (da aggiornare in base a dati reali se disponibili)
+        const currentRiskSituations = {
+            "policoro": {
+                "Rischio Idrogeologico": "Giallo",
+                "Rischio Sismico": "Verde",
+                "Rischio Maremoto": "Verde"
+            },
+            // Puoi aggiungere qui la situazione per altri comuni
+            "potenza": {
+                "Rischio Idrogeologico": "Verde",
+                "Rischio Sismico": "Giallo",
+                "Rischio Maremoto": "Non applicabile"
+            }
+        };
+
+
         // Carica dati GeoJSON e colori Firebase all'avvio
         Promise.all([
             fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
@@ -462,7 +527,8 @@
         function filterMap() {
             const searchTerm = normalizeComuneName(comuneSearchInput.value);
             infoMessage.textContent = ''; // Resetta il messaggio di errore
-            comuneRisksDisplay.innerHTML = ''; // Pulisci la sezione dei rischi
+            comuneRisksDisplay.innerHTML = ''; // Pulisci la sezione dei rischi dettagliati
+            riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>'; // Pulisci il riepilogo
 
             if (!searchTerm) {
                 infoMessage.textContent = 'Inserisci il nome di un comune per iniziare la ricerca.';
@@ -470,6 +536,7 @@
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
                 comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
+                riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
                 return;
             }
 
@@ -495,16 +562,19 @@
 
                 // Mostra i rischi specifici per il comune
                 displayComuneRisks(searchTerm);
+                // Mostra il riepilogo dei rischi
+                displayRiskSummary(searchTerm);
 
             } else {
                 infoMessage.textContent = `Comune "${comuneSearchInput.value}" non trovato. Verifica il nome.`;
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
                 comuneRisksDisplay.innerHTML = '<p>Comune non trovato o dati sui rischi non disponibili.</p>';
+                riskSummaryList.innerHTML = '<p>Comune non trovato o dati sui rischi non disponibili.</p>';
             }
         }
 
-        // Funzione per visualizzare i rischi del comune
+        // Funzione per visualizzare i rischi del comune (dettagliati)
         function displayComuneRisks(normalizedComuneName) {
             const risks = comuneRisksData[normalizedComuneName];
 
@@ -535,6 +605,29 @@
                 });
             } else {
                 comuneRisksDisplay.innerHTML = '<p>Dati sui rischi per questo comune non disponibili al momento.</p>';
+            }
+        }
+
+        // NUOVA FUNZIONE: Visualizza il riepilogo dei rischi
+        function displayRiskSummary(normalizedComuneName) {
+            const summaryData = currentRiskSituations[normalizedComuneName];
+            riskSummaryList.innerHTML = ''; // Pulisci il contenuto precedente
+
+            if (summaryData) {
+                for (const riskName in summaryData) {
+                    const status = summaryData[riskName];
+                    const alertClass = `alert-${status.toLowerCase().replace(/\s/g, '-')}`; // Per "Non applicabile"
+
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('risk-summary-item');
+                    listItem.innerHTML = `
+                        <h4>${riskName}</h4>
+                        <span class="alert-status-small ${alertClass}">${status}</span>
+                    `;
+                    riskSummaryList.appendChild(listItem);
+                }
+            } else {
+                riskSummaryList.innerHTML = '<li>Riepilogo rischi non disponibile per questo comune.</li>';
             }
         }
 
