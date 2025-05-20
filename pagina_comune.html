@@ -361,7 +361,7 @@
                 comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
 
                 const criticità = criticitàMap[foundFeature.properties.normalizedName] || 'Non disponibile';
-                comuneCriticityDisplay.textContent = `Criticità: ${criticità}`;
+                comuneCriticityDisplay.textContent = `Base: ${criticità}`;
 
                 // Rimuovi layer precedenti e aggiungi solo il comune trovato
                 leafletMap.eachLayer(layer => {
