@@ -215,6 +215,8 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             background-color: #ffffff;
+            /* Inizialmente nascosto */
+            display: none; 
         }
 
         #emergency-contacts-container h2 {
@@ -417,6 +419,8 @@
         const entitySelectWrapper = document.getElementById('entity-select-wrapper');
         const operatorEntitySelect = document.getElementById('operator-entity-select');
         const proceduresDisplay = document.getElementById('procedures-display');
+        const emergencyContactsContainer = document.getElementById('emergency-contacts-container'); // Nuovo riferimento all'elemento
+
 
         let geojsonDataGlobal = null;
         let criticitàMap = {};
@@ -755,6 +759,10 @@
             geoJsonLayerGroup.clearLayers();
             emergencyAreasLayerGroup.clearLayers(); // Pulisci anche le aree di emergenza
 
+            // Nascondi la sezione delle figure di riferimento all'inizio di ogni ricerca
+            emergencyContactsContainer.style.display = 'none';
+
+
             if (!searchTerm) {
                 infoMessage.textContent = 'Inserisci il nome di un comune per iniziare la ricerca.';
                 comuneNameDisplay.textContent = '';
@@ -785,10 +793,15 @@
                 // Mostra le aree di emergenza per il comune selezionato
                 displayEmergencyAreas(searchTerm);
 
+                // Mostra la sezione delle figure di riferimento se il comune è trovato
+                emergencyContactsContainer.style.display = 'block';
+
             } else {
                 infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
+                // Assicurati che la sezione delle figure di riferimento sia nascosta se il comune non è trovato
+                emergencyContactsContainer.style.display = 'none';
             }
         }
 
