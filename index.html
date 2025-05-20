@@ -2,17 +2,21 @@
 <html lang="it">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seleziona Colori Criticità</title>
-<style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seleziona Colori Criticità</title>
+    <style>
         body {
             font-family: sans-serif;
             margin: 20px;
+            display: flex; /* Utilizza flexbox per allineare i contenuti */
+            flex-direction: column; /* Impila gli elementi verticalmente */
+            align-items: center; /* Centra gli elementi orizzontalmente */
         }
 
         h2 {
             margin-bottom: 20px;
+            color: #333;
         }
 
         form {
@@ -20,16 +24,26 @@
             flex-direction: column;
             gap: 10px;
             margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+            width: 100%;
+            max-width: 400px; /* Limita la larghezza del form */
         }
 
         label {
             font-weight: bold;
+            color: #555;
         }
 
         select {
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
+            width: 100%;
+            box-sizing: border-box; /* Includi padding e border nella larghezza */
         }
 
         button {
@@ -39,6 +53,8 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s ease;
         }
 
         button:hover {
@@ -48,14 +64,25 @@
         #message {
             margin-top: 10px;
             font-weight: bold;
-            cursor: pointer; /* Aggiungi un cursore per indicare che è cliccabile */
-            color: green; /* Cambia il colore per evidenziare */
+            cursor: pointer;
+            color: green;
+            text-align: center;
         }
 
         .base-color-picker {
             display: flex;
             align-items: center;
             gap: 10px;
+            justify-content: space-between; /* Spazia label e select */
+        }
+
+        .base-color-picker label {
+            flex-shrink: 0; /* Impedisce alla label di restringersi */
+            width: 30px; /* Larghezza fissa per le label A1, A2, etc. */
+        }
+
+        .base-color-picker select {
+            flex-grow: 1; /* Permette alla select di occupare lo spazio rimanente */
         }
 
         #logo-container {
@@ -64,8 +91,51 @@
         }
 
         #logo-container img {
-            max-width: 200px; /* Imposta una larghezza massima per il logo */
+            max-width: 200px;
             height: auto;
+        }
+
+        /* Nuovi stili per la sezione di navigazione */
+        .navigation-section {
+            margin-top: 40px;
+            padding: 25px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+            text-align: center;
+            width: 100%;
+            max-width: 600px; /* Larghezza massima per la sezione */
+        }
+
+        .navigation-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            flex-wrap: wrap; /* Permette ai bottoni di andare a capo */
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .navigation-buttons a {
+            text-decoration: none; /* Rimuove la sottolineatura dai link */
+        }
+
+        .navigation-buttons button {
+            background-color: #28a745; /* Un bel verde per i bottoni di navigazione */
+            padding: 12px 25px;
+            font-size: 1.1em;
+            border-radius: 6px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navigation-buttons button:hover {
+            background-color: #218838;
+            transform: translateY(-2px); /* Effetto leggero al passaggio del mouse */
         }
     </style>
 </head>
@@ -76,126 +146,137 @@
         <img src="Logo regione.png" alt="Logo Regione Basilicata">
     </div>
 
-<h2>Seleziona Colori Criticità</h2>
+    <h2>Seleziona Colori Criticità</h2>
 
-<form id="color-form">
-<div id="base-color-pickers">
-<label>Colori per Base:</label>
-<div class="base-color-picker">
-<label for="color-A1">A1:</label>
-<select id="color-A1" name="color-A1">
-<option value="green">Verde</option>
-<option value="yellow">Giallo</option>
-<option value="orange">Arancione</option>
-<option value="red">Rosso</option>
-</select>
-</div>
-<div class="base-color-picker">
-<label for="color-A2">A2:</label>
-<select id="color-A2" name="color-A2">
-<option value="green">Verde</option>
-<option value="yellow">Giallo</option>
-<option value="orange">Arancione</option>
-<option value="red">Rosso</option>
-</select>
-</div>
-<div class="base-color-picker">
-<label for="color-B">B:</label>
-<select id="color-B" name="color-B">
-<option value="green">Verde</option>
-<option value="yellow">Giallo</option>
-<option value="orange">Arancione</option>
-<option value="red">Rosso</option>
-</select>
-</div>
-<div class="base-color-picker">
-<label for="color-C">C:</label>
-<select id="color-C" name="color-C">
-<option value="green">Verde</option>
-<option value="yellow">Giallo</option>
-<option value="orange">Arancione</option>
-<option value="red">Rosso</option>
-</select>
-</div>
-<div class="base-color-picker">
-<label for="color-D">D:</label>
-<select id="color-D" name="color-D">
-<option value="green">Verde</option>
-<option value="yellow">Giallo</option>
-<option value="orange">Arancione</option>
-<option value="red">Rosso</option>
-</select>
-</div>
-<div class="base-color-picker">
-<label for="color-E1">E1:</label>
-<select id="color-E1" name="color-E1">
-<option value="green">Verde</option>
-<option value="yellow">Giallo</option>
-<option value="orange">Arancione</option>
-<option value="red">Rosso</option>
-</select>
-</div>
-<div class="base-color-picker">
-<label for="color-E2">E2:</label>
-<select id="color-E2" name="color-E2">
-<option value="green">Verde</option>
-<option value="yellow">Giallo</option>
-<option value="orange">Arancione</option>
-<option value="red">Rosso</option>
-</select>
-</div>
-</div>
+    <form id="color-form">
+        <div id="base-color-pickers">
+            <label>Colori per Base:</label>
+            <div class="base-color-picker">
+                <label for="color-A1">A1:</label>
+                <select id="color-A1" name="color-A1">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-A2">A2:</label>
+                <select id="color-A2" name="color-A2">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-B">B:</label>
+                <select id="color-B" name="color-B">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-C">C:</label>
+                <select id="color-C" name="color-C">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-D">D:</label>
+                <select id="color-D" name="color-D">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-E1">E1:</label>
+                <select id="color-E1" name="color-E1">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+            <div class="base-color-picker">
+                <label for="color-E2">E2:</label>
+                <select id="color-E2" name="color-E2">
+                    <option value="green">Verde</option>
+                    <option value="yellow">Giallo</option>
+                    <option value="orange">Arancione</option>
+                    <option value="red">Rosso</option>
+                </select>
+            </div>
+        </div>
 
-<button type="submit">Salva Colori</button>
-</form>
+        <button type="submit">Salva Colori</button>
+    </form>
 
-<div id="message"></div>
+    <div id="message"></div>
 
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    ---
 
-<script>
-// Your web app's Firebase configuration (IDENTICO A visualizza.html)
-const firebaseConfig = {
-apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
-authDomain: "bollettinoregionale.firebaseapp.com",
-projectId: "bollettinoregionale",
-databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
-storageBucket: "bollettinoregionale.appspot.com",
-messagingSenderId: "765538370497",
-appId: "1:765538370497:web:9c4f569754c0df01cc2540",
-// measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
-};
+    <div class="navigation-section">
+        <h3>Navigazione rapida (per test)</h3>
+        <p>Questa sezione è temporanea e serve per facilitare la navigazione tra le diverse visualizzazioni della piattaforma durante la fase di test.</p>
+        <div class="navigation-buttons">
+            <a href="https://eatapples15.github.io/basilicata/visualizza.html"><button>Visualizza Regione Completa</button></a>
+            <a href="https://eatapples15.github.io/basilicata/comune.html?comune=Potenza"><button>Visualizza Comune (es. Potenza)</button></a>
+            <a href="https://eatapples15.github.io/basilicata/consultazione_cittadino.html"><button>Ricerca Comune</button></a>
+        </div>
+    </div>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
 
-// Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+    <script>
+        // Your web app's Firebase configuration (IDENTICO A visualizza.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
+        };
 
-const colorForm = document.getElementById('color-form');
-const messageDiv = document.getElementById('message');
-const baseColorPickers = document.querySelectorAll('.base-color-picker');
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
 
-colorForm.addEventListener('submit', function (e) {
-e.preventDefault();
+        const colorForm = document.getElementById('color-form');
+        const messageDiv = document.getElementById('message');
+        const baseColorPickers = document.querySelectorAll('.base-color-picker');
 
-const coloriBase = {};
-baseColorPickers.forEach(picker => {
-const base = picker.querySelector('label').textContent.slice(0, -1); // Rimuove i due punti
-const color = picker.querySelector('select').value;
-coloriBase[base] = color;
-});
+        colorForm.addEventListener('submit', function (e) {
+            e.preventDefault();
 
-const datiColori = {
-coloriBase: coloriBase,
-dataCreazione: new Date().toISOString() // Aggiungi la data/ora
-};
+            const coloriBase = {};
+            baseColorPickers.forEach(picker => {
+                const base = picker.querySelector('label').textContent.slice(0, -1); // Rimuove i due punti
+                const color = picker.querySelector('select').value;
+                coloriBase[base] = color;
+            });
 
- database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
+            const datiColori = {
+                coloriBase: coloriBase,
+                dataCreazione: new Date().toISOString() // Aggiungi la data/ora
+            };
+
+            database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
                 .then(() => {
                     messageDiv.textContent = 'Colori salvati con successo!';
                     messageDiv.style.cursor = 'pointer'; // Rendi il testo cliccabile
                     messageDiv.style.color = 'green';
-                    messageDiv.onclick = function() {
+                    messageDiv.onclick = function () {
                         window.location.href = 'https://eatapples15.github.io/basilicata/visualizza.html';
                     };
                     colorForm.reset();
@@ -207,10 +288,9 @@ dataCreazione: new Date().toISOString() // Aggiungi la data/ora
                     messageDiv.style.color = 'red';
                     messageDiv.onclick = null; // Rimuovi qualsiasi handler di click in caso di errore
                 });
-});
-</script>
+        });
+    </script>
 
 </body>
 
-</html>
 </html>
