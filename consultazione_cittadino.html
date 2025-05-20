@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Criticità per Comune - Basilicata</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center; /* Centra il contenuto orizzontalmente */
+            align-items: flex-start; /* Allinea il contenuto in alto */
+        }
+
+        #controls-container {
+            flex: 1;
+            min-width: 250px;
+            max-width: 300px; /* Limita la larghezza del pannello di controllo */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+
+        #leaflet-map {
+            flex: 3; /* Occupa più spazio rispetto ai controlli */
+            min-width: 400px;
+            height: 600px; /* Aumenta l'altezza della mappa per una migliore visualizzazione */
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #comune-search-input {
+            width: calc(100% - 20px); /* Larghezza completa meno padding */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        #search-button {
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        #search-button:hover {
+            background-color: #0056b3;
+        }
+
+        #current-comune-info {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+
+        #comune-name-display {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        #comune-criticity-display {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        #info-message {
+            margin-top: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        /* Stili per i popup di Leaflet (già presenti e corretti) */
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="controls-container">
+        <h2>Cerca il tuo Comune</h2>
+        <input type="text" id="comune-search-input" placeholder="Es: Potenza">
+        <button id="search-button">Cerca</button>
+
+        <div id="current-comune-info">
+            <p><span id="comune-name-display"></span></p>
+            <p><span id="comune-criticity-display"></span></p>
+            <p id="info-message" style="color: red;"></p>
+        </div>
+
+        <p id="last-updated" style="font-style: italic; color: #777; margin-top: 20px;"></p>
+    </div>
+
+    <div id="leaflet-map"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Your web app's Firebase configuration (IDENTICO ALLE ALTRE PAGINE)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8); // Vista iniziale sulla Basilicata
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
+
+        // Elementi HTML per l'interazione e la visualizzazione
+        const comuneSearchInput = document.getElementById('comune-search-input');
+        const searchButton = document.getElementById('search-button');
+        const comuneNameDisplay = document.getElementById('comune-name-display');
+        const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
+        const infoMessage = document.getElementById('info-message');
+        const lastUpdatedElement = document.getElementById('last-updated');
+
+        let geojsonDataGlobal = null; // Memorizza i dati GeoJSON una volta caricati
+        let criticitàMap = {};
+        let coloriBase = {};
+        let geoJsonLayerGroup = new L.LayerGroup().addTo(leafletMap); // Gruppo di layer per gestire i comuni
+
+        // Normalizzazione dei nomi dei comuni (funzione esistente, essenziale!)
+        function normalizeComuneName(nome) {
+            if (!nome) return "";
+            let normalized = nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return normalized;
+        }
+
+        // Funzione per ottenere il colore basato sulla criticità (dal tuo codice esistente)
+        function getHexColor(colorName) {
+            switch (colorName) {
+                case 'green': return '#008000';
+                case 'yellow': return '#FFFF00';
+                case 'orange': return '#FFA500';
+                case 'red': return '#FF0000';
+                default: return '#ccc'; // Colore di default se non trovato
+            }
+        }
+
+        // Funzione per definire lo stile di un comune sulla mappa
+        function styleComune(feature) {
+            let normalizedComuneNome = feature.properties.normalizedName;
+            const criticità = criticitàMap[normalizedComuneNome];
+            const fillColor = coloriBase[criticità] || '#ccc'; // Usa il colore base o grigio predefinito
+
+            return {
+                fillColor: getHexColor(fillColor),
+                weight: 2, // Aumenta il bordo per visibilità
+                opacity: 1,
+                color: 'black', // Bordo nero
+                fillOpacity: 0.8 // Trasparenza per il riempimento
+            };
+        }
+
+        // Funzione per gestire i popup (adattata per visualizzare il nome e la criticità)
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                const normalizedComuneNome = feature.properties.normalizedName;
+                const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
+            }
+        }
+
+        // Carica dati GeoJSON e colori Firebase all'avvio
+        Promise.all([
+            fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
+            database.ref('colori').once('value')
+        ]).then(([geojsonData, snapshot]) => {
+            geojsonDataGlobal = geojsonData; // Memorizza i dati GeoJSON globalmente
+
+            // Normalizza i nomi dei comuni nel GeoJSON
+            geojsonDataGlobal.features.forEach(feature => {
+                if (feature.properties && feature.properties.name) {
+                    feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
+                }
+            });
+
+            if (snapshot.exists()) {
+                const datiColori = snapshot.val();
+                coloriBase = datiColori.coloriBase || {};
+                const timestamp = new Date(datiColori.dataCreazione);
+                lastUpdatedElement.textContent = `Dati aggiornati il: ${timestamp.toLocaleString()}`;
+
+                // Configurazione delle criticità (identica a quella esistente)
+                const configurazioneCriticità = {
+                    'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
+                    'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
+                    'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
+                    'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant'Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Marsico Nuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d'Agri", "San Paolo Albanese", "San Severino Lucano", "Sant'Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
+                    'D': ["Nemoli", "Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
+                    'E1': ["Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi", "Montalbano Jonico", "Craco"],
+                    'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
+                };
+
+                // Costruisci la mappa delle criticità
+                for (const base in configurazioneCriticità) {
+                    const comuni = configurazioneCriticità[base];
+                    comuni.forEach(comune => {
+                        criticitàMap[normalizeComuneName(comune)] = base;
+                    });
+                }
+            } else {
+                lastUpdatedElement.textContent = 'Nessun dato colore disponibile da Firebase.';
+                console.warn("Nessun dato colore trovato in Firebase.");
+            }
+        }).catch(error => {
+            console.error("Errore nel caricamento dei dati:", error);
+            infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+        });
+
+        // Funzione per filtrare la mappa
+        function filterMap() {
+            const searchTerm = normalizeComuneName(comuneSearchInput.value);
+            infoMessage.textContent = ''; // Resetta il messaggio di errore
+
+            if (!searchTerm) {
+                infoMessage.textContent = 'Inserisci il nome di un comune.';
+                // Se non c'è un termine di ricerca, potremmo voler mostrare di nuovo l'intera mappa
+                // o lasciare vuota. Per ora, la lascio vuota per chiarezza.
+                geoJsonLayerGroup.clearLayers();
+                comuneNameDisplay.textContent = '';
+                comuneCriticityDisplay.textContent = '';
+                return;
+            }
+
+            geoJsonLayerGroup.clearLayers(); // Rimuovi tutti i layer esistenti dalla mappa
+
+            const foundFeature = geojsonDataGlobal.features.find(feature =>
+                feature.properties.normalizedName === searchTerm
+            );
+
+            if (foundFeature) {
+                L.geoJSON(foundFeature, {
+                    style: styleComune,
+                    onEachFeature: onEachFeature
+                }).addTo(geoJsonLayerGroup);
+
+                // Aggiorna le informazioni testuali
+                comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
+                const criticità = criticitàMap[foundFeature.properties.normalizedName] || 'Non disponibile';
+                comuneCriticityDisplay.textContent = `Criticità: ${criticità}`;
+
+                // Centra la mappa sul comune trovato
+                leafletMap.fitBounds(L.geoJSON(foundFeature).getBounds());
+
+            } else {
+                infoMessage.textContent = `Comune "${comuneSearchInput.value}" non trovato. Verifica il nome.`;
+                comuneNameDisplay.textContent = '';
+                comuneCriticityDisplay.textContent = '';
+            }
+        }
+
+        // Event Listener per il pulsante di ricerca
+        searchButton.addEventListener('click', filterMap);
+
+        // Event Listener per la pressione del tasto "Invio" nel campo di input
+        comuneSearchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                filterMap();
+            }
+        });
+    </script>
+
+</body>
+
+</html>
