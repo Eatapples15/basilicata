@@ -2,98 +2,116 @@
 <html lang="it">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Visualizza Mappa Criticità</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-<style>
-body {
-font-family: sans-serif;
-display: flex;
-flex-wrap: wrap;
-gap: 20px;
-padding: 20px;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizza Mappa Criticità</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+        }
 
-#leaflet-map {
-flex: 2;
-min-width: 300px;
-height: 500px;
-}
+        #leaflet-map {
+            flex: 2;
+            min-width: 300px;
+            height: 500px;
+        }
 
-#info-container {
-flex: 1;
-min-width: 200px;
-display: flex;
-flex-direction: column;
-gap: 10px;
-}
+        #info-container {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px; /* Aggiunto padding per il contenitore delle info */
+            border: 1px solid #ddd; /* Aggiunto bordo per distinguere meglio */
+            border-radius: 8px; /* Bordi arrotondati */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Ombra leggera */
+            background-color: #f9f9f9; /* Sfondo leggermente grigio */
+        }
 
-#last-updated {
-font-style: italic;
-color: #777;
-}
+        #last-updated {
+            font-style: italic;
+            color: #777;
+        }
 
-#save-pdf-button {
-padding: 10px 15px;
-background-color: #dc3545;
-color: white;
-border: none;
-border-radius: 5px;
-cursor: pointer;
-font-size: 16px;
-margin-top: 20px;
-}
+        #save-pdf-button {
+            padding: 10px 15px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+            transition: background-color 0.3s ease; /* Transizione per hover */
+        }
 
-#save-pdf-button:hover {
-background-color: #c82333;
-}
+        #save-pdf-button:hover {
+            background-color: #c82333;
+        }
 
-.leaflet-popup-content-wrapper {
-background-color: white;
-color: #333;
-border-radius: 5px;
-padding: 10px;
-box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
+        #region-logo {
+            width: 100%; /* Occupa la larghezza del contenitore */
+            max-width: 200px; /* Limita la dimensione massima */
+            height: auto;
+            margin-top: auto; /* Sposta il logo in fondo al flex container */
+            align-self: center; /* Centra il logo orizzontalmente */
+            padding-top: 20px; /* Aggiungi un po' di spazio sopra se necessario */
+        }
 
-.leaflet-popup-content {
-margin: 0;
-}
 
-.leaflet-popup-tip-container {
-width: 20px;
-height: 10px;
-}
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
 
-.leaflet-popup-tip {
-background: white;
-border: 1px solid #aaa;
-border-top-color: transparent;
-border-left-color: transparent;
-}
-</style>
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
+    </style>
 </head>
 
 <body>
 
-<div id="leaflet-map"></div>
+    <div id="leaflet-map"></div>
 
-<div id="info-container">
-<h3>Ultimo Aggiornamento</h3>
-<p id="last-updated"></p>
-<button id="save-pdf-button">Scarica come PDF</button>
-</div>
+    <div id="info-container">
+        <h3>Ultimo Aggiornamento</h3>
+        <p id="last-updated"></p>
+        <button id="save-pdf-button">Scarica come PDF</button>
 
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
+        <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
+    </div>
 
-<script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
+
+    <script>
         // Your web app's Firebase configuration (IDENTICO A index.html)
         const firebaseConfig = {
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
@@ -137,7 +155,7 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                 geojsonData.features.forEach(feature => {
                     if (feature.properties && feature.properties.name) {
                         let normalizedName = normalizeComuneName(feature.properties.name);
-                        console.log(`  - Originale: "${feature.properties.name}", Normalizzato: "${normalizedName}"`);
+                        console.log(` - Originale: "${feature.properties.name}", Normalizzato: "${normalizedName}"`);
                         feature.properties.normalizedName = normalizedName; // Aggiungi il nome normalizzato all'oggetto feature
                     }
                 });
@@ -248,17 +266,31 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                     console.log("Inizio generazione PDF...");
 
                     // Stili semplificati per il PDF
-                    const pdfStyles = {
-                        fillColor: '#000', // Colore pieno per i poligoni nel PDF
-                        weight: 1,
-                        color: '#333',
-                        fillOpacity: 1 // Nessuna trasparenza per il PDF
+                    const pdfStyles = (feature) => {
+                        let normalizedComuneNome = feature.properties.normalizedName;
+                        const criticità = criticitàMap[normalizedComuneNome];
+                        const fillColor = coloriBase[criticità] || '#ccc';
+                        let hexColor = fillColor;
+                        switch (fillColor) {
+                            case 'green': hexColor = '#008000'; break;
+                            case 'yellow': hexColor = '#FFFF00'; break;
+                            case 'orange': hexColor = '#FFA500'; break;
+                            case 'red': hexColor = '#FF0000'; break;
+                            default: hexColor = '#ccc';
+                        }
+                        return {
+                            fillColor: hexColor,
+                            weight: 1,
+                            color: '#333',
+                            fillOpacity: 1 // Nessuna trasparenza per il PDF
+                        };
                     };
 
                     // Applica gli stili semplificati temporaneamente
+                    // Iterate through existing GeoJSON layers and apply new styles for PDF capture
                     leafletMap.eachLayer(layer => {
                         if (layer instanceof L.GeoJSON) {
-                            layer.setStyle(pdfStyles);
+                            layer.setStyle((feature) => pdfStyles(feature)); // Use a function for setStyle
                         }
                     });
 
@@ -266,7 +298,7 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                     leafletMap.getContainer().style.display;
 
                     // Aumenta l'attesa
-                    setTimeout(function() {
+                    setTimeout(function () {
                         console.log("Chiamata leafletImage...");
 
                         leafletImage(leafletMap, function (err, canvas) {
@@ -280,11 +312,6 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                             const imgData = canvas.toDataURL('image/png');
                             console.log("Dati immagine ottenuti:", imgData.substring(0, 100) + "..."); // Log parziale
 
-                            // Visualizza l'immagine (DEBUG)
-                            // const img = document.createElement('img');
-                            // img.src = imgData;
-                            // document.body.appendChild(img);
-
                             const { jsPDF } = window.jspdf;
                             const pdf = new jsPDF('landscape');
                             const imgWidth = pdf.internal.pageSize.getWidth() - 20;
@@ -293,6 +320,18 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                             pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
                             pdf.setFontSize(10);
                             pdf.text(lastUpdatedElement.textContent, 10, pdf.internal.pageSize.getHeight() - 10);
+
+                            // Aggiungi il logo al PDF
+                            const logoImg = document.getElementById('region-logo');
+                            if (logoImg) {
+                                const logoData = logoImg.src;
+                                const logoPdfWidth = 40; // Larghezza del logo nel PDF (adatta a piacere)
+                                const logoPdfHeight = (logoImg.naturalHeight * logoPdfWidth) / logoImg.naturalWidth;
+                                const pdfPageWidth = pdf.internal.pageSize.getWidth();
+                                pdf.addImage(logoData, 'PNG', pdfPageWidth - logoPdfWidth - 10, 10, logoPdfWidth, logoPdfHeight); // Posiziona in alto a destra
+                            }
+
+
                             pdf.save(`bollettino_criticità_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
 
                             console.log("PDF generato e salvato.");
@@ -300,7 +339,7 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                             // Ripristina gli stili originali
                             leafletMap.eachLayer(layer => {
                                 if (layer instanceof L.GeoJSON) {
-                                    layer.setStyle(styleComune);
+                                    layer.setStyle(styleComune); // Ripristina la funzione originale styleComune
                                 }
                             });
 
@@ -309,3 +348,7 @@ integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""><
                 });
             });
     </script>
+
+</body>
+
+</html>
