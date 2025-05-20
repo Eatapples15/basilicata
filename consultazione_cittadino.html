@@ -20,11 +20,12 @@
             /* Allinea il contenuto in alto */
         }
 
-        #controls-container {
+        #controls-container,
+        #risk-info-container {
             flex: 1;
             min-width: 250px;
-            max-width: 300px;
-            /* Limita la larghezza del pannello di controllo */
+            max-width: 350px;
+            /* Aumentata leggermente la larghezza massima per contenere più info */
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -96,11 +97,15 @@
         }
 
         #region-logo {
-            width: 100%; /* Occupa la larghezza del contenitore */
-            max-width: 200px; /* Limita la dimensione massima */
+            width: 100%;
+            /* Occupa la larghezza del contenitore */
+            max-width: 200px;
+            /* Limita la dimensione massima */
             height: auto;
-            margin-top: 20px; /* Spazio sopra il logo */
-            align-self: center; /* Centra il logo orizzontalmente nel flex container */
+            margin-top: 20px;
+            /* Spazio sopra il logo */
+            align-self: center;
+            /* Centra il logo orizzontalmente nel flex container */
         }
 
         /* Stili per i popup di Leaflet (già presenti e corretti) */
@@ -127,6 +132,68 @@
             border-top-color: transparent;
             border-left-color: transparent;
         }
+
+        /* Stili per la nuova sezione dei rischi */
+        #risk-info-container {
+            margin-top: 20px;
+            max-height: 600px; /* Limita l'altezza del contenitore dei rischi */
+            overflow-y: auto; /* Aggiunge scroll se il contenuto è troppo lungo */
+        }
+
+        .risk-section {
+            background-color: #fff;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .risk-section h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .risk-alert-status {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .alert-message {
+            color: #dc3545;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .preparedness-actions h4 {
+            margin-top: 10px;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .preparedness-actions ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            padding-left: 0;
+        }
+
+        .preparedness-actions li {
+            margin-bottom: 5px;
+        }
+
+        /* Colori per lo stato delle allerte */
+        .alert-green {
+            color: #28a745;
+        } /* Verde */
+        .alert-yellow {
+            color: #ffc107;
+        } /* Giallo */
+        .alert-orange {
+            color: #fd7e14;
+        } /* Arancione */
+        .alert-red {
+            color: #dc3545;
+        } /* Rosso */
     </style>
 </head>
 
@@ -149,6 +216,14 @@
     </div>
 
     <div id="leaflet-map"></div>
+
+    <div id="risk-info-container">
+        <h2>Rischi e Allerte del Comune</h2>
+        <div id="comune-risks-display">
+            <p>Seleziona un comune per visualizzare i rischi e le allerte.</p>
+        </div>
+    </div>
+
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
@@ -184,6 +259,7 @@
         const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
         const infoMessage = document.getElementById('info-message');
         const lastUpdatedElement = document.getElementById('last-updated');
+        const comuneRisksDisplay = document.getElementById('comune-risks-display'); // Nuovo elemento per i rischi
 
         let geojsonDataGlobal = null; // Memorizza i dati GeoJSON una volta caricati
         let criticitàMap = {};
@@ -200,11 +276,16 @@
         // Funzione per ottenere il colore basato sulla criticità (dal tuo codice esistente)
         function getHexColor(colorName) {
             switch (colorName) {
-                case 'green': return '#008000';
-                case 'yellow': return '#FFFF00';
-                case 'orange': return '#FFA500';
-                case 'red': return '#FF0000';
-                default: return '#ccc'; // Colore di default se non trovato
+                case 'green':
+                    return '#008000';
+                case 'yellow':
+                    return '#FFFF00';
+                case 'orange':
+                    return '#FFA500';
+                case 'red':
+                    return '#FF0000';
+                default:
+                    return '#ccc'; // Colore di default se non trovato
             }
         }
 
@@ -231,6 +312,67 @@
                 layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
             }
         }
+
+        // Dati di esempio per i rischi dei comuni (aggiunta per Policoro)
+        const comuneRisksData = {
+            "policoro": {
+                risks: [{
+                    name: "Rischio Idrogeologico",
+                    alertStatus: "Giallo", // Esempio: Giallo (Moderata criticità)
+                    alertMessage: "Attenzione: Precipitazioni diffuse previste, possibili allagamenti localizzati e criticità idrauliche.",
+                    guidelines: {
+                        before: [
+                            "Informati sul Piano di Protezione Civile del comune.",
+                            "Prepara un kit di emergenza (acqua, cibo non deperibile, farmaci, documenti).",
+                            "Pulisci grondaie e tombini, assicurati che siano liberi da detriti.",
+                            "Sposta all'interno oggetti che potrebbero essere trascinati dall'acqua."
+                        ],
+                        during: [
+                            "Non uscire di casa se non strettamente necessario.",
+                            "Non attraversare sottopassi o aree allagate, a piedi o in auto.",
+                            "Sali ai piani superiori dell'edificio se l'acqua dovesse salire.",
+                            "Stacca la corrente elettrica e chiudi il gas.",
+                            "Segui le indicazioni delle autorità e resta informato tramite radio/TV."
+                        ],
+                        after: [
+                            "Non rientrare in casa finché non è stato verificato che sia sicuro.",
+                            "Non toccare cavi elettrici caduti o apparecchi elettrici bagnati.",
+                            "Non bere acqua dal rubinetto senza prima averla fatta bollire o aver verificato la potabilità.",
+                            "Pulisci e disinfetta gli ambienti colpiti dall'alluvione.",
+                            "Segnala danni alle autorità competenti."
+                        ]
+                    }
+                }, {
+                    name: "Rischio Sismico",
+                    alertStatus: "Verde", // Esempio: Verde (Nessuna allerta specifica, ma rischio strutturale)
+                    alertMessage: "Zona a rischio sismico. Non sono presenti allerte immediate, ma è fondamentale conoscere le norme di comportamento.",
+                    guidelines: {
+                        before: [
+                            "Identifica i luoghi sicuri della tua casa (sotto tavoli robusti, vicino a muri portanti).",
+                            "Fissa mobili pesanti e scaffali alle pareti.",
+                            "Prepara un kit di emergenza con acqua, cibo, farmaci, radio a pile, torcia.",
+                            "Individua le vie di fuga e i punti di raccolta esterni sicuri."
+                        ],
+                        during: [
+                            "Se sei in un edificio, mettiti sotto un tavolo robusto o vicino a un muro portante, lontano da finestre e oggetti che potrebbero cadere.",
+                            "Se sei all'aperto, allontanati da edifici, alberi, pali e linee elettriche; cerca un luogo aperto.",
+                            "Non usare ascensori.",
+                            "Se sei in auto, fermati in un luogo sicuro (lontano da edifici e ponti) e rimani nel veicolo."
+                        ],
+                        after: [
+                            "Verifica le condizioni degli occupanti e, se necessario, presta i primi soccorsi.",
+                            "Non usare fiamme libere o accendini (possibili fughe di gas).",
+                            "Chiudi gas, acqua ed elettricità se senti odore di gas o vedi danni all'impianto elettrico.",
+                            "Esci con calma dall'edificio seguendo le vie di fuga, raggiungi il punto di raccolta esterno.",
+                            "Sii pronto a replicare le azioni in caso di scosse di assestamento.",
+                            "Utilizza il telefono solo per emergenze gravi per non intasare le linee."
+                        ]
+                    }
+                }]
+            }
+            // Aggiungi altri comuni qui se necessario
+        };
+
 
         // Carica dati GeoJSON e colori Firebase all'avvio
         Promise.all([
@@ -279,16 +421,18 @@
             infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
         });
 
-        // Funzione per filtrare la mappa
+        // Funzione per filtrare la mappa e aggiornare le informazioni sui rischi
         function filterMap() {
             const searchTerm = normalizeComuneName(comuneSearchInput.value);
             infoMessage.textContent = ''; // Resetta il messaggio di errore
+            comuneRisksDisplay.innerHTML = ''; // Pulisci la sezione dei rischi
 
             if (!searchTerm) {
                 infoMessage.textContent = 'Inserisci il nome di un comune per iniziare la ricerca.';
                 geoJsonLayerGroup.clearLayers(); // Rimuovi tutti i layer se la ricerca è vuota
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
+                comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
                 return;
             }
 
@@ -312,12 +456,51 @@
                 // Centra la mappa sul comune trovato
                 leafletMap.fitBounds(L.geoJSON(foundFeature).getBounds());
 
+                // Mostra i rischi specifici per il comune
+                displayComuneRisks(searchTerm);
+
             } else {
                 infoMessage.textContent = `Comune "${comuneSearchInput.value}" non trovato. Verifica il nome.`;
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
+                comuneRisksDisplay.innerHTML = '<p>Comune non trovato o dati sui rischi non disponibili.</p>';
             }
         }
+
+        // Funzione per visualizzare i rischi del comune
+        function displayComuneRisks(normalizedComuneName) {
+            const risks = comuneRisksData[normalizedComuneName];
+
+            if (risks && risks.risks && risks.risks.length > 0) {
+                comuneRisksDisplay.innerHTML = ''; // Pulisci il contenuto precedente
+                risks.risks.forEach(risk => {
+                    const riskSection = document.createElement('div');
+                    riskSection.classList.add('risk-section');
+
+                    const alertClass = `alert-${risk.alertStatus.toLowerCase()}`;
+
+                    riskSection.innerHTML = `
+                        <h3>${risk.name}</h3>
+                        <p class="risk-alert-status">Stato Allerta: <span class="${alertClass}">${risk.alertStatus}</span></p>
+                        ${risk.alertMessage ? `<p class="alert-message">Messaggio: ${risk.alertMessage}</p>` : ''}
+                        
+                        <div class="preparedness-actions">
+                            <h4>Cosa fare:</h4>
+                            <h5>Prima:</h5>
+                            <ul>${risk.guidelines.before.map(item => `<li>${item}</li>`).join('')}</ul>
+                            <h5>Durante:</h5>
+                            <ul>${risk.guidelines.during.map(item => `<li>${item}</li>`).join('')}</ul>
+                            <h5>Dopo:</h5>
+                            <ul>${risk.guidelines.after.map(item => `<li>${item}</li>`).join('')}</ul>
+                        </div>
+                    `;
+                    comuneRisksDisplay.appendChild(riskSection);
+                });
+            } else {
+                comuneRisksDisplay.innerHTML = '<p>Dati sui rischi per questo comune non disponibili al momento.</p>';
+            }
+        }
+
 
         // Event Listener per il pulsante di ricerca
         searchButton.addEventListener('click', filterMap);
