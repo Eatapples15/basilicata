@@ -639,180 +639,181 @@
 
             if (foundFeature) {
                 L.geoJSON(foundFeature, {
-                    style: styleCom
-http://googleusercontent.com/map_content/14atura).addTo(geoJsonLayerGroup);
-leafletMap.fitBounds(geoJsonLayerGroup.getBounds());
+                    style: styleComune,
+                    onEachFeature: onEachFeature // Aggiunto onEachFeature per i popup
+                }).addTo(geoJsonLayerGroup);
+                leafletMap.fitBounds(geoJsonLayerGroup.getBounds());
 
-            comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
-            const criticitàComune = criticitàMap[searchTerm];
-            comuneCriticityDisplay.textContent = `Criticità di Base: ${criticitàComune || 'Non disponibile'}`;
+                comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
+                const criticitàComune = criticitàMap[searchTerm];
+                comuneCriticityDisplay.textContent = `Criticità di Base: ${criticitàComune || 'Non disponibile'}`;
 
-            // Visualizza le aree di Policoro solo se il comune cercato è Policoro
-            if (searchTerm === "policoro") {
-                addPolicoroMarkers();
-                displayComuneRisks(searchTerm);
-                displayCurrentRiskSummary(searchTerm);
+                // Visualizza le aree di Policoro solo se il comune cercato è Policoro
+                if (searchTerm === "policoro") {
+                    addPolicoroMarkers();
+                    displayComuneRisks(searchTerm);
+                    displayCurrentRiskSummary(searchTerm);
+                } else {
+                    // Se non è Policoro, rimuovi eventuali marker precedenti e svuota le sezioni rischi/riepilogo
+                    removePolicoroMarkers();
+                    comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
+                    riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
+                }
+
             } else {
-                // Se non è Policoro, rimuovi eventuali marker precedenti e svuota le sezioni rischi/riepilogo
-                removePolicoroMarkers();
+                infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
+                comuneNameDisplay.textContent = '';
+                comuneCriticityDisplay.textContent = '';
+                removePolicoroMarkers(); // Assicurati di rimuovere i marker di Policoro se un altro comune non è trovato
                 comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
                 riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
             }
-
-        } else {
-            infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
-            comuneNameDisplay.textContent = '';
-            comuneCriticityDisplay.textContent = '';
-            removePolicoroMarkers(); // Assicurati di rimuovere i marker di Policoro se un altro comune non è trovato
-            comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
-            riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
         }
-    }
 
-    // Funzione per visualizzare i rischi dettagliati di un comune
-    function displayComuneRisks(normalizedComuneName) {
-        const risks = comuneRisksData[normalizedComuneName] ? comuneRisksData[normalizedComuneName].risks : [];
-        comuneRisksDisplay.innerHTML = ''; // Pulisci il contenuto precedente
+        // Funzione per visualizzare i rischi dettagliati di un comune
+        function displayComuneRisks(normalizedComuneName) {
+            const risks = comuneRisksData[normalizedComuneName] ? comuneRisksData[normalizedComuneName].risks : [];
+            comuneRisksDisplay.innerHTML = ''; // Pulisci il contenuto precedente
 
-        if (risks.length > 0) {
-            risks.forEach(risk => {
-                const riskSection = document.createElement('div');
-                riskSection.classList.add('risk-section');
+            if (risks.length > 0) {
+                risks.forEach(risk => {
+                    const riskSection = document.createElement('div');
+                    riskSection.classList.add('risk-section');
 
-                let alertStatusClass = '';
-                switch (risk.alertStatus) {
-                    case 'Verde':
-                        alertStatusClass = 'alert-green';
-                        break;
-                    case 'Giallo':
-                        alertStatusClass = 'alert-yellow';
-                        break;
-                    case 'Arancione':
-                        alertStatusClass = 'alert-orange';
-                        break;
-                    case 'Rosso':
-                        alertStatusClass = 'alert-red';
-                        break;
-                    default:
-                        alertStatusClass = '';
-                }
+                    let alertStatusClass = '';
+                    switch (risk.alertStatus) {
+                        case 'Verde':
+                            alertStatusClass = 'alert-green';
+                            break;
+                        case 'Giallo':
+                            alertStatusClass = 'alert-yellow';
+                            break;
+                        case 'Arancione':
+                            alertStatusClass = 'alert-orange';
+                            break;
+                        case 'Rosso':
+                            alertStatusClass = 'alert-red';
+                            break;
+                        default:
+                            alertStatusClass = '';
+                    }
 
-                riskSection.innerHTML = `
-                    <h3>${risk.name}</h3>
-                    <p class="risk-alert-status">Stato Allerta: <span class="${alertStatusClass}">${risk.alertStatus}</span></p>
-                    ${risk.alertMessage ? `<p class="alert-message">${risk.alertMessage}</p>` : ''}
-                    <div class="preparedness-actions">
-                        <h4>Cosa fare:</h4>
-                        <p><strong>Prima:</strong></p>
-                        <ul>
-                            ${risk.guidelines.before.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                        <p><strong>Durante:</strong></p>
-                        <ul>
-                            ${risk.guidelines.during.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                        <p><strong>Dopo:</strong></p>
-                        <ul>
-                            ${risk.guidelines.after.map(item => `<li>${item}</li>`).join('')}
-                        </ul>
-                    </div>
-                `;
-                comuneRisksDisplay.appendChild(riskSection);
-            });
-        } else {
-            comuneRisksDisplay.innerHTML = '<p>Nessun dato di rischio specifico disponibile per questo comune.</p>';
-        }
-    }
-
-    // Funzione per visualizzare il riepilogo dei rischi (nuova)
-    function displayCurrentRiskSummary(normalizedComuneName) {
-        const risksSummary = currentRiskSituations[normalizedComuneName];
-        riskSummaryList.innerHTML = ''; // Pulisci il contenuto precedente
-
-        if (risksSummary) {
-            for (const riskType in risksSummary) {
-                const status = risksSummary[riskType];
-                let statusClass = '';
-                switch (status) {
-                    case 'Verde':
-                        statusClass = 'alert-green';
-                        break;
-                    case 'Giallo':
-                        statusClass = 'alert-yellow';
-                        break;
-                    case 'Arancione':
-                        statusClass = 'alert-orange';
-                        break;
-                    case 'Rosso':
-                        statusClass = 'alert-red';
-                        break;
-                    default:
-                        statusClass = '';
-                }
-
-                const listItem = document.createElement('li');
-                listItem.classList.add('risk-summary-item');
-                listItem.innerHTML = `
-                    <h4>${riskType}</h4>
-                    <p class="alert-status-small ${statusClass}">${status}</p>
-                `;
-                riskSummaryList.appendChild(listItem);
+                    riskSection.innerHTML = `
+                        <h3>${risk.name}</h3>
+                        <p class="risk-alert-status">Stato Allerta: <span class="${alertStatusClass}">${risk.alertStatus}</span></p>
+                        ${risk.alertMessage ? `<p class="alert-message">${risk.alertMessage}</p>` : ''}
+                        <div class="preparedness-actions">
+                            <h4>Cosa fare:</h4>
+                            <p><strong>Prima:</strong></p>
+                            <ul>
+                                ${risk.guidelines.before.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                            <p><strong>Durante:</strong></p>
+                            <ul>
+                                ${risk.guidelines.during.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                            <p><strong>Dopo:</strong></p>
+                            <ul>
+                                ${risk.guidelines.after.map(item => `<li>${item}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                    comuneRisksDisplay.appendChild(riskSection);
+                });
+            } else {
+                comuneRisksDisplay.innerHTML = '<p>Nessun dato di rischio specifico disponibile per questo comune.</p>';
             }
-        } else {
-            riskSummaryList.innerHTML = '<li>Nessun riepilogo rischi disponibile per questo comune.</li>';
         }
-    }
 
-    // **NUOVO: Array per memorizzare i marker di Policoro**
-    let policoroMarkers = [];
+        // Funzione per visualizzare il riepilogo dei rischi (nuova)
+        function displayCurrentRiskSummary(normalizedComuneName) {
+            const risksSummary = currentRiskSituations[normalizedComuneName];
+            riskSummaryList.innerHTML = ''; // Pulisci il contenuto precedente
 
-    // **NUOVO: Funzione per aggiungere i marker di Policoro alla mappa**
-    function addPolicoroMarkers() {
-        // Rimuovi prima tutti i marker esistenti per Policoro
-        removePolicoroMarkers();
+            if (risksSummary) {
+                for (const riskType in risksSummary) {
+                    const status = risksSummary[riskType];
+                    let statusClass = '';
+                    switch (status) {
+                        case 'Verde':
+                            statusClass = 'alert-green';
+                            break;
+                        case 'Giallo':
+                            statusClass = 'alert-yellow';
+                            break;
+                        case 'Arancione':
+                            statusClass = 'alert-orange';
+                            break;
+                        case 'Rosso':
+                            statusClass = 'alert-red';
+                            break;
+                        default:
+                            statusClass = '';
+                    }
 
-        policoroLocations.forEach(location => {
-            const marker = L.marker([location.coordinates.lat, location.coordinates.lon]).addTo(leafletMap);
-            marker.bindPopup(`<b>${location.nome}</b><br>Tipologia: ${location.tipologia}<br>Ubicazione: ${location.ubicazione}`);
-            policoroMarkers.push(marker); // Aggiungi il marker all'array
+                    const listItem = document.createElement('li');
+                    listItem.classList.add('risk-summary-item');
+                    listItem.innerHTML = `
+                        <h4>${riskType}</h4>
+                        <p class="alert-status-small ${statusClass}">${status}</p>
+                    `;
+                    riskSummaryList.appendChild(listItem);
+                }
+            } else {
+                riskSummaryList.innerHTML = '<li>Nessun riepilogo rischi disponibile per questo comune.</li>';
+            }
+        }
+
+        // **NUOVO: Array per memorizzare i marker di Policoro**
+        let policoroMarkers = [];
+
+        // **NUOVO: Funzione per aggiungere i marker di Policoro alla mappa**
+        function addPolicoroMarkers() {
+            // Rimuovi prima tutti i marker esistenti per Policoro
+            removePolicoroMarkers();
+
+            policoroLocations.forEach(location => {
+                const marker = L.marker([location.coordinates.lat, location.coordinates.lon]).addTo(leafletMap);
+                marker.bindPopup(`<b>${location.nome}</b><br>Tipologia: ${location.tipologia}<br>Ubicazione: ${location.ubicazione}`);
+                policoroMarkers.push(marker); // Aggiungi il marker all'array
+            });
+        }
+
+        // **NUOVO: Funzione per rimuovere i marker di Policoro dalla mappa**
+        function removePolicoroMarkers() {
+            policoroMarkers.forEach(marker => {
+                leafletMap.removeLayer(marker);
+            });
+            policoroMarkers = []; // Svuota l'array
+        }
+
+
+        // Event listener per il pulsante di ricerca
+        searchButton.addEventListener('click', filterMap);
+
+        // Event listener per la pressione del tasto Invio nell'input di ricerca
+        comuneSearchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                filterMap();
+            }
         });
-    }
 
-    // **NUOVO: Funzione per rimuovere i marker di Policoro dalla mappa**
-    function removePolicoroMarkers() {
-        policoroMarkers.forEach(marker => {
-            leafletMap.removeLayer(marker);
+        // Inizializza la mappa con tutti i comuni della Basilicata all'avvio
+        // Commentato per default per mostrare solo il comune cercato, riabilita se vuoi vederli tutti all'inizio
+        /*
+        database.ref('comuni').once('value').then(snapshot => {
+            if (snapshot.exists()) {
+                const comuniData = snapshot.val();
+                L.geoJSON(geojsonDataGlobal, {
+                    style: styleComune,
+                    onEachFeature: onEachFeature
+                }).addTo(leafletMap);
+            }
+        }).catch(error => {
+            console.error("Errore nel caricamento dei dati dei comuni all'avvio:", error);
         });
-        policoroMarkers = []; // Svuota l'array
-    }
+        */
+    </script>
+</body>
 
-
-    // Event listener per il pulsante di ricerca
-    searchButton.addEventListener('click', filterMap);
-
-    // Event listener per la pressione del tasto Invio nell'input di ricerca
-    comuneSearchInput.addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            filterMap();
-        }
-    });
-
-    // Inizializza la mappa con tutti i comuni della Basilicata all'avvio
-    // Commentato per default per mostrare solo il comune cercato, riabilita se vuoi vederli tutti all'inizio
-    /*
-    database.ref('comuni').once('value').then(snapshot => {
-        if (snapshot.exists()) {
-            const comuniData = snapshot.val();
-            L.geoJSON(geojsonDataGlobal, {
-                style: styleComune,
-                onEachFeature: onEachFeature
-            }).addTo(leafletMap);
-        }
-    }).catch(error => {
-        console.error("Errore nel caricamento dei dati dei comuni all'avvio:", error);
-    });
-    */
-</script>
-&lt;/body>
-
-&lt;/html>
+</html>
