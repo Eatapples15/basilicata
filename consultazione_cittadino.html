@@ -14,14 +14,17 @@
             flex-wrap: wrap;
             gap: 20px;
             padding: 20px;
-            justify-content: center; /* Centra il contenuto orizzontalmente */
-            align-items: flex-start; /* Allinea il contenuto in alto */
+            justify-content: center;
+            /* Centra il contenuto orizzontalmente */
+            align-items: flex-start;
+            /* Allinea il contenuto in alto */
         }
 
         #controls-container {
             flex: 1;
             min-width: 250px;
-            max-width: 300px; /* Limita la larghezza del pannello di controllo */
+            max-width: 300px;
+            /* Limita la larghezza del pannello di controllo */
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -33,15 +36,18 @@
         }
 
         #leaflet-map {
-            flex: 3; /* Occupa più spazio rispetto ai controlli */
+            flex: 3;
+            /* Occupa più spazio rispetto ai controlli */
             min-width: 400px;
-            height: 600px; /* Aumenta l'altezza della mappa per una migliore visualizzazione */
+            height: 600px;
+            /* Aumenta l'altezza della mappa per una migliore visualizzazione */
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         #comune-search-input {
-            width: calc(100% - 20px); /* Larghezza completa meno padding */
+            width: calc(100% - 20px);
+            /* Larghezza completa meno padding */
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
@@ -89,6 +95,14 @@
             font-weight: bold;
         }
 
+        #region-logo {
+            width: 100%; /* Occupa la larghezza del contenitore */
+            max-width: 200px; /* Limita la dimensione massima */
+            height: auto;
+            margin-top: 20px; /* Spazio sopra il logo */
+            align-self: center; /* Centra il logo orizzontalmente nel flex container */
+        }
+
         /* Stili per i popup di Leaflet (già presenti e corretti) */
         .leaflet-popup-content-wrapper {
             background-color: white;
@@ -130,6 +144,8 @@
         </div>
 
         <p id="last-updated" style="font-style: italic; color: #777; margin-top: 20px;"></p>
+
+        <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
     </div>
 
     <div id="leaflet-map"></div>
@@ -269,10 +285,8 @@
             infoMessage.textContent = ''; // Resetta il messaggio di errore
 
             if (!searchTerm) {
-                infoMessage.textContent = 'Inserisci il nome di un comune.';
-                // Se non c'è un termine di ricerca, potremmo voler mostrare di nuovo l'intera mappa
-                // o lasciare vuota. Per ora, la lascio vuota per chiarezza.
-                geoJsonLayerGroup.clearLayers();
+                infoMessage.textContent = 'Inserisci il nome di un comune per iniziare la ricerca.';
+                geoJsonLayerGroup.clearLayers(); // Rimuovi tutti i layer se la ricerca è vuota
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
                 return;
