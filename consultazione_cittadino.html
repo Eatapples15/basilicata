@@ -638,16 +638,21 @@
             );
 
             if (foundFeature) {
-                L.geoJSON(foundFeature, {
+                // Cattura il riferimento al layer L.GeoJSON appena creato
+                const comuneLayer = L.geoJSON(foundFeature, {
                     style: styleComune,
                     onEachFeature: onEachFeature // Aggiunto onEachFeature per i popup
-                }).addTo(geoJsonLayerGroup);
-                leafletMap.fitBounds(geoJsonLayerGroup.getBounds());
+                }).addTo(geoJsonLayerGroup); // Aggiungi questo layer al tuo LayerGroup
+
+                // Ora usa getBounds() sul layer specifico del comune
+                leafletMap.fitBounds(comuneLayer.getBounds()); // <--- Correzione qui!
 
                 comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
                 const criticitàComune = criticitàMap[searchTerm];
                 comuneCriticityDisplay.textContent = `Criticità di Base: ${criticitàComune || 'Non disponibile'}`;
 
+                // ... il resto del tuo codice per Policoro o altri comuni ...
+            
                 // Visualizza le aree di Policoro solo se il comune cercato è Policoro
                 if (searchTerm === "policoro") {
                     addPolicoroMarkers();
