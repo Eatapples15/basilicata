@@ -22,7 +22,8 @@
 
         #controls-container,
         #risk-info-container,
-        #current-risk-summary-container { /* Aggiunto il nuovo ID qui */
+        #current-risk-summary-container {
+            /* Aggiunto il nuovo ID qui */
             flex: 1;
             min-width: 250px;
             max-width: 350px;
@@ -209,9 +210,12 @@
         /* Stili per la nuova sezione di riepilogo */
         #current-risk-summary-container {
             margin-top: 20px;
-            width: 100%; /* Occupa tutta la larghezza disponibile sotto gli altri elementi */
-            max-width: calc(100% - 40px); /* Regola per i padding del body */
-            order: 4; /* Assicura che vada sotto gli altri elementi flex */
+            width: 100%;
+            /* Occupa tutta la larghezza disponibile sotto gli altri elementi */
+            max-width: calc(100% - 40px);
+            /* Regola per i padding del body */
+            order: 4;
+            /* Assicura che vada sotto gli altri elementi flex */
         }
 
         #risk-summary-list {
@@ -231,7 +235,7 @@
             border: 1px solid #eee;
             border-radius: 5px;
             background-color: #fff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
         .risk-summary-item h4 {
@@ -459,7 +463,6 @@
             // Aggiungi altri comuni qui se necessario
         };
 
-
         // Criticità inventate per la sezione di riepilogo (da aggiornare in base a dati reali se disponibili)
         const currentRiskSituations = {
             "policoro": {
@@ -474,6 +477,94 @@
                 "Rischio Maremoto": "Non applicabile"
             }
         };
+
+        // **NUOVO: Dati per i marker di Policoro**
+        const policoroLocations = [
+            {
+                tipologia: "CENTRO DI ASSISTENZA ALLA POPOLAZIONE (C.A.1)",
+                nome: 'Polifunzionale "Palaercole"',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.20883394323659, lon: 16.665672863620713 },
+            },
+            {
+                tipologia: "AREA DI ASSISTENZA ALLA POPOLAZIONE (A.P.1)",
+                nome: 'Parc. Polifunzionale "Palaercole" - Piazza A. Moro',
+                ubicazione: "Via Papa Giovanni Paolo II",
+                coordinates: { lat: 40.2083499609406, lon: 16.669912343286097 },
+            },
+            {
+                tipologia: "AREA DI ASSISTENZA ALLA POPOLAZIONE (A.P.2)",
+                nome: 'Campo Sportivo "R. Periello"',
+                ubicazione: "Via San Gottardo",
+                coordinates: { lat: 40.202660874879165, lon: 16.670793115504434 },
+            },
+            {
+                tipologia: "AREE DI AMMASSAMENTO",
+                nome: "Piazza A. Moro",
+                ubicazione: "Via Papa Giovanni Paolo II",
+                coordinates: { lat: 40.208777554175555, lon: 16.669838334392445 },
+            },
+            {
+                tipologia: "AREA DI ASSISTENZA ALLA POPOLAZIONE COMPRENSIORALE (A.P.C.)",
+                nome: 'Parc. Polifunzionale "Palaercole" - Piazza A. Moro',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.20860047797445, lon: 16.66815086951912 },
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.1)",
+                nome: 'Parc. Polifunzionale "Palaercole"',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.20860047797445, lon: 16.66815086951912 }, // Same as A.P.C.
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.2)",
+                nome: 'Campo Sportivo "R. Periello"',
+                ubicazione: "Via San Gottardo",
+                coordinates: { lat: 40.202660874879165, lon: 16.670793115504434 }, // Same as A.P.2
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.3)",
+                nome: 'Parc. "Ex Zuccherificio"',
+                ubicazione: "Via Lido",
+                coordinates: { lat: 40.20858421660303, lon: 16.685300392249157 },
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.4)",
+                nome: "Area Via Lido",
+                ubicazione: "Via Lido",
+                coordinates: { lat: 40.19755094954803, lon: 16.69994436668819 },
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.5)",
+                nome: "Area Via Verdi",
+                ubicazione: "Via Verdi",
+                coordinates: { lat: 40.17918103598341, lon: 16.678246928970157 },
+            },
+            {
+                tipologia: "AREA PARCHEGGIO POPOLAZIONE (A.M.1)",
+                nome: "Area Archeologica",
+                ubicazione: "Via Gonzaga",
+                coordinates: { lat: 40.211319791542614, lon: 16.671444679728058 },
+            },
+            {
+                tipologia: "AREA PARCHEGGIO POPOLAZIONE (A.M.2)",
+                nome: "Prolungamento Via Siris",
+                ubicazione: "Via Siris",
+                coordinates: { lat: 40.19970002378048, lon: 16.6696314217047 },
+            },
+            {
+                tipologia: "CENTRO OPERATIVO COMUNALE (C.O.C)",
+                nome: "Edificio Comunale",
+                ubicazione: "Piazza A. Moro",
+                coordinates: { lat: 40.20903805929999, lon: 16.669785800372367 },
+            },
+            {
+                tipologia: "CENTRO COORDINAMENTO D'AMBITO (C.C.A)",
+                nome: 'Polifunzionale "Palaercole"',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.209632452759244, lon: 16.666928244855328 },
+            },
+        ];
 
 
         // Carica dati GeoJSON e colori Firebase all'avvio
@@ -548,101 +639,180 @@
 
             if (foundFeature) {
                 L.geoJSON(foundFeature, {
-                    style: styleComune,
-                    onEachFeature: onEachFeature
-                }).addTo(geoJsonLayerGroup);
+                    style: styleCom
+http://googleusercontent.com/map_content/14atura).addTo(geoJsonLayerGroup);
+leafletMap.fitBounds(geoJsonLayerGroup.getBounds());
 
-                // Aggiorna le informazioni testuali
-                comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
-                const criticità = criticitàMap[foundFeature.properties.normalizedName] || 'Non disponibile';
-                comuneCriticityDisplay.textContent = `Base: ${criticità}`;
+            comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
+            const criticitàComune = criticitàMap[searchTerm];
+            comuneCriticityDisplay.textContent = `Criticità di Base: ${criticitàComune || 'Non disponibile'}`;
 
-                // Centra la mappa sul comune trovato
-                leafletMap.fitBounds(L.geoJSON(foundFeature).getBounds());
-
-                // Mostra i rischi specifici per il comune
+            // Visualizza le aree di Policoro solo se il comune cercato è Policoro
+            if (searchTerm === "policoro") {
+                addPolicoroMarkers();
                 displayComuneRisks(searchTerm);
-                // Mostra il riepilogo dei rischi
-                displayRiskSummary(searchTerm);
-
+                displayCurrentRiskSummary(searchTerm);
             } else {
-                infoMessage.textContent = `Comune "${comuneSearchInput.value}" non trovato. Verifica il nome.`;
-                comuneNameDisplay.textContent = '';
-                comuneCriticityDisplay.textContent = '';
-                comuneRisksDisplay.innerHTML = '<p>Comune non trovato o dati sui rischi non disponibili.</p>';
-                riskSummaryList.innerHTML = '<p>Comune non trovato o dati sui rischi non disponibili.</p>';
+                // Se non è Policoro, rimuovi eventuali marker precedenti e svuota le sezioni rischi/riepilogo
+                removePolicoroMarkers();
+                comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
+                riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
             }
+
+        } else {
+            infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
+            comuneNameDisplay.textContent = '';
+            comuneCriticityDisplay.textContent = '';
+            removePolicoroMarkers(); // Assicurati di rimuovere i marker di Policoro se un altro comune non è trovato
+            comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
+            riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
         }
+    }
 
-        // Funzione per visualizzare i rischi del comune (dettagliati)
-        function displayComuneRisks(normalizedComuneName) {
-            const risks = comuneRisksData[normalizedComuneName];
+    // Funzione per visualizzare i rischi dettagliati di un comune
+    function displayComuneRisks(normalizedComuneName) {
+        const risks = comuneRisksData[normalizedComuneName] ? comuneRisksData[normalizedComuneName].risks : [];
+        comuneRisksDisplay.innerHTML = ''; // Pulisci il contenuto precedente
 
-            if (risks && risks.risks && risks.risks.length > 0) {
-                comuneRisksDisplay.innerHTML = ''; // Pulisci il contenuto precedente
-                risks.risks.forEach(risk => {
-                    const riskSection = document.createElement('div');
-                    riskSection.classList.add('risk-section');
+        if (risks.length > 0) {
+            risks.forEach(risk => {
+                const riskSection = document.createElement('div');
+                riskSection.classList.add('risk-section');
 
-                    const alertClass = `alert-${risk.alertStatus.toLowerCase()}`;
-
-                    riskSection.innerHTML = `
-                        <h3>${risk.name}</h3>
-                        <p class="risk-alert-status">Stato Allerta: <span class="${alertClass}">${risk.alertStatus}</span></p>
-                        ${risk.alertMessage ? `<p class="alert-message">Messaggio: ${risk.alertMessage}</p>` : ''}
-                        
-                        <div class="preparedness-actions">
-                            <h4>Cosa fare:</h4>
-                            <h5>Prima:</h5>
-                            <ul>${risk.guidelines.before.map(item => `<li>${item}</li>`).join('')}</ul>
-                            <h5>Durante:</h5>
-                            <ul>${risk.guidelines.during.map(item => `<li>${item}</li>`).join('')}</ul>
-                            <h5>Dopo:</h5>
-                            <ul>${risk.guidelines.after.map(item => `<li>${item}</li>`).join('')}</ul>
-                        </div>
-                    `;
-                    comuneRisksDisplay.appendChild(riskSection);
-                });
-            } else {
-                comuneRisksDisplay.innerHTML = '<p>Dati sui rischi per questo comune non disponibili al momento.</p>';
-            }
-        }
-
-        // NUOVA FUNZIONE: Visualizza il riepilogo dei rischi
-        function displayRiskSummary(normalizedComuneName) {
-            const summaryData = currentRiskSituations[normalizedComuneName];
-            riskSummaryList.innerHTML = ''; // Pulisci il contenuto precedente
-
-            if (summaryData) {
-                for (const riskName in summaryData) {
-                    const status = summaryData[riskName];
-                    const alertClass = `alert-${status.toLowerCase().replace(/\s/g, '-')}`; // Per "Non applicabile"
-
-                    const listItem = document.createElement('li');
-                    listItem.classList.add('risk-summary-item');
-                    listItem.innerHTML = `
-                        <h4>${riskName}</h4>
-                        <span class="alert-status-small ${alertClass}">${status}</span>
-                    `;
-                    riskSummaryList.appendChild(listItem);
+                let alertStatusClass = '';
+                switch (risk.alertStatus) {
+                    case 'Verde':
+                        alertStatusClass = 'alert-green';
+                        break;
+                    case 'Giallo':
+                        alertStatusClass = 'alert-yellow';
+                        break;
+                    case 'Arancione':
+                        alertStatusClass = 'alert-orange';
+                        break;
+                    case 'Rosso':
+                        alertStatusClass = 'alert-red';
+                        break;
+                    default:
+                        alertStatusClass = '';
                 }
-            } else {
-                riskSummaryList.innerHTML = '<li>Riepilogo rischi non disponibile per questo comune.</li>';
-            }
+
+                riskSection.innerHTML = `
+                    <h3>${risk.name}</h3>
+                    <p class="risk-alert-status">Stato Allerta: <span class="${alertStatusClass}">${risk.alertStatus}</span></p>
+                    ${risk.alertMessage ? `<p class="alert-message">${risk.alertMessage}</p>` : ''}
+                    <div class="preparedness-actions">
+                        <h4>Cosa fare:</h4>
+                        <p><strong>Prima:</strong></p>
+                        <ul>
+                            ${risk.guidelines.before.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                        <p><strong>Durante:</strong></p>
+                        <ul>
+                            ${risk.guidelines.during.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                        <p><strong>Dopo:</strong></p>
+                        <ul>
+                            ${risk.guidelines.after.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+                comuneRisksDisplay.appendChild(riskSection);
+            });
+        } else {
+            comuneRisksDisplay.innerHTML = '<p>Nessun dato di rischio specifico disponibile per questo comune.</p>';
         }
+    }
 
+    // Funzione per visualizzare il riepilogo dei rischi (nuova)
+    function displayCurrentRiskSummary(normalizedComuneName) {
+        const risksSummary = currentRiskSituations[normalizedComuneName];
+        riskSummaryList.innerHTML = ''; // Pulisci il contenuto precedente
 
-        // Event Listener per il pulsante di ricerca
-        searchButton.addEventListener('click', filterMap);
+        if (risksSummary) {
+            for (const riskType in risksSummary) {
+                const status = risksSummary[riskType];
+                let statusClass = '';
+                switch (status) {
+                    case 'Verde':
+                        statusClass = 'alert-green';
+                        break;
+                    case 'Giallo':
+                        statusClass = 'alert-yellow';
+                        break;
+                    case 'Arancione':
+                        statusClass = 'alert-orange';
+                        break;
+                    case 'Rosso':
+                        statusClass = 'alert-red';
+                        break;
+                    default:
+                        statusClass = '';
+                }
 
-        // Event Listener per la pressione del tasto "Invio" nel campo di input
-        comuneSearchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                filterMap();
+                const listItem = document.createElement('li');
+                listItem.classList.add('risk-summary-item');
+                listItem.innerHTML = `
+                    <h4>${riskType}</h4>
+                    <p class="alert-status-small ${statusClass}">${status}</p>
+                `;
+                riskSummaryList.appendChild(listItem);
             }
+        } else {
+            riskSummaryList.innerHTML = '<li>Nessun riepilogo rischi disponibile per questo comune.</li>';
+        }
+    }
+
+    // **NUOVO: Array per memorizzare i marker di Policoro**
+    let policoroMarkers = [];
+
+    // **NUOVO: Funzione per aggiungere i marker di Policoro alla mappa**
+    function addPolicoroMarkers() {
+        // Rimuovi prima tutti i marker esistenti per Policoro
+        removePolicoroMarkers();
+
+        policoroLocations.forEach(location => {
+            const marker = L.marker([location.coordinates.lat, location.coordinates.lon]).addTo(leafletMap);
+            marker.bindPopup(`<b>${location.nome}</b><br>Tipologia: ${location.tipologia}<br>Ubicazione: ${location.ubicazione}`);
+            policoroMarkers.push(marker); // Aggiungi il marker all'array
         });
-    </script>
+    }
 
-</body>
+    // **NUOVO: Funzione per rimuovere i marker di Policoro dalla mappa**
+    function removePolicoroMarkers() {
+        policoroMarkers.forEach(marker => {
+            leafletMap.removeLayer(marker);
+        });
+        policoroMarkers = []; // Svuota l'array
+    }
 
-</html>
+
+    // Event listener per il pulsante di ricerca
+    searchButton.addEventListener('click', filterMap);
+
+    // Event listener per la pressione del tasto Invio nell'input di ricerca
+    comuneSearchInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            filterMap();
+        }
+    });
+
+    // Inizializza la mappa con tutti i comuni della Basilicata all'avvio
+    // Commentato per default per mostrare solo il comune cercato, riabilita se vuoi vederli tutti all'inizio
+    /*
+    database.ref('comuni').once('value').then(snapshot => {
+        if (snapshot.exists()) {
+            const comuniData = snapshot.val();
+            L.geoJSON(geojsonDataGlobal, {
+                style: styleComune,
+                onEachFeature: onEachFeature
+            }).addTo(leafletMap);
+        }
+    }).catch(error => {
+        console.error("Errore nel caricamento dei dati dei comuni all'avvio:", error);
+    });
+    */
+</script>
+&lt;/body>
+
+&lt;/html>
