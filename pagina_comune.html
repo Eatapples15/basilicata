@@ -253,7 +253,7 @@
             if (feature.properties && feature.properties.name) {
                 const normalizedComuneNome = feature.properties.normalizedName;
                 const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
-                layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
             }
         }
 
