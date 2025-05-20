@@ -143,7 +143,8 @@
             margin-top: 15px;
             border-top: 1px solid #eee;
             padding-top: 15px;
-            display: none; /* Inizialmente nascosto */
+            display: none;
+            /* Inizialmente nascosto */
         }
 
         #entity-select-wrapper label {
@@ -168,7 +169,8 @@
         }
 
         #procedures-display ul {
-            list-style-type: decimal; /* Numerato per le procedure */
+            list-style-type: decimal;
+            /* Numerato per le procedure */
             margin-left: 20px;
             padding-left: 0;
         }
@@ -201,6 +203,69 @@
             border: 1px solid #aaa;
             border-top-color: transparent;
             border-left-color: transparent;
+        }
+
+        /* Stili per la tabella dei contatti di emergenza */
+        #emergency-contacts-container {
+            flex-basis: 100%;
+            /* Occupa tutta la larghezza disponibile */
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+
+        #emergency-contacts-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        #emergency-contacts-container p {
+            text-align: center;
+            font-style: italic;
+            color: #777;
+            margin-bottom: 20px;
+        }
+
+        #emergency-contacts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        #emergency-contacts-table th,
+        #emergency-contacts-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        #emergency-contacts-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        #emergency-contacts-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #emergency-contacts-table tr:hover {
+            background-color: #ddd;
+        }
+
+        /* Stile specifico per le aree di emergenza sulla mappa */
+        .emergency-area-style {
+            fillColor: '#800080';
+            /* Viola */
+            color: '#4B0082';
+            /* Indaco */
+            weight: 3;
+            opacity: 0.7;
+            fillOpacity: 0.3;
         }
     </style>
 </head>
@@ -249,6 +314,71 @@
         </div>
     </div>
 
+    <div id="emergency-contacts-container">
+        <h2>Figure di Riferimento in Caso di Emergenza (Policoro)</h2>
+        <p>I dati di contatto sono a scopo esemplificativo.</p>
+        <table id="emergency-contacts-table">
+            <thead>
+                <tr>
+                    <th>Ruolo</th>
+                    <th>Nome Cognome</th>
+                    <th>Contatto Principale</th>
+                    <th>Contatto Alternativo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Sindaco</td>
+                    <td>Mario Rossi</td>
+                    <td>333 1234567</td>
+                    <td>0835 123456</td>
+                </tr>
+                <tr>
+                    <td>Responsabile Ufficio Protezione Civile Comunale</td>
+                    <td>Anna Bianchi</td>
+                    <td>333 9876543</td>
+                    <td>0835 987654</td>
+                </tr>
+                <tr>
+                    <td>Comandante Polizia Locale</td>
+                    <td>Marco Verdi</td>
+                    <td>333 4567890</td>
+                    <td>0835 456789</td>
+                </tr>
+                <tr>
+                    <td>Dirigente Ufficio Tecnico Comunale</td>
+                    <td>Luca Neri</td>
+                    <td>333 1122334</td>
+                    <td>0835 112233</td>
+                </tr>
+                <tr>
+                    <td>Direttore Ospedale di Riferimento</td>
+                    <td>Dott.ssa Laura Gialli</td>
+                    <td>0835 789012</td>
+                    <td>333 7890123</td>
+                </tr>
+                <tr>
+                    <td>Comandante Stazione Carabinieri</td>
+                    <td>Cap. Paolo Marroni</td>
+                    <td>0835 234567</td>
+                    <td>333 2345678</td>
+                </tr>
+                <tr>
+                    <td>Responsabile Distaccamento Vigili del Fuoco</td>
+                    <td>Capo Rep. Enzo Bruno</td>
+                    <td>0835 345678</td>
+                    <td>333 3456789</td>
+                </tr>
+                <tr>
+                    <td>Dirigente Prefettura di Matera (Area Protezione Civile)</td>
+                    <td>Dott. Antonio Grigio</td>
+                    <td>0835 876543</td>
+                    <td>333 8765432</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
@@ -292,6 +422,9 @@
         let criticitàMap = {};
         let coloriBase = {};
         let geoJsonLayerGroup = new L.LayerGroup().addTo(leafletMap);
+        // Nuovo layer group per le aree di emergenza
+        let emergencyAreasLayerGroup = new L.LayerGroup().addTo(leafletMap);
+
 
         // Stato corrente della selezione operatore
         let currentSelectedComune = null;
@@ -388,6 +521,114 @@
         // --- FINE NUOVA STRUTTURA DATI ---
 
 
+        // --- Dati GeoJSON per le Aree di Emergenza (per Policoro) ---
+        // Ho convertito i tuoi dati in un formato GeoJSON valido per Leaflet (FeatureCollection di Point features).
+        // Assicurati che le coordinate siano [longitudine, latitudine] per GeoJSON.
+        const emergencyAreasRawData = [
+            {
+                tipologia: "CENTRO DI ASSISTENZA ALLA POPOLAZIONE (C.A.1)",
+                nome: 'Polifunzionale "Palaercole"',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.20883394323659, lon: 16.665672863620713 },
+            },
+            {
+                tipologia: "AREA DI ASSISTENZA ALLA POPOLAZIONE (A.P.1)",
+                nome: 'Parc. Polifunzionale "Palaercole" - Piazza A. Moro',
+                ubicazione: "Via Papa Giovanni Paolo II",
+                coordinates: { lat: 40.2083499609406, lon: 16.669912343286097 },
+            },
+            {
+                tipologia: "AREA DI ASSISTENZA ALLA POPOLAZIONE (A.P.2)",
+                nome: 'Campo Sportivo "R. Periello"',
+                ubicazione: "Via San Gottardo",
+                coordinates: { lat: 40.202660874879165, lon: 16.670793115504434 },
+            },
+            {
+                tipologia: "AREE DI AMMASSAMENTO",
+                nome: "Piazza A. Moro",
+                ubicazione: "Via Papa Giovanni Paolo II",
+                coordinates: { lat: 40.208777554175555, lon: 16.669838334392445 },
+            },
+            {
+                tipologia: "AREA DI ASSISTENZA ALLA POPOLAZIONE COMPRENSIORALE (A.P.C.)",
+                nome: 'Parc. Polifunzionale "Palaercole" - Piazza A. Moro',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.20860047797445, lon: 16.66815086951912 },
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.1)",
+                nome: 'Parc. Polifunzionale "Palaercole"',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.20860047797445, lon: 16.66815086951912 }, // Same as A.P.C.
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.2)",
+                nome: 'Campo Sportivo "R. Periello"',
+                ubicazione: "Via San Gottardo",
+                coordinates: { lat: 40.202660874879165, lon: 16.670793115504434 }, // Same as A.P.2
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.3)",
+                nome: 'Parc. "Ex Zuccherificio"',
+                ubicazione: "Via Lido",
+                coordinates: { lat: 40.20858421660303, lon: 16.685300392249157 },
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.4)",
+                nome: "Area Via Lido",
+                ubicazione: "Via Lido",
+                coordinates: { lat: 40.19755094954803, lon: 16.69994436668819 },
+            },
+            {
+                tipologia: "AREA DI ATTESA (A.A.5)",
+                nome: "Area Via Verdi",
+                ubicazione: "Via Verdi",
+                coordinates: { lat: 40.17918103598341, lon: 16.678246928970157 },
+            },
+            {
+                tipologia: "AREA PARCHEGGIO POPOLAZIONE (A.M.1)",
+                nome: "Area Archeologica",
+                ubicazione: "Via Gonzaga",
+                coordinates: { lat: 40.211319791542614, lon: 16.671444679728058 },
+            },
+            {
+                tipologia: "AREA PARCHEGGIO POPOLAZIONE (A.M.2)",
+                nome: "Prolungamento Via Siris",
+                ubicazione: "Via Siris",
+                coordinates: { lat: 40.19970002378048, lon: 16.6696314217047 },
+            },
+            {
+                tipologia: "CENTRO OPERATIVO COMUNALE (C.O.C)",
+                nome: "Edificio Comunale",
+                ubicazione: "Piazza A. Moro",
+                coordinates: { lat: 40.20903805929999, lon: 16.669785800372367 },
+            },
+            {
+                tipologia: "CENTRO COORDINAMENTO D'AMBITO (C.C.A)",
+                nome: 'Polifunzionale "Palaercole"',
+                ubicazione: "Via Umbria",
+                coordinates: { lat: 40.209632452759244, lon: 16.666928244855328 },
+            },
+        ];
+
+        // Converte i dati delle aree di emergenza in GeoJSON Point features
+        const emergencyAreasGeoJSON = {
+            "type": "FeatureCollection",
+            "features": emergencyAreasRawData.map(area => ({
+                "type": "Feature",
+                "properties": {
+                    "tipologia": area.tipologia,
+                    "name": area.nome,
+                    "ubicazione": area.ubicazione,
+                    "comune": "policoro" // Associa esplicitamente a Policoro
+                },
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [area.coordinates.lon, area.coordinates.lat] // GeoJSON è [longitudine, latitudine]
+                }
+            }))
+        };
+
         // Normalizzazione dei nomi dei comuni
         function normalizeComuneName(nome) {
             if (!nome) return "";
@@ -432,6 +673,25 @@
                 const normalizedComuneNome = feature.properties.normalizedName;
                 const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
                 layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
+            }
+        }
+
+        // Funzione per definire lo stile delle aree di emergenza (punti)
+        function styleEmergencyPoint(feature) {
+            return {
+                radius: 8,
+                fillColor: '#800080', // Viola
+                color: '#4B0082',    // Indaco
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.7
+            };
+        }
+
+        // Funzione per i popup delle aree di emergenza
+        function onEachEmergencyArea(feature, layer) {
+            if (feature.properties) {
+                layer.bindPopup(`<b>${feature.properties.tipologia}</b><br>Nome: ${feature.properties.name}<br>Ubicazione: ${feature.properties.ubicazione}`);
             }
         }
 
@@ -491,15 +751,16 @@
             currentSelectedComune = null; // Resetta lo stato
             currentSelectedRiskType = null; // Resetta lo stato
 
+            // Pulisci i layer esistenti
+            geoJsonLayerGroup.clearLayers();
+            emergencyAreasLayerGroup.clearLayers(); // Pulisci anche le aree di emergenza
+
             if (!searchTerm) {
                 infoMessage.textContent = 'Inserisci il nome di un comune per iniziare la ricerca.';
-                geoJsonLayerGroup.clearLayers();
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
                 return;
             }
-
-            geoJsonLayerGroup.clearLayers();
 
             const foundFeature = geojsonDataGlobal.features.find(feature =>
                 feature.properties.normalizedName === searchTerm
@@ -510,7 +771,7 @@
                     style: styleComune,
                     onEachFeature: onEachFeature
                 }).addTo(geoJsonLayerGroup);
-                leafletMap.fitBounds(comuneLayer.getBounds()); // Correzione qui
+                leafletMap.fitBounds(comuneLayer.getBounds());
 
                 comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
                 const criticitàComune = criticitàMap[searchTerm];
@@ -520,6 +781,9 @@
 
                 // Mostra i rischi per il comune selezionato
                 displayOperatorRisks(searchTerm);
+
+                // Mostra le aree di emergenza per il comune selezionato
+                displayEmergencyAreas(searchTerm);
 
             } else {
                 infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
@@ -551,6 +815,40 @@
                 risksListDisplay.innerHTML = '<p>Nessun rischio specifico definito per questo comune.</p>';
             }
         }
+
+        // Funzione per visualizzare le aree di emergenza relative al comune cercato
+        function displayEmergencyAreas(normalizedComuneName) {
+            emergencyAreasLayerGroup.clearLayers(); // Pulisci le aree di emergenza precedenti
+
+            // Filtra le aree di emergenza per il comune selezionato
+            const filteredEmergencyFeatures = emergencyAreasGeoJSON.features.filter(feature =>
+                feature.properties.comune && normalizeComuneName(feature.properties.comune) === normalizedComuneName
+            );
+
+            if (filteredEmergencyFeatures.length > 0) {
+                // Crea un nuovo GeoJSON con solo le feature filtrate
+                const filteredGeoJSON = {
+                    "type": "FeatureCollection",
+                    "features": filteredEmergencyFeatures
+                };
+
+                L.geoJSON(filteredGeoJSON, {
+                    pointToLayer: function (feature, latlng) {
+                        // Per i punti (es. aree di emergenza definite con coordinate), usa un marker circolare
+                        if (feature.geometry.type === 'Point') {
+                            return L.circleMarker(latlng, styleEmergencyPoint(feature));
+                        }
+                        // Se avessi poligoni o linee in emergencyAreasGeoJSON,
+                        // L.geoJSON li renderà con lo stile di default o con styleEmergencyArea
+                        return L.geoJSON(feature, { style: styleEmergencyArea });
+                    },
+                    onEachFeature: onEachEmergencyArea
+                }).addTo(emergencyAreasLayerGroup);
+            }
+            // Non c'è bisogno di mostrare un messaggio se non ci sono aree di emergenza,
+            // semplicemente non vengono aggiunte alla mappa.
+        }
+
 
         // Funzione per capitalizzare la prima lettera di una stringa
         function capitalizeFirstLetter(string) {
@@ -606,7 +904,6 @@
 
         // Event listener per il cambio di selezione dell'ente
         operatorEntitySelect.addEventListener('change', displayEntityProcedures);
-
     </script>
 </body>
 
