@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Criticità del Comune</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            background-color: #f0f2f5; /* Sfondo leggero */
+        }
+
+        #main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px; /* Limita la larghezza massima del contenuto */
+        }
+
+        #info-panel {
+            flex: 1;
+            min-width: 300px;
+            max-width: 350px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 25px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            background-color: #fff;
+        }
+
+        #leaflet-map {
+            flex: 2;
+            min-width: 450px;
+            height: 600px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #555;
+            line-height: 1.6;
+        }
+
+        strong {
+            color: #000;
+        }
+
+        #comune-name-display {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #0056b3;
+            margin-bottom: 5px;
+        }
+
+        #comune-criticity-display {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #dc3545; /* Colore più evidente per la criticità */
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        #info-message {
+            color: red;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        #last-updated {
+            font-style: italic;
+            color: #777;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        #region-logo {
+            width: 100%;
+            max-width: 180px;
+            height: auto;
+            margin-top: auto; /* Sposta il logo in fondo */
+            align-self: center;
+            padding-top: 20px;
+            border-top: 1px solid #eee; /* Separatore per il logo */
+        }
+
+        /* Stili per i popup di Leaflet */
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
+
+        /* Stili per le sezioni informative aggiuntive */
+        .info-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        .info-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        ul {
+            list-style-type: disc;
+            margin-left: 20px;
+            color: #666;
+        }
+
+        ul li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="main-content">
+        <div id="info-panel">
+            <h1 id="comune-name-display"></h1>
+            <p id="comune-criticity-display"></p>
+            <p id="info-message"></p>
+            <p id="last-updated"></p>
+
+            <div class="info-section">
+                <h2>Informazioni sul Rischio Territoriale</h2>
+                <p id="risk-info">Caricamento informazioni sui rischi...</p>
+            </div>
+
+            <div class="info-section">
+                <h2>Aree di Accoglienza / Punti di Raccolta</h2>
+                <p id="shelter-info">Caricamento informazioni sulle aree di accoglienza...</p>
+            </div>
+
+            <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
+        </div>
+
+        <div id="leaflet-map"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Your web app's Firebase configuration (IDENTICO ALLE ALTRE PAGINE)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const leafletMap = L.map('leaflet-map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
+
+        // Elementi HTML
+        const pageTitle = document.getElementById('page-title');
+        const comuneNameDisplay = document.getElementById('comune-name-display');
+        const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
+        const infoMessage = document.getElementById('info-message');
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const riskInfoElement = document.getElementById('risk-info');
+        const shelterInfoElement = document.getElementById('shelter-info');
+
+        let geojsonDataGlobal = null;
+        let criticitàMap = {};
+        let coloriBase = {};
+
+        // Normalizzazione dei nomi dei comuni
+        function normalizeComuneName(nome) {
+            if (!nome) return "";
+            return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        // Funzione per ottenere il colore basato sulla criticità
+        function getHexColor(colorName) {
+            switch (colorName) {
+                case 'green': return '#008000';
+                case 'yellow': return '#FFFF00';
+                case 'orange': return '#FFA500';
+                case 'red': return '#FF0000';
+                default: return '#ccc';
+            }
+        }
+
+        // Funzione per definire lo stile di un comune sulla mappa
+        function styleComune(feature) {
+            let normalizedComuneNome = feature.properties.normalizedName;
+            const criticità = criticitàMap[normalizedComuneNome];
+            const fillColor = coloriBase[criticità] || '#ccc';
+
+            return {
+                fillColor: getHexColor(fillColor),
+                weight: 3, // Bordo più spesso per il comune evidenziato
+                opacity: 1,
+                color: 'black',
+                fillOpacity: 0.9 // Leggermente meno trasparente per evidenziare
+            };
+        }
+
+        // Funzione per gestire i popup
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                const normalizedComuneNome = feature.properties.normalizedName;
+                const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità: ${criticità}`);
+            }
+        }
+
+        // Funzione per recuperare il nome del comune dall'URL
+        function getComuneFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            const comune = params.get('comune');
+            return comune ? decodeURIComponent(comune) : null;
+        }
+
+        // Dati informativi per comune (ESTENSIBILE VIA FIREBASE O JSON LOCALE)
+        // Per semplicità, qui è un oggetto JS. Per una soluzione scalabile,
+        // potresti voler caricare queste informazioni da Firebase o da un file JSON.
+        const infoComuni = {
+            "potenza": {
+                rischi: "Principali rischi: sismico, idrogeologico (frane e alluvioni in alcune zone).",
+                accoglienza: "Aree di accoglienza designate: Centro Polifunzionale di C.da Macchia Romana, Campo CONI. Punti di raccolta in Piazza Prefettura, Piazza Zara."
+            },
+            "matera": {
+                rischi: "Principali rischi: sismico, idrogeologico (zone dei Sassi e lungo il Torrente Gravina).",
+                accoglienza: "Aree di accoglienza designate: Palazzetto dello Sport in Via delle Nazioni Unite, Centro Giovanile. Punti di raccolta in Piazza Vittorio Veneto, Piazza Pascoli."
+            },
+            // Aggiungi altri comuni qui...
+            "policoro": {
+                rischi: "Principali rischi: alluvioni (vicinanza al mare e fiumi), rischio costiero. Sismico moderato.",
+                accoglienza: "Aree di accoglienza: Palazzetto dello Sport. Punti di raccolta: Piazza Heraclea, lungomare."
+            },
+            "melfi": {
+                rischi: "Principali rischi: sismico, vulcanico (vicinanza al Vulture), idrogeologico.",
+                accoglienza: "Aree di accoglienza: Centro Sportivo. Punti di raccolta: Piazza Duomo, Piazza Vescovado."
+            }
+            // ...e così via per tutti i tuoi comuni
+        };
+
+
+        // Carica dati GeoJSON e colori Firebase all'avvio
+        Promise.all([
+            fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
+            database.ref('colori').once('value')
+        ]).then(([geojsonData, snapshot]) => {
+            geojsonDataGlobal = geojsonData;
+
+            // Normalizza i nomi dei comuni nel GeoJSON
+            geojsonDataGlobal.features.forEach(feature => {
+                if (feature.properties && feature.properties.name) {
+                    feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
+                }
+            });
+
+            if (snapshot.exists()) {
+                const datiColori = snapshot.val();
+                coloriBase = datiColori.coloriBase || {};
+                const timestamp = new Date(datiColori.dataCreazione);
+                lastUpdatedElement.textContent = `Dati aggiornati il: ${timestamp.toLocaleString()}`;
+
+                const configurazioneCriticità = {
+                    'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
+                    'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
+                    'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
+                    'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant'Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Marsico Nuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d'Agri", "San Paolo Albanese", "San Severino Lucano", "Sant'Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
+                    'D': ["Nemoli", "Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
+                    'E1': ["Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi", "Montalbano Jonico", "Craco"],
+                    'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
+                };
+
+                for (const base in configurazioneCriticità) {
+                    const comuni = configurazioneCriticità[base];
+                    comuni.forEach(comune => {
+                        criticitàMap[normalizeComuneName(comune)] = base;
+                    });
+                }
+
+                // Carica il comune specifico dall'URL
+                const targetComuneNome = getComuneFromUrl();
+                if (targetComuneNome) {
+                    displayComuneInfo(targetComuneNome);
+                } else {
+                    infoMessage.textContent = "Nessun comune specificato nell'URL. Utilizza '?comune=NomeComune'.";
+                    comuneNameDisplay.textContent = "Comune non specificato";
+                    comuneCriticityDisplay.textContent = "";
+                    riskInfoElement.textContent = "Nessuna informazione disponibile.";
+                    shelterInfoElement.textContent = "Nessuna informazione disponibile.";
+                    leafletMap.setView([40.6393, 15.8054], 8); // Vista predefinita sulla Basilicata
+                }
+
+            } else {
+                lastUpdatedElement.textContent = 'Nessun dato colore disponibile da Firebase.';
+                console.warn("Nessun dato colore trovato in Firebase.");
+            }
+        }).catch(error => {
+            console.error("Errore nel caricamento dei dati:", error);
+            infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+        });
+
+        // Funzione per visualizzare le informazioni del comune
+        function displayComuneInfo(comuneOriginalName) {
+            const normalizedComuneName = normalizeComuneName(comuneOriginalName);
+            const foundFeature = geojsonDataGlobal.features.find(feature =>
+                feature.properties.normalizedName === normalizedComuneName
+            );
+
+            if (foundFeature) {
+                // Aggiorna il titolo della pagina
+                pageTitle.textContent = `Criticità del Comune di ${foundFeature.properties.name}`;
+                comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
+
+                const criticità = criticitàMap[foundFeature.properties.normalizedName] || 'Non disponibile';
+                comuneCriticityDisplay.textContent = `Criticità: ${criticità}`;
+
+                // Rimuovi layer precedenti e aggiungi solo il comune trovato
+                leafletMap.eachLayer(layer => {
+                    if (layer instanceof L.GeoJSON || layer instanceof L.Marker) {
+                        leafletMap.removeLayer(layer);
+                    }
+                });
+
+                L.geoJSON(foundFeature, {
+                    style: styleComune,
+                    onEachFeature: onEachFeature
+                }).addTo(leafletMap);
+
+                // Centra la mappa sul comune trovato
+                leafletMap.fitBounds(L.geoJSON(foundFeature).getBounds());
+
+                // Carica e visualizza le informazioni aggiuntive
+                const comuneInfo = infoComuni[normalizedComuneName];
+                if (comuneInfo) {
+                    riskInfoElement.textContent = comuneInfo.rischi;
+                    shelterInfoElement.textContent = comuneInfo.accoglienza;
+                } else {
+                    riskInfoElement.textContent = "Informazioni sui rischi non disponibili per questo comune.";
+                    shelterInfoElement.textContent = "Informazioni sulle aree di accoglienza non disponibili per questo comune.";
+                }
+
+            } else {
+                infoMessage.textContent = `Comune "${comuneOriginalName}" non trovato nella mappa. Verifica il nome.`;
+                comuneNameDisplay.textContent = `Comune: ${comuneOriginalName}`;
+                comuneCriticityDisplay.textContent = 'Criticità: Non trovata';
+                riskInfoElement.textContent = "Informazioni sui rischi non disponibili.";
+                shelterInfoElement.textContent = "Informazioni sulle aree di accoglienza non disponibili.";
+                leafletMap.setView([40.6393, 15.8054], 8); // Torna alla vista predefinita
+            }
+        }
+    </script>
+
+</body>
+
+</html>
