@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultazione Operatori - Basilicata</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            background-color: #f0f2f5;
+        }
+
+        #controls-container,
+        #operator-procedures-container,
+        #risk-selection-container {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+
+        #leaflet-map {
+            flex: 2;
+            min-width: 500px;
+            height: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"],
+        select,
+        button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #current-comune-info {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #comune-name-display {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        #comune-criticity-display {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        #info-message {
+            margin-top: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        #last-updated {
+            font-style: italic;
+            color: #777;
+            margin-top: 20px;
+        }
+
+        #region-logo {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            margin-top: 20px;
+            align-self: center;
+        }
+
+        /* Stili per la selezione dei rischi */
+        #risk-selection-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        #risk-selection-list li {
+            margin-bottom: 8px;
+        }
+
+        .risk-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            transition: background-color 0.3s ease;
+        }
+
+        .risk-button:hover {
+            background-color: #5a6268;
+        }
+
+        /* Stili per le procedure operatore */
+        #operator-procedures-container {
+            margin-top: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        #entity-select-wrapper {
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            display: none; /* Inizialmente nascosto */
+        }
+
+        #entity-select-wrapper label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #procedures-display {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #procedures-display h4 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        #procedures-display ul {
+            list-style-type: decimal; /* Numerato per le procedure */
+            margin-left: 20px;
+            padding-left: 0;
+        }
+
+        #procedures-display li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        /* Stili per i popup di Leaflet */
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="controls-container">
+        <h2>Cerca Comune (Operatore)</h2>
+        <input type="text" id="comune-search-input" placeholder="Es: Policoro">
+        <button id="search-button">Cerca</button>
+
+        <div id="current-comune-info">
+            <p><span id="comune-name-display"></span></p>
+            <p><span id="comune-criticity-display"></span></p>
+            <p id="info-message" style="color: red;"></p>
+        </div>
+
+        <p id="last-updated"></p>
+
+        <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
+    </div>
+
+    <div id="leaflet-map"></div>
+
+    <div id="risk-selection-container">
+        <h2>Rischi Rilevati</h2>
+        <div id="risks-list-display">
+            <p>Seleziona un comune per visualizzare i rischi.</p>
+        </div>
+        <div id="entity-select-wrapper">
+            <label for="operator-entity-select">Seleziona il tuo ente:</label>
+            <select id="operator-entity-select">
+                <option value="">-- Seleziona un ente --</option>
+                <option value="carabinieri">Carabinieri</option>
+                <option value="vigili del fuoco">Vigili del Fuoco</option>
+                <option value="ufficio protezione civile">Ufficio Protezione Civile</option>
+                <option value="prefettura">Prefettura</option>
+                </select>
+        </div>
+    </div>
+
+    <div id="operator-procedures-container">
+        <h2>Procedure Operative</h2>
+        <div id="procedures-display">
+            <p>Seleziona un rischio e un ente per visualizzare le procedure.</p>
+        </div>
+    </div>
+
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8); // Vista iniziale sulla Basilicata
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
+
+        // Elementi HTML
+        const comuneSearchInput = document.getElementById('comune-search-input');
+        const searchButton = document.getElementById('search-button');
+        const comuneNameDisplay = document.getElementById('comune-name-display');
+        const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
+        const infoMessage = document.getElementById('info-message');
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const risksListDisplay = document.getElementById('risks-list-display');
+        const entitySelectWrapper = document.getElementById('entity-select-wrapper');
+        const operatorEntitySelect = document.getElementById('operator-entity-select');
+        const proceduresDisplay = document.getElementById('procedures-display');
+
+        let geojsonDataGlobal = null;
+        let criticitàMap = {};
+        let coloriBase = {};
+        let geoJsonLayerGroup = new L.LayerGroup().addTo(leafletMap);
+
+        // Stato corrente della selezione operatore
+        let currentSelectedComune = null;
+        let currentSelectedRiskType = null;
+
+
+        // --- NUOVA STRUTTURA DATI PER LE PROCEDURE OPERATIVE ---
+        const operatorProcedures = {
+            "policoro": {
+                "rischio idrogeologico": {
+                    "carabinieri": [
+                        "Pattugliare le zone a rischio allagamento e frane, verificando la presenza di persone in pericolo.",
+                        "Assistere nelle operazioni di evacuazione della popolazione, garantendo la sicurezza e l'ordine pubblico.",
+                        "Controllare l'accesso alle aree intercluse o allagate, prevenendo saccheggi e ingressi non autorizzati.",
+                        "Supportare le altre forze dell'ordine e i soccorritori nelle attività di emergenza e nella gestione della viabilità."
+                    ],
+                    "vigili del fuoco": [
+                        "Intervenire per prosciugamenti di locali, rimozione di detriti e alberi caduti.",
+                        "Effettuare salvataggi di persone bloccate o in pericolo (es. da auto in zone allagate, o abitazioni isolate).",
+                        "Monitorare costantemente i livelli dei corsi d'acqua e l'evoluzione delle condizioni meteo-idrologiche.",
+                        "Supportare le attività di protezione civile nella messa in sicurezza delle infrastrutture."
+                    ],
+                    "ufficio protezione civile": [
+                        "Attivare il Centro Operativo Comunale (COC) e le funzioni di supporto.",
+                        "Diramare allerte e comunicazioni ufficiali alla popolazione attraverso i canali designati.",
+                        "Coordinare le squadre di volontari e gli enti operativi sul territorio.",
+                        "Organizzare e gestire i centri di accoglienza per gli sfollati.",
+                        "Richiedere supporto e risorse ai livelli superiori (Provincia, Regione) se necessario."
+                    ],
+                    "prefettura": [
+                        "Attivare il Centro Coordinamento Soccorsi (CCS) e le relative sale operative.",
+                        "Emettere ordinanze urgenti e provvedimenti di protezione civile a livello provinciale.",
+                        "Coordinare l'intervento di tutte le forze armate, di polizia e dei corpi dello Stato.",
+                        "Gestire le comunicazioni istituzionali e l'informazione pubblica a livello provinciale.",
+                        "Valutare la richiesta di stato di emergenza e relazionarsi con la Protezione Civile Nazionale."
+                    ]
+                },
+                "rischio sismico": {
+                    "carabinieri": [
+                        "Mantenere l'ordine pubblico nelle aree colpite, prevenendo sciacallaggio.",
+                        "Assistere nelle operazioni di soccorso e nella gestione del traffico.",
+                        "Effettuare primi sopralluoghi di valutazione danni su strutture e infrastrutture.",
+                        "Garantire la sicurezza dei punti di raccolta e delle aree di accoglienza."
+                    ],
+                    "vigili del fuoco": [
+                        "Intervenire per la ricerca e il salvataggio di persone sotto le macerie.",
+                        "Messa in sicurezza di edifici pericolanti e rimozione di elementi instabili.",
+                        "Valutazione della stabilità degli edifici e delle infrastrutture critiche.",
+                        "Estinzione di incendi eventualmente innescati dal sisma."
+                    ],
+                    "ufficio protezione civile": [
+                        "Attivare il piano di emergenza sismico comunale.",
+                        "Individuare e gestire le aree di attesa e i punti di raccolta per la popolazione.",
+                        "Organizzare la distribuzione di beni di prima necessità e l'assistenza sanitaria.",
+                        "Censire i danni e la popolazione coinvolta per la gestione dell'emergenza."
+                    ],
+                    "prefettura": [
+                        "Coordinare i soccorsi a livello provinciale, inclusa la gestione delle colonne mobili.",
+                        "Disporre l'attivazione di squadre specializzate e rinforzi da altre province o regioni.",
+                        "Emettere direttive per la gestione dell'emergenza e l'assistenza alla popolazione.",
+                        "Monitorare l'evoluzione della situazione e la risposta alle esigenze."
+                    ]
+                },
+                "rischio maremoto": {
+                    "carabinieri": [
+                        "Evacuare rapidamente le zone costiere a rischio Tsunami.",
+                        "Controllare gli accessi alle spiagge e alle aree portuali durante l'allerta.",
+                        "Assistere le autorità marittime nella gestione delle imbarcazioni.",
+                        "Mantenere l'ordine e la sicurezza nelle zone di raccolta."
+                    ],
+                    "vigili del fuoco": [
+                        "Verificare l'integrità delle infrastrutture portuali e costiere dopo l'evento.",
+                        "Intervenire per recupero di persone in mare o detriti.",
+                        "Supportare le operazioni di ricerca e soccorso in mare e sulla costa.",
+                        "Valutare i danni e i rischi residui nelle aree colpite."
+                    ],
+                    "ufficio protezione civile": [
+                        "Attivare i sistemi di allerta per la popolazione costiera.",
+                        "Definire e segnalare le vie di fuga e le aree di raccolta sopraelevate.",
+                        "Coordinare l'evacuazione delle aree costiere e l'assistenza agli sfollati.",
+                        "Monitorare l'onda di maremoto e l'impatto sulla costa."
+                    ],
+                    "prefettura": [
+                        "Emettere l'allerta Tsunami e coordinare la risposta provinciale.",
+                        "Organizzare l'evacuazione su larga scala delle aree costiere a rischio.",
+                        "Disporre l'impiego di risorse navali e aeree per monitoraggio e soccorso.",
+                        "Relazionarsi con il Dipartimento Nazionale di Protezione Civile per l'allerta maremoto."
+                    ]
+                }
+            },
+            // Aggiungi altri comuni qui se necessario, seguendo la stessa struttura
+            // "altro comune": { ... }
+        };
+        // --- FINE NUOVA STRUTTURA DATI ---
+
+
+        // Normalizzazione dei nomi dei comuni
+        function normalizeComuneName(nome) {
+            if (!nome) return "";
+            let normalized = nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return normalized;
+        }
+
+        // Funzione per ottenere il colore basato sulla criticità
+        function getHexColor(colorName) {
+            switch (colorName) {
+                case 'green':
+                    return '#008000';
+                case 'yellow':
+                    return '#FFFF00';
+                case 'orange':
+                    return '#FFA500';
+                case 'red':
+                    return '#FF0000';
+                default:
+                    return '#ccc';
+            }
+        }
+
+        // Funzione per definire lo stile di un comune sulla mappa
+        function styleComune(feature) {
+            let normalizedComuneNome = feature.properties.normalizedName;
+            const criticità = criticitàMap[normalizedComuneNome];
+            const fillColor = coloriBase[criticità] || '#ccc';
+
+            return {
+                fillColor: getHexColor(fillColor),
+                weight: 2,
+                opacity: 1,
+                color: 'black',
+                fillOpacity: 0.8
+            };
+        }
+
+        // Funzione per gestire i popup
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                const normalizedComuneNome = feature.properties.normalizedName;
+                const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
+            }
+        }
+
+        // Carica dati GeoJSON e colori Firebase all'avvio
+        Promise.all([
+            fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
+            database.ref('colori').once('value')
+        ]).then(([geojsonData, snapshot]) => {
+            geojsonDataGlobal = geojsonData;
+
+            geojsonDataGlobal.features.forEach(feature => {
+                if (feature.properties && feature.properties.name) {
+                    feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
+                }
+            });
+
+            if (snapshot.exists()) {
+                const datiColori = snapshot.val();
+                coloriBase = datiColori.coloriBase || {};
+                const timestamp = new Date(datiColori.dataCreazione);
+                lastUpdatedElement.textContent = `Dati aggiornati il: ${timestamp.toLocaleString()}`;
+
+                const configurazioneCriticità = {
+                    'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
+                    'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
+                    'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
+                    'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant'Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Marsico Nuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d'Agri", "San Paolo Albanese", "San Severino Lucano", "Sant'Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
+                    'D': ["Nemoli", "Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
+                    'E1': ["Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi", "Montalbano Jonico", "Craco"],
+                    'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
+                };
+
+                for (const base in configurazioneCriticità) {
+                    const comuni = configurazioneCriticità[base];
+                    comuni.forEach(comune => {
+                        criticitàMap[normalizeComuneName(comune)] = base;
+                    });
+                }
+            } else {
+                lastUpdatedElement.textContent = 'Nessun dato colore disponibile da Firebase.';
+                console.warn("Nessun dato colore trovato in Firebase.");
+            }
+        }).catch(error => {
+            console.error("Errore nel caricamento dei dati:", error);
+            infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+        });
+
+        // Funzione per filtrare la mappa e aggiornare le informazioni per l'operatore
+        function filterMap() {
+            const searchTerm = normalizeComuneName(comuneSearchInput.value);
+            infoMessage.textContent = '';
+            risksListDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi.</p>';
+            proceduresDisplay.innerHTML = '<p>Seleziona un rischio e un ente per visualizzare le procedure.</p>';
+            entitySelectWrapper.style.display = 'none'; // Nascondi il selettore dell'ente
+            operatorEntitySelect.value = ''; // Resetta la selezione dell'ente
+
+            currentSelectedComune = null; // Resetta lo stato
+            currentSelectedRiskType = null; // Resetta lo stato
+
+            if (!searchTerm) {
+                infoMessage.textContent = 'Inserisci il nome di un comune per iniziare la ricerca.';
+                geoJsonLayerGroup.clearLayers();
+                comuneNameDisplay.textContent = '';
+                comuneCriticityDisplay.textContent = '';
+                return;
+            }
+
+            geoJsonLayerGroup.clearLayers();
+
+            const foundFeature = geojsonDataGlobal.features.find(feature =>
+                feature.properties.normalizedName === searchTerm
+            );
+
+            if (foundFeature) {
+                const comuneLayer = L.geoJSON(foundFeature, {
+                    style: styleComune,
+                    onEachFeature: onEachFeature
+                }).addTo(geoJsonLayerGroup);
+                leafletMap.fitBounds(comuneLayer.getBounds()); // Correzione qui
+
+                comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
+                const criticitàComune = criticitàMap[searchTerm];
+                comuneCriticityDisplay.textContent = `Criticità di Base: ${criticitàComune || 'Non disponibile'}`;
+
+                currentSelectedComune = searchTerm; // Imposta il comune selezionato
+
+                // Mostra i rischi per il comune selezionato
+                displayOperatorRisks(searchTerm);
+
+            } else {
+                infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
+                comuneNameDisplay.textContent = '';
+                comuneCriticityDisplay.textContent = '';
+            }
+        }
+
+        // Funzione per visualizzare i rischi per l'operatore
+        function displayOperatorRisks(normalizedComuneName) {
+            risksListDisplay.innerHTML = '';
+            const risksForComune = operatorProcedures[normalizedComuneName];
+
+            if (risksForComune) {
+                const ul = document.createElement('ul');
+                ul.id = 'risk-selection-list';
+                for (const riskType in risksForComune) {
+                    const li = document.createElement('li');
+                    const button = document.createElement('button');
+                    button.classList.add('risk-button');
+                    button.textContent = capitalizeFirstLetter(riskType); // Capitalizza il nome del rischio
+                    button.dataset.riskType = riskType; // Aggiungi il tipo di rischio come data attribute
+                    button.addEventListener('click', () => selectRiskAndEntity(riskType));
+                    li.appendChild(button);
+                    ul.appendChild(li);
+                }
+                risksListDisplay.appendChild(ul);
+            } else {
+                risksListDisplay.innerHTML = '<p>Nessun rischio specifico definito per questo comune.</p>';
+            }
+        }
+
+        // Funzione per capitalizzare la prima lettera di una stringa
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        // Funzione per selezionare il rischio e mostrare il selettore dell'ente
+        function selectRiskAndEntity(riskType) {
+            currentSelectedRiskType = riskType; // Imposta il rischio selezionato
+            proceduresDisplay.innerHTML = '<p>Seleziona il tuo ente per visualizzare le procedure.</p>';
+            entitySelectWrapper.style.display = 'block'; // Mostra il selettore dell'ente
+            operatorEntitySelect.value = ''; // Resetta la selezione dell'ente
+        }
+
+        // Funzione per visualizzare le procedure specifiche dell'ente per il rischio selezionato
+        function displayEntityProcedures() {
+            const selectedEntity = operatorEntitySelect.value;
+
+            if (!currentSelectedComune || !currentSelectedRiskType || !selectedEntity) {
+                proceduresDisplay.innerHTML = '<p>Seleziona un rischio e un ente per visualizzare le procedure.</p>';
+                return;
+            }
+
+            const procedures = operatorProcedures[currentSelectedComune]?.[currentSelectedRiskType]?.[selectedEntity];
+
+            proceduresDisplay.innerHTML = '';
+            if (procedures && procedures.length > 0) {
+                const h4 = document.createElement('h4');
+                h4.textContent = `Procedure per ${capitalizeFirstLetter(currentSelectedRiskType)} - ${capitalizeFirstLetter(selectedEntity)}`;
+                proceduresDisplay.appendChild(h4);
+
+                const ul = document.createElement('ul');
+                procedures.forEach(procedure => {
+                    const li = document.createElement('li');
+                    li.textContent = procedure;
+                    ul.appendChild(li);
+                });
+                proceduresDisplay.appendChild(ul);
+            } else {
+                proceduresDisplay.innerHTML = `<p>Nessuna procedura definita per ${capitalizeFirstLetter(currentSelectedRiskType)} e ${capitalizeFirstLetter(selectedEntity)} in questo comune.</p>`;
+            }
+        }
+
+        // Event listener per il pulsante di ricerca
+        searchButton.addEventListener('click', filterMap);
+
+        // Event listener per la pressione del tasto Invio nell'input di ricerca
+        comuneSearchInput.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                filterMap();
+            }
+        });
+
+        // Event listener per il cambio di selezione dell'ente
+        operatorEntitySelect.addEventListener('change', displayEntityProcedures);
+
+    </script>
+</body>
+
+</html>
