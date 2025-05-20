@@ -323,7 +323,7 @@
             }
         }
 
-        // Dati di esempio per i rischi dei comuni (aggiunta per Policoro)
+      // Dati di esempio per i rischi dei comuni (aggiunta per Policoro)
         const comuneRisksData = {
             "policoro": {
                 risks: [{
@@ -379,7 +379,6 @@
                         ]
                     }
                 },
-                // INIZIO AGGIUNTA RISCHIO MAREMOTO
                 {
                     name: "Rischio Maremoto",
                     alertStatus: "Verde", // Impostato a Verde come default, si può aggiornare manualmente
@@ -407,12 +406,10 @@
                             "Sii consapevole della possibilità di onde successive, un maremoto è spesso composto da più onde."
                         ]
                     }
-                }
-                // FINE AGGIUNTA RISCHIO MAREMOTO
-            
+                }]
+            }
             // Aggiungi altri comuni qui se necessario
         };
-
 
         // Carica dati GeoJSON e colori Firebase all'avvio
         Promise.all([
