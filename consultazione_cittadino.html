@@ -136,8 +136,10 @@
         /* Stili per la nuova sezione dei rischi */
         #risk-info-container {
             margin-top: 20px;
-            max-height: 600px; /* Limita l'altezza del contenitore dei rischi */
-            overflow-y: auto; /* Aggiunge scroll se il contenuto è troppo lungo */
+            max-height: 600px;
+            /* Limita l'altezza del contenitore dei rischi */
+            overflow-y: auto;
+            /* Aggiunge scroll se il contenuto è troppo lungo */
         }
 
         .risk-section {
@@ -184,16 +186,24 @@
         /* Colori per lo stato delle allerte */
         .alert-green {
             color: #28a745;
-        } /* Verde */
+        }
+
+        /* Verde */
         .alert-yellow {
             color: #ffc107;
-        } /* Giallo */
+        }
+
+        /* Giallo */
         .alert-orange {
             color: #fd7e14;
-        } /* Arancione */
+        }
+
+        /* Arancione */
         .alert-red {
             color: #dc3545;
-        } /* Rosso */
+        }
+
+        /* Rosso */
     </style>
 </head>
 
@@ -368,7 +378,37 @@
                             "Utilizza il telefono solo per emergenze gravi per non intasare le linee."
                         ]
                     }
-                }]
+                },
+                // INIZIO AGGIUNTA RISCHIO MAREMOTO
+                {
+                    name: "Rischio Maremoto",
+                    alertStatus: "Verde", // Impostato a Verde come default, si può aggiornare manualmente
+                    alertMessage: "Assenza di allerta Tsunami al momento. In caso di terremoto in mare forte e prolungato, allontanarsi dalla costa.",
+                    guidelines: {
+                        before: [
+                            "Identifica le aree sicure e le vie di fuga verso zone elevate, almeno 10-15 metri sul livello del mare.",
+                            "Prepara un kit di emergenza con acqua, cibo, farmaci, radio a pile, torcia, fischietto e una copia dei documenti.",
+                            "Se vivi in una zona costiera a rischio, informati sui piani di evacuazione locali.",
+                            "Assicurati che tutti i membri della famiglia conoscano i punti di incontro designati."
+                        ],
+                        during: [
+                            "Se senti un forte terremoto mentre sei sulla costa, o se le autorità emettono un allarme Tsunami, allontanati immediatamente dalla spiaggia e dalle zone basse.",
+                            "Dirigiti verso le zone più alte e interne seguendo i percorsi di evacuazione, se disponibili.",
+                            "Non tornare in spiaggia per curiosità o per osservare il fenomeno.",
+                            "Se sei in mare aperto, rimani al largo. Non rientrare in porto o vicino alla costa.",
+                            "Se non puoi evacuare, cerca rifugio ai piani superiori di edifici robusti e solidi, lontano dalla linea di costa."
+                        ],
+                        after: [
+                            "Non rientrare nelle zone costiere basse finché le autorità non dichiarano il cessato allarme.",
+                            "Fai attenzione a detriti e inondazioni residue.",
+                            "Controlla eventuali feriti e presta soccorso se necessario.",
+                            "Non bere acqua del rubinetto senza prima averla fatta bollire o averne verificata la potabilità.",
+                            "Collabora con le squadre di soccorso e segui le loro indicazioni.",
+                            "Sii consapevole della possibilità di onde successive, un maremoto è spesso composto da più onde."
+                        ]
+                    }
+                }
+                // FINE AGGIUNTA RISCHIO MAREMOTO
             }
             // Aggiungi altri comuni qui se necessario
         };
