@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualizza Mappa Criticità</title>
+    <title>Visualizza Mappa Criticità per Rischio</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <style>
@@ -20,6 +20,9 @@
             flex: 2;
             min-width: 300px;
             height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         #info-container {
@@ -28,11 +31,50 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
-            padding: 15px; /* Aggiunto padding per il contenitore delle info */
-            border: 1px solid #ddd; /* Aggiunto bordo per distinguere meglio */
-            border-radius: 8px; /* Bordi arrotondati */
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Ombra leggera */
-            background-color: #f9f9f9; /* Sfondo leggermente grigio */
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            background-color: #f9f9f9;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        #current-risk-legend {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .legend-color-box {
+            width: 20px;
+            height: 20px;
+            border: 1px solid #777;
+            margin-right: 8px;
+            flex-shrink: 0;
         }
 
         #last-updated {
@@ -49,7 +91,7 @@
             cursor: pointer;
             font-size: 16px;
             margin-top: 20px;
-            transition: background-color 0.3s ease; /* Transizione per hover */
+            transition: background-color 0.3s ease;
         }
 
         #save-pdf-button:hover {
@@ -57,15 +99,15 @@
         }
 
         #region-logo {
-            width: 100%; /* Occupa la larghezza del contenitore */
-            max-width: 200px; /* Limita la dimensione massima */
+            width: 100%;
+            max-width: 200px;
             height: auto;
-            margin-top: auto; /* Sposta il logo in fondo al flex container */
-            align-self: center; /* Centra il logo orizzontalmente */
-            padding-top: 20px; /* Aggiungi un po' di spazio sopra se necessario */
+            margin-top: auto;
+            align-self: center;
+            padding-top: 20px;
         }
 
-
+        /* Leaflet popup styles */
         .leaflet-popup-content-wrapper {
             background-color: white;
             color: #333;
@@ -97,6 +139,16 @@
     <div id="leaflet-map"></div>
 
     <div id="info-container">
+        <div class="form-group">
+            <label for="risk-selector">Seleziona Rischio:</label>
+            <select id="risk-selector">
+                </select>
+        </div>
+
+        <div id="current-risk-legend">
+            <h4>Legenda Rischio Corrente:</h4>
+            </div>
+
         <h3>Ultimo Aggiornamento</h3>
         <p id="last-updated"></p>
         <button id="save-pdf-button">Scarica come PDF</button>
@@ -112,7 +164,7 @@
     <script src="https://unpkg.com/leaflet-image@latest/leaflet-image.js"></script>
 
     <script>
-        // Your web app's Firebase configuration (IDENTICO A index.html)
+        // La configurazione di Firebase è identica a `index.html`
         const firebaseConfig = {
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
             authDomain: "bollettinoregionale.firebaseapp.com",
@@ -124,7 +176,7 @@
             // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
         };
 
-        // Initialize Firebase
+        // Inizializza Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
@@ -135,218 +187,398 @@
 
         const lastUpdatedElement = document.getElementById('last-updated');
         const savePdfButton = document.getElementById('save-pdf-button');
+        const riskSelector = document.getElementById('risk-selector');
+        const currentRiskLegend = document.getElementById('current-risk-legend');
 
-        let criticitàMap = {};
-        let coloriBase = {};
+        let criticitàMap = {}; // Mappa: nome comune normalizzato -> sua 'Base' (es. "potenza" -> "B")
+        let riskColorsData = {}; // Memorizza i colori per ogni base, per tipo di rischio (es. {'IdrogeologicoTemporali': {'A1': 'red', ...}})
+        let geoJsonLayer = null; // Memorizza il layer Leaflet GeoJSON
+        let loadedGeojsonData = null; // Cache per i dati GeoJSON
 
-        // Normalizzazione dei nomi dei comuni
+        // Mappa i nomi delle chiavi dei rischi ai nomi da visualizzare.
+        // ATTENZIONE: Questi nomi DEVONO corrispondere esattamente ai nomi dei nodi su Firebase
+        // (es. "IdrogeologicoTemporali" e non "idrogeologico_temporali").
+        const riskDisplayName = {
+            'IdrogeologicoTemporali': 'Idrogeologico (Temporali)',
+            'Idrogeologico': 'Idrogeologico',
+            'Idraulico': 'Idraulico',
+            'Incendio': 'Incendio'
+        };
+
+        // Normalizzazione dei nomi dei comuni (identica a prima)
         function normalizeComuneName(nome) {
             if (!nome) return "";
-            let normalized = nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            return normalized;
+            return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
-        // Carica il file GeoJSON (Assicurati che sia disponibile!)
-        fetch('limits_R_17_municipalities.geojson')
-            .then(response => response.json())
-            .then(geojsonData => {
-                // Log dei nomi dei comuni dal GeoJSON (NORMALIZZATI)
-                console.log("Nomi dei Comuni nel GeoJSON (NORMALIZZATI):");
-                geojsonData.features.forEach(feature => {
-                    if (feature.properties && feature.properties.name) {
-                        let normalizedName = normalizeComuneName(feature.properties.name);
-                        console.log(` - Originale: "${feature.properties.name}", Normalizzato: "${normalizedName}"`);
-                        feature.properties.normalizedName = normalizedName; // Aggiungi il nome normalizzato all'oggetto feature
-                    }
-                });
+        // Funzione per ottenere il codice esadecimale da un nome di colore (identica a prima)
+        function getHexColor(colorName) {
+            switch (colorName.toLowerCase()) { // Converti in minuscolo per confronto
+                case 'green': return '#008000';
+                case 'yellow': return '#FFFF00';
+                case 'orange': return '#FFA500';
+                case 'red': return '#FF0000';
+                default: return '#ccc'; // Grigio di default per colori mancanti
+            }
+        }
 
+        // Configurazione delle basi di criticità e dei loro comuni (identica a prima)
+        const configurazioneCriticità = {
+            'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
+            'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
+            'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
+            'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant'Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Marsico Nuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d'Agri", "San Paolo Albanese", "San Severino Lucano", "Sant'Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
+            'D': ["Nemoli", "Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
+            'E1': ["Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi", "Montalbano Jonico", "Craco"],
+            'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
+        };
 
-                // Funzione per recuperare e applicare i colori
-                function applyColorsAndDisplay() {
-                    database.ref('colori').once('value', snapshot => {
-                        if (snapshot.exists()) {
-                            const datiColori = snapshot.val();
-                            coloriBase = datiColori.coloriBase || {};
-                            console.log("Colori Base:", JSON.stringify(coloriBase, null, 2));
-                            const timestamp = new Date(datiColori.dataCreazione);
-                            const formattedDate = timestamp.toLocaleString();
-                            lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
-
-                            const configurazioneCriticità = {
-                                'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
-                                'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
-                                'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
-                                'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant'Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Marsico Nuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d'Agri", "San Paolo Albanese", "San Severino Lucano", "Sant'Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
-                                'D': ["Nemoli", "Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
-                                'E1': ["Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi", "Montalbano Jonico", "Craco"],
-                                'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
-                            };
-
-                            // Costruisci la mappa delle criticità (NORMALIZZATA)
-                            for (const base in configurazioneCriticità) {
-                                const comuni = configurazioneCriticità[base];
-                                comuni.forEach(comune => {
-                                    const normalizedComune = normalizeComuneName(comune);
-                                    criticitàMap[normalizedComune] = base; // APPLICA LA NORMALIZZAZIONE QUI
-                                    console.log(`CriticitàMap: "${normalizedComune}" -> ${base}`); // LOG
-                                });
-                            }
-
-                            L.geoJSON(geojsonData, {
-                                style: styleComune,
-                                onEachFeature: onEachFeature // Aggiunta la funzione per i popup
-                            }).addTo(leafletMap);
-
-                        } else {
-                            lastUpdatedElement.textContent = 'Nessun dato colore disponibile.';
-                        }
-                    }, error => {
-                        console.error("Errore nel recupero dei colori:", error);
-                        lastUpdatedElement.textContent = 'Errore nel caricamento dei colori.';
-                    });
-                }
-
-                applyColorsAndDisplay();
-
-                function styleComune(feature) {
-                    let normalizedComuneNome = feature.properties.normalizedName; // Usa il nome normalizzato
-                    const criticità = getCriticità(normalizedComuneNome);
-
-                    console.log(`styleComune - Comune Normalizzato: "${normalizedComuneNome}", Criticità: ${criticità}`);
-
-                    let fillColor = '#ccc';
-                    if (criticità && coloriBase[criticità]) {
-                        fillColor = coloriBase[criticità];
-                    }
-
-                    console.log(`Colore da Applicare: ${fillColor}`);
-
-                    let hexColor = fillColor;
-                    switch (fillColor) {
-                        case 'green':
-                            hexColor = '#008000';
-                            break;
-                        case 'yellow':
-                            hexColor = '#FFFF00';
-                            break;
-                        case 'orange':
-                            hexColor = '#FFA500';
-                            break;
-                        case 'red':
-                            hexColor = '#FF0000';
-                            break;
-                        default:
-                            hexColor = '#ccc';
-                    }
-
-                    return {
-                        fillColor: hexColor,
-                        weight: 1,
-                        opacity: 1,
-                        color: '#333',
-                        fillOpacity: 0.7 // Mantieni la trasparenza per la visualizzazione nella pagina
-                    };
-                }
-
-                function getCriticità(comuneNome) {
-                    const criticità = criticitàMap[comuneNome];
-                    console.log(`getCriticità - Ricerca Criticità per "${comuneNome}": ${criticità}`); // LOG
-                    return criticità;
-                }
-
-                function onEachFeature(feature, layer) {
-                    if (feature.properties && feature.properties.name) {
-                        const normalizedComuneNome = feature.properties.normalizedName; // Usa il nome normalizzato
-                        const criticità = getCriticità(normalizedComuneNome) || 'Non disponibile';
-                        layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
-                    }
-                }
-
-                savePdfButton.addEventListener('click', function () {
-                    console.log("Inizio generazione PDF...");
-
-                    // Stili semplificati per il PDF
-                    const pdfStyles = (feature) => {
-                        let normalizedComuneNome = feature.properties.normalizedName;
-                        const criticità = criticitàMap[normalizedComuneNome];
-                        const fillColor = coloriBase[criticità] || '#ccc';
-                        let hexColor = fillColor;
-                        switch (fillColor) {
-                            case 'green': hexColor = '#008000'; break;
-                            case 'yellow': hexColor = '#FFFF00'; break;
-                            case 'orange': hexColor = '#FFA500'; break;
-                            case 'red': hexColor = '#FF0000'; break;
-                            default: hexColor = '#ccc';
-                        }
-                        return {
-                            fillColor: hexColor,
-                            weight: 1,
-                            color: '#333',
-                            fillOpacity: 1 // Nessuna trasparenza per il PDF
-                        };
-                    };
-
-                    // Applica gli stili semplificati temporaneamente
-                    // Iterate through existing GeoJSON layers and apply new styles for PDF capture
-                    leafletMap.eachLayer(layer => {
-                        if (layer instanceof L.GeoJSON) {
-                            layer.setStyle((feature) => pdfStyles(feature)); // Use a function for setStyle
-                        }
-                    });
-
-                    // Forzare il reflow
-                    leafletMap.getContainer().style.display;
-
-                    // Aumenta l'attesa
-                    setTimeout(function () {
-                        console.log("Chiamata leafletImage...");
-
-                        leafletImage(leafletMap, function (err, canvas) {
-                            console.log("Callback di leafletImage eseguito.");
-
-                            if (err) {
-                                console.error("Errore in leafletImage:", err);
-                                return;
-                            }
-
-                            const imgData = canvas.toDataURL('image/png');
-                            console.log("Dati immagine ottenuti:", imgData.substring(0, 100) + "..."); // Log parziale
-
-                            const { jsPDF } = window.jspdf;
-                            const pdf = new jsPDF('landscape');
-                            const imgWidth = pdf.internal.pageSize.getWidth() - 20;
-                            const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-                            pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                            pdf.setFontSize(10);
-                            pdf.text(lastUpdatedElement.textContent, 10, pdf.internal.pageSize.getHeight() - 10);
-
-                            // Aggiungi il logo al PDF
-                            const logoImg = document.getElementById('region-logo');
-                            if (logoImg) {
-                                const logoData = logoImg.src;
-                                const logoPdfWidth = 40; // Larghezza del logo nel PDF (adatta a piacere)
-                                const logoPdfHeight = (logoImg.naturalHeight * logoPdfWidth) / logoImg.naturalWidth;
-                                const pdfPageWidth = pdf.internal.pageSize.getWidth();
-                                pdf.addImage(logoData, 'PNG', pdfPageWidth - logoPdfWidth - 10, 10, logoPdfWidth, logoPdfHeight); // Posiziona in alto a destra
-                            }
-
-
-                            pdf.save(`bollettino_criticità_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
-
-                            console.log("PDF generato e salvato.");
-
-                            // Ripristina gli stili originali
-                            leafletMap.eachLayer(layer => {
-                                if (layer instanceof L.GeoJSON) {
-                                    layer.setStyle(styleComune); // Ripristina la funzione originale styleComune
-                                }
-                            });
-
-                        });
-                    }, 1000); // Aumenta l'attesa a 1 secondo
-                });
+        // Costruisci la mappa di criticità (nome comune normalizzato -> base) una volta sola all'avvio
+        for (const base in configurazioneCriticità) {
+            const comuni = configurazioneCriticità[base];
+            comuni.forEach(comune => {
+                const normalizedComune = normalizeComuneName(comune);
+                criticitàMap[normalizedComune] = base;
             });
+        }
+
+        // Funzione per ottenere la base geografica per un dato comune normalizzato
+        function getBaseForComune(comuneNome) {
+            return criticitàMap[comuneNome];
+        }
+
+        // Funzione principale per inizializzare la mappa: recupera i dati, popola il selettore e mostra la mappa
+        async function initializeMap() {
+            try {
+                // Carica il file GeoJSON una sola volta
+                const response = await fetch('limits_R_17_municipalities.geojson');
+                loadedGeojsonData = await response.json();
+
+                // Pre-processa loadedGeojsonData per aggiungere i nomi normalizzati
+                loadedGeojsonData.features.forEach(feature => {
+                    if (feature.properties && feature.properties.name) {
+                        feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
+                    }
+                });
+
+                // Recupera i colori dei rischi da Firebase dal nodo 'colori'
+                const snapshot = await database.ref('colori').once('value');
+
+                if (snapshot.exists()) {
+                    const datiColori = snapshot.val();
+                    
+                    // MODIFICA QUI: Ora riskColorsData prende i dati dal nodo 'rischi'
+                    riskColorsData = datiColori.rischi || {}; 
+
+                    // MODIFICA QUI: Recupera il timestamp dal nodo 'dataCreazione' (direttamente sotto 'colori')
+                    const timestampString = datiColori.dataCreazione;
+                    if (timestampString) {
+                        const timestamp = new Date(timestampString);
+                        const formattedDate = timestamp.toLocaleString();
+                        lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
+                    } else {
+                        lastUpdatedElement.textContent = 'Data di aggiornamento non disponibile.';
+                    }
+
+                    // Popola il menu a discesa dei rischi
+                    // Filtra solo le chiavi che non sono il timestamp
+                    const riskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione'); 
+                    riskSelector.innerHTML = ''; // Pulisci le opzioni esistenti
+
+                    if (riskTypes.length === 0) {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'Nessun rischio disponibile';
+                        riskSelector.appendChild(option);
+                        riskSelector.disabled = true; // Disabilita il selettore se non ci sono rischi
+                    } else {
+                        // Ordina i tipi di rischio per visualizzarli in un ordine consistente
+                        const orderedRiskTypes = ['Idrogeologico', 'IdrogeologicoTemporali', 'Idraulico', 'Incendio'];
+                        riskTypes.sort((a, b) => {
+                            const indexA = orderedRiskTypes.indexOf(a);
+                            const indexB = orderedRiskTypes.indexOf(b);
+                            if (indexA === -1 && indexB === -1) return 0; // Entrambi non nell'ordine predefinito
+                            if (indexA === -1) return 1; // a non nell'ordine, b lo è (a va dopo)
+                            if (indexB === -1) return -1; // b non nell'ordine, a lo è (b va dopo)
+                            return indexA - indexB;
+                        });
+
+                        orderedRiskTypes.forEach(riskKey => {
+                            if (riskTypes.includes(riskKey)) { // Aggiungi solo se il rischio esiste in Firebase
+                                const option = document.createElement('option');
+                                option.value = riskKey;
+                                option.textContent = riskDisplayName[riskKey] || riskKey; // Usa il nome visualizzato se disponibile
+                                riskSelector.appendChild(option);
+                            }
+                        });
+                        
+                        riskSelector.disabled = false;
+                        
+                        // Cerca il parametro 'risk' nell'URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const initialRisk = urlParams.get('risk');
+                        if (initialRisk && riskTypes.includes(initialRisk)) {
+                            riskSelector.value = initialRisk; // Seleziona il rischio dall'URL
+                        } else {
+                            // Se non c'è un parametro o è invalido, imposta la prima opzione come selezionata di default
+                            riskSelector.value = riskTypes[0]; 
+                        }
+                    }
+
+                    // Imposta la visualizzazione iniziale della mappa e della legenda
+                    updateMapAndLegend();
+
+                    // Aggiungi il listener per il cambio di selezione nel menu
+                    riskSelector.addEventListener('change', updateMapAndLegend);
+
+                } else {
+                    lastUpdatedElement.textContent = 'Nessun dato colore disponibile su Firebase.';
+                    riskSelector.disabled = true;
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Nessun dato rischio';
+                    riskSelector.appendChild(option);
+                }
+            } catch (error) {
+                console.error("Errore durante l'inizializzazione della mappa:", error);
+                lastUpdatedElement.textContent = 'Errore nel caricamento dei dati.';
+            }
+        }
+
+        // Funzione per aggiornare la mappa e la legenda in base al rischio selezionato
+        function updateMapAndLegend() {
+            const selectedRisk = riskSelector.value;
+            // Assicurati che l'oggetto dei colori per il rischio selezionato esista
+            const currentRiskBaseColors = riskColorsData[selectedRisk] || {};
+
+            // Rimuovi il layer GeoJSON esistente dalla mappa
+            if (geoJsonLayer) {
+                leafletMap.removeLayer(geoJsonLayer);
+            }
+
+            // Aggiungi un nuovo layer GeoJSON con gli stili aggiornati
+            geoJsonLayer = L.geoJSON(loadedGeojsonData, {
+                style: function (feature) {
+                    return styleComune(feature, currentRiskBaseColors);
+                },
+                onEachFeature: onEachFeature
+            }).addTo(leafletMap);
+
+            updateLegend(currentRiskBaseColors); // Aggiorna la legenda
+        }
+
+        // Funzione per determinare lo stile del comune (colore e opacità)
+        function styleComune(feature, currentRiskBaseColors) {
+            const normalizedComuneNome = feature.properties.normalizedName;
+            const base = getBaseForComune(normalizedComuneNome); // Ottieni la base geografica (A1, B, ecc.)
+
+            let fillColor = '#ccc'; // Colore di default per comuni non mappati o senza colore per il rischio selezionato
+            const fillOpacity = 0.7;
+
+            // Se la base esiste e c'è un colore definito per quel rischio
+            if (base && currentRiskBaseColors[base]) {
+                fillColor = getHexColor(currentRiskBaseColors[base]);
+            }
+
+            return {
+                fillColor: fillColor,
+                weight: 1,
+                opacity: 1,
+                color: '#333',
+                fillOpacity: fillOpacity
+            };
+        }
+
+        // Funzione per creare il contenuto del popup quando si clicca su un comune
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                const normalizedComuneNome = feature.properties.normalizedName;
+                const base = getBaseForComune(normalizedComuneNome) || 'Non assegnata';
+                const selectedRisk = riskSelector.value;
+                // Assicurati di accedere correttamente al colore per la base
+                const riskColorName = riskColorsData[selectedRisk] ? (riskColorsData[selectedRisk][base] || 'N/A') : 'N/A';
+                const riskDisplayNameText = riskDisplayName[selectedRisk] || selectedRisk;
+
+                layer.bindPopup(`
+                    <b>Comune: ${feature.properties.name}</b><br>
+                    Base di Appartenenza: ${base}<br>
+                    Rischio "${riskDisplayNameText}": ${riskColorName.charAt(0).toUpperCase() + riskColorName.slice(1)}
+                `);
+            }
+        }
+
+        // Funzione per aggiornare la legenda dinamica
+        function updateLegend(colorsForSelectedRisk) {
+            currentRiskLegend.innerHTML = '<h4>Legenda Rischio Corrente:</h4>';
+
+            // Ordina le basi per un ordine consistente nella legenda
+            const sortedBases = Object.keys(configurazioneCriticità).sort((a, b) => {
+                // Ordine specifico per le basi (A1, A2, B, C, D, E1, E2)
+                const order = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'];
+                return order.indexOf(a) - order.indexOf(b);
+            });
+
+            // Aggiungi gli elementi della legenda per le basi che hanno un colore per il rischio selezionato
+            sortedBases.forEach(base => {
+                const colorName = colorsForSelectedRisk[base];
+                if (colorName) { // Mostra solo le basi che hanno un colore definito per il rischio corrente
+                    const hexColor = getHexColor(colorName);
+
+                    const legendItem = document.createElement('div');
+                    legendItem.className = 'legend-item';
+
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'legend-color-box';
+                    colorBox.style.backgroundColor = hexColor;
+
+                    const text = document.createElement('span');
+                    text.textContent = `Base ${base}: ${colorName.charAt(0).toUpperCase() + colorName.slice(1)}`;
+
+                    legendItem.appendChild(colorBox);
+                    legendItem.appendChild(text);
+                    currentRiskLegend.appendChild(legendItem);
+                }
+            });
+
+            // Aggiungi una voce di default per le aree non colorate/non mappate
+            const defaultItem = document.createElement('div');
+            defaultItem.className = 'legend-item';
+            const defaultColorBox = document.createElement('div');
+            defaultColorBox.className = 'legend-color-box';
+            defaultColorBox.style.backgroundColor = '#ccc';
+            const defaultText = document.createElement('span');
+            defaultText.textContent = `Base Non Mappata / Nessun Rischio`;
+            defaultItem.appendChild(defaultColorBox);
+            defaultItem.appendChild(defaultText);
+            currentRiskLegend.appendChild(defaultItem);
+        }
+
+        // Logica di Generazione del PDF
+        savePdfButton.addEventListener('click', function () {
+            console.log("Inizio generazione PDF...");
+
+            const selectedRisk = riskSelector.value;
+            const currentRiskBaseColors = riskColorsData[selectedRisk] || {};
+            const pdfSelectedRiskDisplayName = riskDisplayName[selectedRisk] || selectedRisk;
+
+            // Definisci gli stili specifici per il PDF (opacità piena)
+            const pdfStyleComune = (feature) => {
+                const normalizedComuneNome = feature.properties.normalizedName;
+                const base = getBaseForComune(normalizedComuneNome);
+                let fillColor = '#ccc'; // Default per il PDF
+
+                if (base && currentRiskBaseColors[base]) {
+                    fillColor = getHexColor(currentRiskBaseColors[base]);
+                }
+
+                return {
+                    fillColor: fillColor,
+                    weight: 1,
+                    opacity: 1,
+                    color: '#333',
+                    fillOpacity: 1 // Opacità piena per la cattura del PDF
+                };
+            };
+
+            // Applica temporaneamente gli stili PDF per la cattura dell'immagine
+            if (geoJsonLayer) {
+                geoJsonLayer.setStyle(pdfStyleComune);
+            }
+
+            // Forza il reflow (per assicurare che Leaflet abbia ridisegnato)
+            leafletMap.getContainer().style.display;
+
+            // Piccola attesa per il rendering della mappa con i nuovi stili
+            setTimeout(function () {
+                console.log("Chiamata leafletImage...");
+
+                leafletImage(leafletMap, function (err, canvas) {
+                    console.log("Callback di leafletImage eseguito.");
+
+                    if (err) {
+                        console.error("Errore in leafletImage:", err);
+                        return;
+                    }
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const { jsPDF } = window.jspdf;
+                    const pdf = new jsPDF('landscape'); // Formato orizzontale
+                    const imgWidth = pdf.internal.pageSize.getWidth() - 20; // Larghezza immagine (con margini)
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width; // Altezza proporzionale
+
+                    let currentY = 10; // Posizione Y iniziale per gli elementi
+
+                    // Aggiungi Titolo
+                    pdf.setFontSize(20);
+                    pdf.text(`Bollettino Criticità - Rischio: ${pdfSelectedRiskDisplayName}`, 10, currentY);
+                    currentY += 15;
+
+                    // Aggiungi l'immagine della mappa
+                    pdf.addImage(imgData, 'PNG', 10, currentY, imgWidth, imgHeight);
+                    currentY += imgHeight + 10;
+
+                    // Aggiungi il testo "Ultimo Aggiornamento"
+                    pdf.setFontSize(10);
+                    pdf.text(lastUpdatedElement.textContent, 10, currentY);
+                    currentY += 10;
+
+                    // Aggiungi Logo (in alto a destra)
+                    const logoImg = document.getElementById('region-logo');
+                    if (logoImg) {
+                        const logoData = logoImg.src;
+                        const logoPdfWidth = 40;
+                        const logoPdfHeight = (logoImg.naturalHeight * logoPdfWidth) / logoImg.naturalWidth;
+                        const pdfPageWidth = pdf.internal.pageSize.getWidth();
+                        pdf.addImage(logoData, 'PNG', pdfPageWidth - logoPdfWidth - 10, 10, logoPdfWidth, logoPdfHeight);
+                    }
+
+                    // Aggiungi Legenda per il rischio specifico (in basso a destra)
+                    let legendStartX = pdf.internal.pageSize.getWidth() - 80; // Posiziona la legenda a destra
+                    let legendY = 20; // Inizio legenda in alto, dopo il logo
+
+                    pdf.setFontSize(12);
+                    pdf.text('Legenda:', legendStartX, legendY);
+                    legendY += 5;
+
+                    // Ottieni le basi ordinate che hanno colori per il rischio corrente
+                    const sortedBasesForLegend = Object.keys(configurazioneCriticità).filter(base => currentRiskBaseColors[base]).sort((a, b) => {
+                           const order = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'];
+                           return order.indexOf(a) - order.indexOf(b);
+                    });
+
+                    sortedBasesForLegend.forEach((base) => {
+                        const colorName = currentRiskBaseColors[base];
+                        const hexColor = getHexColor(colorName);
+                        pdf.setFillColor(hexColor);
+                        pdf.rect(legendStartX, legendY + 2, 5, 5, 'F'); // Quadro colore
+                        pdf.setFontSize(10);
+                        pdf.text(`Base ${base}: ${colorName.charAt(0).toUpperCase() + colorName.slice(1)}`, legendStartX + 8, legendY + 6);
+                        legendY += 8;
+                    });
+                     // Aggiungi una voce di default per le aree non colorate
+                    pdf.setFillColor('#ccc');
+                    pdf.rect(legendStartX, legendY + 2, 5, 5, 'F');
+                    pdf.setFontSize(10);
+                    pdf.text('Base Non Mappata / Nessun Rischio', legendStartX + 8, legendY + 6);
+
+
+                    pdf.save(`bollettino_criticità_${pdfSelectedRiskDisplayName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+
+                    console.log("PDF generato e salvato.");
+
+                    // Ripristina gli stili originali della mappa (per la visualizzazione a schermo)
+                    if (geoJsonLayer) {
+                        geoJsonLayer.setStyle(function (feature) {
+                            return styleComune(feature, currentRiskBaseColors);
+                        });
+                    }
+                });
+            }, 1000); // Aumenta l'attesa a 1 secondo per il rendering
+        });
+
+        // Inizializza la mappa e i dati all'apertura della pagina
+        initializeMap();
+
     </script>
 
 </body>
