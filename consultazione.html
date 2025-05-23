@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Criticità per Comune - Basilicata</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+            /* Centra il contenuto orizzontalmente */
+            align-items: flex-start;
+            /* Allinea il contenuto in alto */
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        #controls-container,
+        #risk-info-container,
+        #current-risk-summary-container {
+            flex: 1;
+            min-width: 280px;
+            max-width: 380px; /* Aumentata leggermente la larghezza massima per contenere più info */
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 25px;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+
+        #leaflet-map {
+            flex: 3;
+            /* Occupa più spazio rispetto ai controlli */
+            min-width: 500px; /* Aumentato il min-width per la mappa */
+            height: 650px;
+            /* Aumenta l'altezza della mappa per una migliore visualizzazione */
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background-color: #e6e6e6; /* Colore di sfondo per la mappa */
+        }
+
+        h2 {
+            color: #2c3e50;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            text-align: center;
+        }
+
+        #comune-search-input {
+            width: calc(100% - 20px);
+            padding: 12px 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 17px;
+            box-sizing: border-box; /* Include padding e border nella larghezza */
+        }
+
+        #search-button {
+            padding: 12px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 17px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        #search-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-1px);
+        }
+
+        #search-button:active {
+            transform: translateY(0);
+        }
+
+        #current-comune-info {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #fcfcfc;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        #comune-name-display {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        #comune-criticity-display {
+            font-size: 1.3em;
+            color: #555;
+            text-align: center;
+        }
+
+        #info-message {
+            margin-top: 15px;
+            color: #d9534f; /* Rosso più morbido */
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.95em;
+        }
+
+        #region-logo {
+            width: 100%;
+            max-width: 250px;
+            height: auto;
+            margin-top: 30px;
+            align-self: center;
+            opacity: 0.85; /* Leggermente trasparente */
+        }
+
+        /* Stili per i popup di Leaflet (già presenti e corretti) */
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            font-size: 0.9em;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
+
+        /* Stili per la nuova sezione dei rischi */
+        #risk-info-container {
+            /* margin-top: 20px; */ /* Già gestito dal gap del body */
+            max-height: 650px;
+            overflow-y: auto;
+            box-sizing: border-box; /* Include padding e border */
+        }
+        
+        #risk-info-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        #risk-info-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        #risk-info-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        
+        #risk-info-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+
+        .risk-section {
+            background-color: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .risk-section h3 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.4em;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+
+        .risk-alert-status {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .alert-message {
+            color: #4a4a4a;
+            font-style: italic;
+            margin-bottom: 15px;
+            background-color: #fefefe;
+            border-left: 4px solid #007bff;
+            padding: 10px 15px;
+            border-radius: 5px;
+        }
+
+        .preparedness-actions h4 {
+            margin-top: 15px;
+            margin-bottom: 8px;
+            color: #444;
+            font-size: 1.2em;
+        }
+
+        .preparedness-actions ul {
+            list-style-type: none; /* Rimuove i bullet point di default */
+            margin-left: 0;
+            padding-left: 0;
+        }
+
+        .preparedness-actions li {
+            margin-bottom: 8px;
+            padding-left: 25px; /* Spazio per l'icona custom */
+            position: relative;
+            font-size: 0.95em;
+        }
+        .preparedness-actions li::before {
+            content: "\f00c"; /* Icona di checkmark da Font Awesome */
+            font-family: "Font Awesome 5 Free";
+            font-weight: 900; /* Richiesto per le icone solide */
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+
+        /* Colori per lo stato delle allerte */
+        .alert-green {
+            color: #28a745;
+        }
+
+        /* Verde */
+        .alert-yellow {
+            color: #ffc107;
+        }
+
+        /* Giallo */
+        .alert-orange {
+            color: #fd7e14;
+        }
+
+        /* Arancione */
+        .alert-red {
+            color: #dc3545;
+        }
+
+        /* Rosso */
+
+        /* Stili per la nuova sezione di riepilogo */
+        #current-risk-summary-container {
+            width: 100%;
+            max-width: calc(100% - 40px); /* Regola per i padding del body */
+            order: 4; /* Assicura che vada sotto gli altri elementi flex */
+            margin-top: 0; /* Già gestito dal gap del body */
+        }
+
+        #risk-summary-list {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 0;
+            list-style: none;
+        }
+
+        .risk-summary-item {
+            flex: 1;
+            min-width: 160px;
+            text-align: center;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            background-color: #fcfcfc;
+            box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .risk-summary-item h4 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            color: #333;
+            font-size: 1.2em;
+        }
+
+        .risk-summary-item .alert-status-small {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="controls-container">
+        <h2>Cerca il tuo Comune</h2>
+        <input type="text" id="comune-search-input" placeholder="Es: Potenza">
+        <button id="search-button">Cerca</button>
+
+        <div id="current-comune-info">
+            <p><span id="comune-name-display"></span></p>
+            <p><span id="comune-criticity-display"></span></p>
+            <p id="info-message" style="color: red;"></p>
+        </div>
+
+        <p id="last-updated" style="font-style: italic; color: #777; margin-top: 20px; text-align: center;"></p>
+
+        <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
+    </div>
+
+    <div id="leaflet-map"></div>
+
+    <div id="risk-info-container">
+        <h2>Rischi e Allerte del Comune</h2>
+        <div id="comune-risks-display">
+            <p>Seleziona un comune per visualizzare i rischi e le allerte.</p>
+        </div>
+    </div>
+
+    <div id="current-risk-summary-container">
+        <h2>Situazione Attuale dei Rischi</h2>
+        <ul id="risk-summary-list">
+            <li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>
+        </ul>
+    </div>
+
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration (IDENTICO ALLE ALTRE PAGINE)
+        const firebaseConfig = {
+            apiKey: "YOUR_FIREBASE_API_KEY", // <-- SOSTITUISCI CON LA TUA VERA CHIAVE API
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const comuniRef = database.ref('comuni_data'); // Riferimento aggiunto
+        const coloriRef = database.ref('colori');     // Riferimento aggiunto
+
+        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8); // Vista iniziale sulla Basilicata
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
+
+        // Elementi HTML per l'interazione e la visualizzazione
+        const comuneSearchInput = document.getElementById('comune-search-input');
+        const searchButton = document.getElementById('search-button');
+        const comuneNameDisplay = document.getElementById('comune-name-display');
+        const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
+        const infoMessage = document.getElementById('info-message');
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const comuneRisksDisplay = document.getElementById('comune-risks-display'); // Elemento per i rischi dettagliati
+        const riskSummaryList = document.getElementById('risk-summary-list'); // Nuovo elemento per il riepilogo
+
+        let geojsonDataGlobal = null; // Memorizza i dati GeoJSON una volta caricati
+        let criticitàMap = {};
+        let coloriBase = {};
+        let geoJsonLayerGroup = new L.LayerGroup().addTo(leafletMap); // Gruppo di layer per gestire i comuni
+        let policoroMarkers = new L.LayerGroup().addTo(leafletMap); // Gruppo di layer per i marker di Policoro
+
+
+        // Normalizzazione dei nomi dei comuni (funzione esistente, essenziale!)
+        function normalizeComuneName(nome) {
+            if (!nome) return "";
+            let normalized = nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return normalized;
+        }
+
+        // Funzione per ottenere il colore basato sulla criticità (dal tuo codice esistente)
+        function getHexColor(colorName) {
+            switch (colorName) {
+                case 'green':
+                    return '#28a745'; // Colore usato nel CSS
+                case 'yellow':
+                    return '#ffc107'; // Colore usato nel CSS
+                case 'orange':
+                    return '#fd7e14'; // Colore usato nel CSS
+                case 'red':
+                    return '#dc3545'; // Colore usato nel CSS
+                default:
+                    return '#ccc'; // Colore di default se non trovato
+            }
+        }
+
+        // Funzione per definire lo stile di un comune sulla mappa
+        function styleComune(feature) {
+            let normalizedComuneNome = feature.properties.normalizedName;
+            const criticità = criticitàMap[normalizedComuneNome];
+            const fillColor = coloriBase[criticità] || 'green'; // Ottieni il colore mappato o default verde
+
+            return {
+                fillColor: getHexColor(fillColor),
+                weight: 2, // Aumenta il bordo per visibilità
+                opacity: 1,
+                color: 'black', // Bordo nero
+                fillOpacity: 0.8 // Trasparenza per il riempimento
+            };
+        }
+
+        // Funzione per gestire i popup (adattata per visualizzare il nome e la criticità)
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                const normalizedComuneNome = feature.properties.normalizedName;
+                const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>Criticità Base: ${criticità}`);
+            }
+        }
+
+        // **NUOVO: Dati per i marker di Policoro (da database, simulati per ora)**
+        let comunePuntiMappa = {}; // Verrà popolato con i dati da Firebase
+
+        // Funzione per aggiungere i marker di Policoro
+        function addPolicoroMarkers() {
+            policoroMarkers.clearLayers(); // Pulisci i marker esistenti
+            const currentComuneData = comunePuntiMappa["policoro"]; // Prendi i dati dei punti mappa per Policoro
+            
+            if (currentComuneData && Array.isArray(currentComuneData) && currentComuneData.length > 0) {
+                currentComuneData.forEach(punto => {
+                    if (punto.lat && punto.lon && !isNaN(punto.lat) && !isNaN(punto.lon)) {
+                        const latLng = [punto.lat, punto.lon];
+                        L.marker(latLng).addTo(policoroMarkers)
+                            .bindPopup(`<strong><span class="math-inline">\{punto\.tipo \|\| 'Punto di Interesse'\}</strong\><br\></span>{punto.nome || 'N/D'}<br><span class="math-inline">\{punto\.ubicazione \|\| ''\}<br\></span>{punto.note || ''}`);
+                    }
+                });
+            }
+        }
+
+        // Funzione per rimuovere i marker di Policoro
+        function removePolicoroMarkers() {
+            policoroMarkers.clearLayers();
+        }
+
+
+        // Carica dati GeoJSON e colori Firebase all'avvio
+        Promise.all([
+            fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
+            coloriRef.once('value'),
+            comuniRef.once('value') // Aggiungi la lettura dei dati dei comuni per i punti mappa
+        ]).then(([geojsonData, coloriSnapshot, comuniSnapshot]) => {
+            geojsonDataGlobal = geojsonData; // Memorizza i dati GeoJSON globalmente
+
+            // Normalizza i nomi dei comuni nel GeoJSON
+            geojsonDataGlobal.features.forEach(feature => {
+                if (feature.properties && feature.properties.name) {
+                    feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
+                }
+            });
+
+            if (coloriSnapshot.exists()) {
+                const datiColori = coloriSnapshot.val();
+                coloriBase = datiColori.coloriBase || {};
+                const timestamp = new Date(datiColori.dataCreazione);
+                lastUpdatedElement.textContent = `Dati aggiornati il: ${timestamp.toLocaleString()}`;
+
+                // Configurazione delle criticità (identica a quella esistente)
+                const configurazioneCriticità = {
+                    'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
+                    'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
+                    'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
+                    'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant'Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Marsico Nuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d'Agri", "San Paolo Albanese", "San Severino Lucano", "Sant'Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
+                    'D': ["Nemoli", "Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
+                    'E1': ["Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi", "Montalbano Jonico", "Craco"],
+                    'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
+                };
+
+                // Costruisci la mappa delle criticità
+                for (const base in configurazioneCriticità) {
+                    const comuni = configurazioneCriticità[base];
+                    comuni.forEach(comune => {
+                        criticitàMap[normalizeComuneName(comune)] = base;
+                    });
+                }
+            } else {
+                lastUpdatedElement.textContent = 'Nessun dato colore disponibile da Firebase.';
+                console.warn("Nessun dato colore trovato in Firebase.");
+            }
+
+            // Popola i dati dei punti mappa per i comuni
+            if (comuniSnapshot.exists()) {
+                const allComuniData = comuniSnapshot.val();
+                for (const normalizedComuneName in allComuniData) {
+                    if (allComuniData[normalizedComuneName].puntiMappa) {
+                        comunePuntiMappa[normalizedComuneName] = allComuniData[normalizedComuneName].puntiMappa;
+                    }
+                }
+                console.log("Dati punti mappa caricati:", comunePuntiMappa);
+            } else {
+                console.warn("Nessun dato comuni_data trovato in Firebase.");
+            }
+
+        }).catch(error => {
+            console.error("Errore nel caricamento dei dati iniziali:", error);
+            infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+        });
+
+
+        // Funzione per filtrare la mappa e aggiornare le informazioni sui rischi
+        function filterMap() {
+            const searchTerm = normalizeComuneName(comuneSearchInput.value);
+            infoMessage.textContent = ''; // Resetta il messaggio di errore
+
+            // Pulisci i layer esistenti dalla mappa all'inizio di ogni ricerca
+            geoJsonLayerGroup.clearLayers();
+            removePolicoroMarkers(); // Rimuovi i marker di Policoro se presenti
+
+            // Reset delle sezioni informazioni a un messaggio iniziale generico
+            comuneNameDisplay.textContent = '';
+            comuneCriticityDisplay.textContent = '';
+            comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
+            riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
+
+
+            if (!searchTerm) {
+                infoMessage.textContent = 'Inserisci il nome di un comune per iniziare la ricerca.';
+                return; // Esci dalla funzione se la ricerca è vuota
+            }
+
+            const foundFeature = geojsonDataGlobal.features.find(feature =>
+                feature.properties.normalizedName === searchTerm
+            );
+
+            if (foundFeature) {
+                const comuneLayer = L.geoJSON(foundFeature, {
+                    style: styleComune,
+                    onEachFeature: onEachFeature // Aggiunto onEachFeature per i popup
+                }).addTo(geoJsonLayerGroup); // Aggiungi questo layer al tuo LayerGroup
+
+                leafletMap.fitBounds(comuneLayer.getBounds());
+
+                comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
+                const criticitàComune = criticitàMap[searchTerm];
+                comuneCriticityDisplay.textContent = `Criticità di Base: ${criticitàComune || 'Non disponibile'}`;
+
+                // Carica i dati specifici del comune da Firebase per la sezione rischi
+                comuniRef.child(searchTerm).once('value')
+                    .then(snapshot => {
+                        const comuneData = snapshot.val();
+                        if (comuneData) {
+                            displayComuneRisks(searchTerm, comuneData);
+                            displayCurrentRiskSummary(searchTerm, comuneData);
+                        } else {
+                            comuneRisksDisplay.innerHTML = '<p>Nessun dato di rischio specifico disponibile per questo comune.</p>';
+                            riskSummaryList.innerHTML = '<li>Nessun riepilogo rischi disponibile per questo comune.</li>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Errore nel caricamento dei dati del comune da Firebase:", error);
+                        infoMessage.textContent = 'Errore nel caricamento dettagli rischi. Riprova.';
+                    });
+
+                // Aggiungi i marker dei punti mappa se presenti per il comune trovato
+                if (comunePuntiMappa[searchTerm]) {
+                    addComuneMarkers(searchTerm);
+                } else {
+                    removeComuneMarkers(); // Assicurati che non ci siano marker di altri comuni
+                }
+
+            } else {
+                infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
+                comuneNameDisplay.textContent = '';
+                comuneCriticityDisplay.textContent = '';
+                removePolicoroMarkers(); // Assicurati di rimuovere i marker di Policoro se un altro comune non è trovato
+                removeComuneMarkers(); // Rimuovi eventuali marker di altri comuni
+                comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
+                riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
+            }
+        }
+
+        // Funzione per ottenere il nome visualizzato del rischio da quello normalizzato
+        function getRiskDisplayNameFromNormalized(normalizedRiskType) {
+            // Lista dei rischi predefiniti (deve essere identica a quella in admin.html)
+            const predefinedRisks = [
+                "Rischio idraulico", "Rischio diga", "Rischio idrogeologico",
+                "Rischio incendi", "Rischio Sismico", "Rischio neve",
+                "Rischio Industriale", "Rischio Maremoto", "Rischio ambientale"
+            ];
+            // Trova il rischio originale confrontando la versione normalizzata
+            const foundRisk = predefinedRisks.find(risk => normalizeComuneName(risk) === normalizedRiskType);
+            // Se trovato, ritorna il nome originale, altrimenti prova a "de-normalizzare" o ritorna il normalizzato
+            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1).replace(/([A-Z])/g, ' $1').trim();
+        }
+
+        // Funzione per visualizzare i rischi dettagliati di un comune (aggiornata per Firebase)
+        function displayComuneRisks(normalizedComuneName, comuneData) {
+            comuneRisksDisplay.innerHTML = ''; // Pulisci il contenuto precedente
+
+            if (comuneData && comuneData.rischi) {
+                let hasRisksToDisplay = false;
+                for (const riskType in comuneData.rischi) {
+                    if (riskType !== 'generale' && comuneData.rischi[riskType] && typeof comuneData.rischi[riskType] === 'object') {
+                        hasRisksToDisplay = true;
+                        const risk = comuneData.rischi[riskType];
+                        const riskSection = document.createElement('div');
+                        riskSection.classList.add('risk-section');
+
+                        const displayName = getRiskDisplayNameFromNormalized(riskType);
+                        const alertStatusClass = `alert-${(risk.alertStatus || 'green').toLowerCase()}`; // Assicurati che sia lowercase
+
+                        riskSection.innerHTML = `
+                            <h3><span class="math-inline">\{displayName\}</h3\>
+<p class\="risk\-alert\-status"\>Stato Allerta\: <span class\="</span>{alertStatusClass}"><span class="math-inline">\{risk\.alertStatus \|\| 'N/D'\}</span\></p\>
+<p class\="alert\-message"\></span>{risk.alertMessage || 'Nessuna allerta specifica per questo rischio.'}</p>
+                            <div class="preparedness-actions">
+                                ${risk.guidelines && risk.guidelines.before && risk.guidelines.before.length > 0 ? `
+                                    <h4>Prima:</h4>
+                                    <ul>${risk.guidelines.before.map(item => `<li>${item}</li>`).join('')}</ul>
+                                ` : ''}
+                                ${risk.guidelines && risk.guidelines.during && risk.guidelines.during.length > 0 ? `
+                                    <h4>Durante:</h4>
+                                    <ul>${risk.guidelines.during.map(item => `<li>${item}</li>`).join('')}</ul>
+                                ` : ''}
+                                ${risk.guidelines && risk.guidelines.after && risk.guidelines.after.length > 0 ? `
+                                    <h4>Dopo:</h4>
+                                    <ul>${risk.guidelines.after.map(item => `<li>${item}</li>`).join('')}</ul>
+                                ` : ''}
+                            </div>
+                        `;
+                        comuneRisksDisplay.appendChild(riskSection);
+                    }
+                }
+                if (!hasRisksToDisplay) {
+                    comuneRisksDisplay.innerHTML = '<p>Nessun rischio specifico dettagliato disponibile per questo comune.</p>';
+                }
+            } else {
+                comuneRisksDisplay.innerHTML = '<p>Nessun dato di rischio disponibile per questo comune.</p>';
+            }
+        }
+
+
+        // Funzione per visualizzare il riepilogo dei rischi (aggiornata per Firebase)
+        function displayCurrentRiskSummary(normalizedComuneName, comuneData) {
+            riskSummaryList.innerHTML = ''; // Pulisci il contenuto precedente
+
+            if (comuneData && comuneData.rischi) {
+                let hasSummaryToDisplay = false;
+                for (const riskType in comuneData.rischi) {
+                    if (riskType !== 'generale' && comuneData.rischi[riskType] && typeof comuneData.rischi[riskType] === 'object') {
+                        hasSummaryToDisplay = true;
+                        const risk = comuneData.rischi[riskType];
+                        const riskSummaryItem = document.createElement('li');
+                        riskSummaryItem.classList.add('risk-summary-item');
+                        const displayName = getRiskDisplayNameFromNormalized(riskType);
+                        const alertStatusClass = `alert-${(risk.alertStatus || 'green').toLowerCase()}`;
+
+                        riskSummaryItem.innerHTML = `
+                            <h4>${displayName}</h4>
+                            <p class="alert-status-small <span class="math-inline">\{alertStatusClass\}"\></span>{risk.alertStatus || 'N/D'}</p>
+                        `;
+                        riskSummaryList.appendChild(riskSummaryItem);
+                    }
+                }
+                if (!hasSummaryToDisplay) {
+                    riskSummaryList.innerHTML = '<li>Nessun riepilogo rischi disponibile per questo comune.</li>';
+                }
+            } else {
+                riskSummaryList.innerHTML = '<li>Nessun riepilogo rischi disponibile per questo comune.</li>';
+            }
+        }
+
+        // Layer Group per i marker dinamici del comune
+        let comuneMarkers = new L.LayerGroup().addTo(leafletMap);
+
+        // Funzione per aggiungere i marker del comune corrente
+        function addComuneMarkers(normalizedComuneName) {
+            comuneMarkers.clearLayers(); // Pulisci i marker precedenti
+            const punti = comunePuntiMappa[normalizedComuneName];
+
+            if (punti && punti.length > 0) {
+                punti.forEach(punto => {
+                    if (punto.lat && punto.lon && !isNaN(punto.lat) && !isNaN(punto.lon)) {
+                        const latLng = [punto.lat, punto.lon
