@@ -4,311 +4,421 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="page-title">Criticità del Comune</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <title>Pannello di Amministrazione Comuni</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
-            font-family: sans-serif;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            padding: 20px;
-            justify-content: center;
-            align-items: flex-start;
-            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+            color: #333;
         }
 
-        #main-content {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            width: 100%;
-            max-width: 1200px;
-        }
-
-        #info-panel {
-            flex: 1;
-            min-width: 300px;
-            max-width: 350px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            padding: 25px;
-            border: 1px solid #ddd;
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            background-color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        #map-container {
-            flex: 2;
-            min-width: 450px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
         }
 
-        #leaflet-map {
-            height: 600px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-
-        h1,
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        p {
-            color: #555;
-            line-height: 1.6;
-        }
-
-        strong {
-            color: #000;
-        }
-
-        #comune-name-display {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #0056b3;
-            margin-bottom: 5px;
-        }
-
-        #comune-criticity-display {
-            font-size: 1.4em;
-            font-weight: bold;
-            color: #dc3545;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #eee;
-        }
-
-        #info-message {
-            color: red;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        #last-updated {
-            font-style: italic;
-            color: #777;
-            margin-top: 10px;
-            font-size: 0.9em;
-        }
-
-        #region-logo {
-            width: 100%;
-            max-width: 180px;
-            height: auto;
-            margin-top: auto;
-            align-self: center;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        /* Stili per i popup di Leaflet */
-        .leaflet-popup-content-wrapper {
-            background-color: white;
-            color: #333;
-            border-radius: 5px;
-            padding: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
-
-        .leaflet-popup-content {
-            margin: 0;
-        }
-
-        .leaflet-popup-tip-container {
-            width: 20px;
-            height: 10px;
-        }
-
-        .leaflet-popup-tip {
-            background: white;
-            border: 1px solid #aaa;
-            border-top-color: transparent;
-            border-left-color: transparent;
-        }
-
-        /* Stili per le sezioni informative aggiuntive */
-        .info-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-
-        .info-section h3 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-
-        ul {
-            list-style-type: disc;
-            margin-left: 20px;
-            color: #666;
-        }
-
-        ul li {
-            margin-bottom: 5px;
-        }
-
-        /* Stili per il pulsante di navigazione */
-        #navigation-button {
-            padding: 10px 15px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1em;
-            transition: background-color 0.3s ease;
-            margin-top: 15px;
-            align-self: center;
-        }
-
-        #navigation-button:hover {
-            background-color: #218838;
-        }
-
-        /* Nuovo stile per il selettore dei rischi */
-        #risk-selector-container {
+        .form-group {
             margin-bottom: 15px;
         }
 
-        #risk-selector-container label {
+        label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: bold;
-            color: #333;
+            color: #555;
         }
 
-        #risk-selector {
-            width: 100%;
-            padding: 8px;
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: calc(100% - 22px);
+            padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        #comune-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            max-height: 300px; /* Limita altezza */
+            overflow-y: auto; /* Aggiunge scroll */
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+
+        #comune-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        #comune-list li:last-child {
+            border-bottom: none;
+        }
+
+        #comune-list li:hover {
             background-color: #f9f9f9;
         }
 
-        /* Stili per la legenda dei rischi (preview) */
-        #risk-legend {
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            margin-top: 20px;
-            min-width: 450px;
-            max-width: 700px;
+        #comune-list li.selected {
+            background-color: #e0f2f7;
+            font-weight: bold;
+            border-left: 5px solid #007bff;
+            padding-left: 10px;
         }
 
-        #risk-legend h3 {
-            margin-top: 0;
-            color: #333;
-            font-size: 1.2em;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+        #search-input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* Stili per la sezione dei rischi */
+        .rischi-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+            color: #444;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+            width: auto;
+            transform: scale(1.1);
+        }
+
+        /* Stili per la sezione dei punti mappa */
+        .punti-mappa-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .punto-mappa-item {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .punto-mappa-item .form-group {
             margin-bottom: 10px;
         }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
+        .punto-mappa-item .form-group label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .punto-mappa-item .form-group input,
+        .punto-mappa-item .form-group select,
+        .punto-mappa-item .form-group textarea {
+            width: calc(100% - 18px); /* Adjust for padding/border */
+            padding: 8px;
+            font-size: 0.9em;
+        }
+
+        .remove-punto-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
             cursor: pointer;
-            padding: 5px;
-            border-radius: 5px;
-            transition: background-color 0.2s ease;
+            font-size: 0.8em;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            transition: background-color 0.3s ease;
         }
 
-        .legend-item:hover {
-            background-color: #f0f0f0;
+        .remove-punto-btn:hover {
+            background-color: #c82333;
         }
 
-        .legend-color-box {
-            width: 25px;
-            height: 25px;
-            border: 1px solid #888;
-            margin-right: 10px;
-            border-radius: 3px;
+        .add-punto-btn {
+            background-color: #28a745;
+            margin-top: 15px;
+            display: block; /* For full width button */
+            width: 100%;
         }
 
-        .legend-text {
-            font-size: 1em;
-            color: #555;
+        .add-punto-btn:hover {
+            background-color: #218838;
+        }
+
+        .geocode-btn {
+            background-color: #17a2b8;
+            margin-left: 10px;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            vertical-align: middle;
+            display: inline-block;
+            width: auto; /* Allow button to size naturally */
+        }
+        .geocode-btn:hover {
+            background-color: #138496;
+        }
+
+        .lat-lon-group {
+            display: flex;
+            align-items: flex-end; /* Align inputs and button at the bottom */
+            gap: 10px;
+        }
+        .lat-lon-group > div {
             flex-grow: 1;
         }
-
-        .legend-item.active {
-            background-color: #e0f2f7;
-            /* Sfondo leggermente colorato per l'elemento attivo */
-            border: 1px solid #007bff;
-            /* Bordo più evidente per l'elemento selezionato */
+        .lat-lon-group input {
+            width: 100%;
+        }
+        .lat-lon-group button {
+            flex-shrink: 0;
+            margin-bottom: 1px; /* Visual alignment */
         }
 
-        .legend-item.active .legend-color-box {
-            border: 2px solid #0056b3;
-            /* Bordo più evidente per l'elemento selezionato */
-        }
     </style>
 </head>
 
 <body>
+    <div class="container">
+        <h1>Pannello di Amministrazione Comuni</h1>
 
-    <div id="main-content">
-        <div id="info-panel">
-            <h1 id="comune-name-display"></h1>
-            <p id="comune-criticity-display"></p>
-            <p id="info-message"></p>
-            <p id="last-updated"></p>
-
-            <div class="info-section" id="risk-selector-container">
-                <label for="risk-selector">Seleziona Tipo di Rischio:</label>
-                <select id="risk-selector">
-                </select>
-            </div>
-
-            <div class="info-section">
-                <h2>Informazioni sul Rischio Territoriale</h2>
-                <p id="risk-info">Caricamento informazioni sui rischi...</p>
-            </div>
-
-            <div class="info-section">
-                <h2>Aree di Accoglienza / Punti di Raccolta</h2>
-                <p id="shelter-info">Caricamento informazioni sulle aree di accoglienza...</p>
-            </div>
-
-            <button id="navigation-button">
-                Naviga all'area di accoglienza più vicina
-            </button>
-
-            <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
+        <div class="form-group">
+            <label for="comune-select">Seleziona Comune:</label>
+            <input type="text" id="search-input" placeholder="Cerca comune...">
+            <ul id="comune-list">
+                </ul>
         </div>
 
-        <div id="map-container">
-            <div id="leaflet-map"></div>
-            <div id="risk-legend">
-                <h3>Legenda Rischi del Comune</h3>
-                <div id="legend-items-container">
+        <div id="comune-details-form" style="display: none;">
+            <h2>Dettagli per <span id="current-comune-name"></span></h2>
+
+            <div class="form-group">
+                <label for="criticity-select">Criticità Base:</label>
+                <select id="criticity-select">
+                    </select>
+            </div>
+
+            <div class="rischi-container">
+                <h3>Informazioni sui Rischi Specifici</h3>
+                <div class="form-group">
+                    <label for="rischio-generale-input">Rischio Generale:</label>
+                    <textarea id="rischio-generale-input" placeholder="Descrizione generale dei rischi"></textarea>
                 </div>
+                <div class="checkbox-group" id="risk-checkboxes">
+                    </div>
+                <div id="risk-descriptions-container">
+                    </div>
             </div>
+
+            <div class="punti-mappa-container">
+                <h3>Aree di Emergenza / Punti di Raccolta</h3>
+                <div id="punti-mappa-list">
+                    </div>
+                <button type="button" class="add-punto-btn" id="add-punto-button"><i class="fas fa-plus-circle"></i> Aggiungi Punto Mappa</button>
+            </div>
+
+
+            <div class="form-group">
+                <label for="shelter-info-textarea">Info Aree di Accoglienza / Punti di Raccolta (Testo Libero):</label>
+                <textarea id="shelter-info-textarea"
+                    placeholder="Descrizione generale delle aree di accoglienza e punti di raccolta"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button type="button" id="save-button"><i class="fas fa-save"></i> Salva Dati</button>
+                <button type="button" id="delete-button" style="background-color: #dc3545;"><i class="fas fa-trash"></i> Elimina Dati Comune</button>
+            </div>
+
+            <div class="message" id="response-message"></div>
         </div>
+
+        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+
+        <h2>Gestione Colori Base e Timestamp</h2>
+        <div class="form-group">
+            <label for="color-a1">Colore A1:</label>
+            <select id="color-a1">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-a2">Colore A2:</label>
+            <select id="color-a2">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-b">Colore B:</label>
+            <select id="color-b">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-c">Colore C:</label>
+            <select id="color-c">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-d">Colore D:</label>
+            <select id="color-d">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-e1">Colore E1:</label>
+            <select id="color-e1">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-e2">Colore E2:</label>
+            <select id="color-e2">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="button-group">
+            <button type="button" id="save-colors-button"><i class="fas fa-palette"></i> Salva Colori</button>
+            <button type="button" id="update-timestamp-button"><i class="fas fa-clock"></i> Aggiorna Timestamp Dati</button>
+        </div>
+        <div class="message" id="colors-response-message"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
     <script>
         // Your web app's Firebase configuration
         // **ATTENZIONE**: Sostituisci "YOUR_FIREBASE_API_KEY" con la tua VERA API Key di Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28", // <-- SOSTITUISCI CON LA TUA CHIAVE API (la stessa di admin.html)
+            apiKey: "YOUR_FIREBASE_API_KEY", // <-- SOSTITUISCI CON LA TUA CHIAVE API
             authDomain: "bollettinoregionale.firebaseapp.com",
             projectId: "bollettinoregionale",
             databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
@@ -321,475 +431,468 @@
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const comuniRef = database.ref('comuni_data'); // Riferimento al nodo dei dati dei comuni
-        const coloriRef = database.ref('colori'); // Riferimento al nodo dei colori
-
-        const leafletMap = L.map('leaflet-map');
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(leafletMap);
+        const comuniRef = database.ref('comuni_data');
+        const coloriRef = database.ref('colori');
 
         // Elementi HTML
-        const pageTitle = document.getElementById('page-title');
-        const comuneNameDisplay = document.getElementById('comune-name-display');
-        const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
-        const infoMessage = document.getElementById('info-message');
-        const lastUpdatedElement = document.getElementById('last-updated');
-        const riskInfoElement = document.getElementById('risk-info');
-        const shelterInfoElement = document.getElementById('shelter-info');
-        const navigationButton = document.getElementById('navigation-button');
-        const riskSelector = document.getElementById('risk-selector');
-        const riskLegendContainer = document.getElementById('legend-items-container');
+        const searchInput = document.getElementById('search-input');
+        const comuniList = document.getElementById('comune-list');
+        const comuneDetailsForm = document.getElementById('comune-details-form');
+        const currentComuneName = document.getElementById('current-comune-name');
+        const criticitySelect = document.getElementById('criticity-select');
+        const rischioGeneraleInput = document.getElementById('rischio-generale-input');
+        const riskCheckboxesContainer = document.getElementById('risk-checkboxes');
+        const riskDescriptionsContainer = document.getElementById('risk-descriptions-container');
+        const shelterInfoTextarea = document.getElementById('shelter-info-textarea');
+        const saveButton = document.getElementById('save-button');
+        const deleteButton = document.getElementById('delete-button');
+        const responseMessage = document.getElementById('response-message');
+        const saveColorsButton = document.getElementById('save-colors-button');
+        const updateTimestampButton = document.getElementById('update-timestamp-button');
+        const colorsResponseMessage = document.getElementById('colors-response-message');
+        const puntiMappaList = document.getElementById('punti-mappa-list');
+        const addPuntoButton = document.getElementById('add-punto-button');
 
-        let geojsonDataGlobal = null;
-        let criticitàMap = {}; // Mappa dei comuni normalizzati alle loro criticità (es. 'A1', 'B')
-        let coloriBase = {}; // Mappa delle criticità ai nomi dei colori (es. 'A1' -> 'green')
-        let currentComuneNormalizedName = null;
-        let currentComuneFeature = null; // Memorizza la feature GeoJSON del comune corrente
-        let currentComuneFirebaseData = null; // NUOVO: Dati del comune corrente da Firebase
 
-        // Layer per i controlli e la visualizzazione
-        let baseLayers = {};
-        let overlays = {};
-        let comuneOutlineLayer = null; // Layer per il bordo del comune
-        let criticitàFillLayer = null; // Layer per il riempimento "base" del comune
-        let emergencyMarkersLayer = new L.LayerGroup(); // Layer per i marker di emergenza/accoglienza
-        let riskSpecificFillLayer = new L.LayerGroup(); // Layer per il riempimento specifico del rischio
+        let allComuni = []; // Array per memorizzare tutti i comuni dal GeoJSON
+        let selectedComune = null; // Il comune attualmente selezionato
 
-        // Normalizzazione dei nomi dei comuni: rimuove accenti, rende minuscolo, rimuove spazi extra
+        // Nuova lista di rischi predefiniti
+        const predefinedRisks = [
+            "Rischio idraulico",
+            "Rischio diga",
+            "Rischio idrogeologico",
+            "Rischio incendi",
+            "Rischio Sismico",
+            "Rischio neve",
+            "Rischio Industriale",
+            "Rischio Maremoto",
+            "Rischio ambientale"
+        ];
+
+        // Tipi di aree predefiniti per i punti mappa
+        const predefinedAreaTypes = [
+            "Area di attesa",
+            "Area di accoglienza",
+            "Area di ammassamento",
+            "Edifici strategici",
+            "Punti critici"
+        ];
+
+        // Funzione di normalizzazione (identica a quella usata nella pagina di visualizzazione)
         function normalizeComuneName(nome) {
             if (!nome) return "";
             return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
-        // Funzione per ottenere il colore esadecimale dal nome del colore
-        function getHexColor(colorName) {
-            switch (colorName.toLowerCase()) { // Assicurati che il nome sia minuscolo
-                case 'green': return '#008000';
-                case 'yellow': return '#FFFF00';
-                case 'orange': return '#FFA500';
-                case 'red': return '#FF0000';
-                case 'blue': return '#0000FF';
-                case 'purple': return '#800080';
-                case 'brown': return '#A52A2A';
-                default:
-                    console.warn(`Colore non riconosciuto: ${colorName}. Usando grigio di default.`);
-                    return '#ccc'; // Grigio di default
+        // Funzione per mostrare messaggi
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message ${type}`;
+            setTimeout(() => {
+                element.textContent = '';
+                element.className = 'message';
+            }, 5000);
+        }
+
+        // --- Gestione Caricamento e Visualizzazione Comuni ---
+
+        // Carica la lista dei comuni dal GeoJSON e i dati da Firebase all'avvio
+        async function loadInitialData() {
+            try {
+                // Carica il GeoJSON
+                const response = await fetch('limits_R_17_municipalities.geojson');
+                const geojsonData = await response.json();
+                allComuni = geojsonData.features.map(feature => ({
+                    originalName: feature.properties.name,
+                    normalizedName: normalizeComuneName(feature.properties.name)
+                })).sort((a, b) => a.originalName.localeCompare(b.originalName)); // Ordina alfabeticamente
+
+                populateComuneList(allComuni);
+
+                // Carica le criticità e i colori (dalla configurazione dell'admin)
+                await loadCriticityOptions();
+                await loadColorSettings();
+                await loadPredefinedRisksCheckboxes(); // Carica le checkbox dei rischi
+            } catch (error) {
+                console.error("Errore nel caricamento dati iniziali:", error);
+                showMessage(responseMessage, "Errore nel caricamento dei dati iniziali.", "error");
             }
         }
 
-        // Funzione per definire lo stile di un comune sulla mappa (solo bordo)
-        function styleComuneOutline(feature) {
-            return {
-                fillColor: 'transparent',
-                weight: 3,
-                opacity: 1,
-                color: 'black',
-                fillOpacity: 0
-            };
-        }
-
-        // Funzione per definire lo stile del riempimento di criticità (colore della base generale del comune)
-        function styleCriticitàFill(feature) {
-            let normalizedComuneNome = feature.properties.normalizedName;
-            const criticità = criticitàMap[normalizedComuneNome];
-            const fillColorName = coloriBase[criticità]; // Ottieni il nome del colore (es. 'green')
-            const hexColor = getHexColor(fillColorName); // Ottieni il codice esadecimale
-
-            console.log(`[styleCriticitàFill] Comune: ${feature.properties.name}, Criticità: ${criticità}, Nome Colore: ${fillColorName}, Colore Hex: ${hexColor}`);
-
-            return {
-                fillColor: hexColor,
-                weight: 0, // Nessun bordo visibile per il riempimento
-                opacity: 0, // Inizialmente trasparente per il bordo del riempimento
-                color: 'transparent',
-                fillOpacity: 0.9 // Opacità del riempimento
-            };
-        }
-
-        // Funzione per definire lo stile del riempimento per un rischio specifico (usando il colore della base generale)
-        function styleSpecificRiskFill(feature) {
-            // Per la logica attuale, i rischi specifici usano lo stesso colore della criticità generale del comune.
-            // Se in futuro avrai criticità/colori specifici per ogni tipo di rischio, questa funzione andrà modificata.
-            let normalizedComuneNome = feature.properties.normalizedName;
-            const criticità = criticitàMap[normalizedComuneNome];
-            const fillColorName = coloriBase[criticità];
-            const hexColor = getHexColor(fillColorName);
-
-            console.log(`[styleSpecificRiskFill] Comune: ${feature.properties.name}, Criticità: ${criticità}, Nome Colore: ${fillColorName}, Colore Hex: ${hexColor}`);
-
-            return {
-                fillColor: hexColor,
-                weight: 0,
-                opacity: 0,
-                color: 'transparent',
-                fillOpacity: 0.9
-            };
-        }
-
-        // Funzione per gestire i popup
-        function onEachFeature(feature, layer) {
-            if (feature.properties && feature.properties.name) {
-                const normalizedComuneNome = feature.properties.normalizedName;
-                const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
-                layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
-            }
-        }
-
-        // Funzione per recuperare il nome del comune dall'URL
-        function getComuneFromUrl() {
-            const params = new URLSearchParams(window.location.search);
-            const comune = params.get('comune');
-            return comune ? decodeURIComponent(comune) : null;
-        }
-
-        // Definisci le icone personalizzate per i marker
-        const shelterIcon = L.icon({
-            iconUrl: 'ico/cluster_shelter_32px_icon_bluebox.png', // Assicurati che il percorso sia corretto
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32],
-            shadowUrl: 'ico/marker-shadow.png',
-            shadowSize: [41, 41]
-        });
-
-        const emergencyIcon = L.icon({
-            iconUrl: 'ico/disaster_earthquake_32px_icon_bluebox.png', // Assicurati che il percorso sia corretto
-            iconSize: [32, 32],
-            iconAnchor: [16, 32],
-            popupAnchor: [0, -32],
-            shadowUrl: 'ico/marker-shadow.png',
-            shadowSize: [41, 41]
-        });
-
-        // Carica dati GeoJSON e tutti i dati dei comuni e colori da Firebase all'avvio
-        Promise.all([
-            fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
-            coloriRef.once('value'), // Carica i colori base
-            comuniRef.once('value') // Carica tutti i dati dei comuni
-        ]).then(([geojsonData, coloriSnapshot, comuniDataSnapshot]) => {
-            geojsonDataGlobal = geojsonData;
-
-            // Normalizza i nomi dei comuni nel GeoJSON
-            geojsonDataGlobal.features.forEach(feature => {
-                if (feature.properties && feature.properties.name) {
-                    feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
-                }
+        function populateComuneList(comuniToDisplay) {
+            comuniList.innerHTML = '';
+            comuniToDisplay.forEach(comune => {
+                const li = document.createElement('li');
+                li.textContent = comune.originalName;
+                li.dataset.normalizedName = comune.normalizedName;
+                li.addEventListener('click', () => selectComune(comune));
+                comuniList.appendChild(li);
             });
-
-            if (coloriSnapshot.exists()) {
-                const datiColori = coloriSnapshot.val();
-                coloriBase = datiColori.coloriBase || {};
-                const timestamp = new Date(datiColori.dataCreazione);
-                lastUpdatedElement.textContent = `Dati colori aggiornati il: ${timestamp.toLocaleString()}`;
-            } else {
-                lastUpdatedElement.textContent = 'Nessun dato colore disponibile da Firebase.';
-                console.warn("Nessun dato colore trovato in Firebase.");
-            }
-
-            // Processa i dati dei comuni caricati da Firebase
-            if (comuniDataSnapshot.exists()) {
-                window.allComuniFirebaseData = comuniDataSnapshot.val(); // Rendi accessibile globalmente
-                console.log("Dati di tutti i comuni da Firebase:", window.allComuniFirebaseData);
-
-                // Popola la criticitàMap dai dati di Firebase
-                for (const normalizedName in window.allComuniFirebaseData) {
-                    criticitàMap[normalizedName] = window.allComuniFirebaseData[normalizedName].criticitàBase || 'Non disponibile';
-                }
-                console.log("Criticità Map popolata da Firebase:", criticitàMap);
-
-                const targetComuneNome = getComuneFromUrl();
-                if (targetComuneNome) {
-                    displayComuneInfo(targetComuneNome);
-                } else {
-                    infoMessage.textContent = "Nessun comune specificato nell'URL. Utilizza '?comune=NomeComune'.";
-                    comuneNameDisplay.textContent = "Comune non specificato";
-                    comuneCriticityDisplay.textContent = "";
-                    riskInfoElement.textContent = "Nessuna informazione disponibile.";
-                    shelterInfoElement.textContent = "Nessuna informazione disponibile.";
-                    leafletMap.setView([40.6393, 15.8054], 8);
-                    document.getElementById('risk-selector-container').style.display = 'none';
-                    document.getElementById('risk-legend').style.display = 'none';
-                    navigationButton.style.display = 'none';
-                }
-
-            } else {
-                infoMessage.textContent = 'Nessun dato dei comuni disponibile da Firebase.';
-                console.warn("Nessun dato dei comuni trovato in Firebase.");
-            }
-        }).catch(error => {
-            console.error("Errore nel caricamento dei dati:", error);
-            infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
-        });
-
-
-        // Funzione per popolare il selettore dei rischi (aggiornata per usare currentComuneFirebaseData)
-        function populateRiskSelector(comuneNormalizedName) {
-            riskSelector.innerHTML = '';
-            const comuneInfo = currentComuneFirebaseData; // Ora prendiamo i dati dal comune caricato
-
-            if (comuneInfo && comuneInfo.rischi) {
-                document.getElementById('risk-selector-container').style.display = 'block';
-
-                const defaultOption = document.createElement('option');
-                defaultOption.value = 'generale';
-                defaultOption.textContent = 'Rischio Generale';
-                riskSelector.appendChild(defaultOption);
-
-                for (const riskType in comuneInfo.rischi) {
-                    if (riskType !== 'generale') {
-                        const option = document.createElement('option');
-                        option.value = riskType;
-                        option.textContent = riskType.charAt(0).toUpperCase() + riskType.slice(1).replace(/([A-Z])/g, ' $1').trim();
-                        riskSelector.appendChild(option);
-                    }
-                }
-                riskSelector.value = 'generale';
-            } else {
-                const noOption = document.createElement('option');
-                noOption.value = '';
-                noOption.textContent = 'Nessun rischio specifico disponibile';
-                riskSelector.appendChild(noOption);
-                document.getElementById('risk-selector-container').style.display = 'none';
-            }
         }
 
-        // Funzione per aggiornare il testo del rischio e la colorazione della mappa (aggiornata)
-        function updateRiskInfoAndMapDisplay(selectedRiskType) {
-            const comuneInfo = currentComuneFirebaseData; // Ora prendiamo i dati dal comune caricato
-            if (comuneInfo && comuneInfo.rischi && comuneInfo.rischi[selectedRiskType]) {
-                riskInfoElement.textContent = comuneInfo.rischi[selectedRiskType];
-            } else {
-                riskInfoElement.textContent = "Informazioni sul rischio non disponibili per il tipo selezionato.";
-            }
-            updateMapColoration(selectedRiskType);
-
-            // Aggiorna lo stato "active" nella legenda
-            document.querySelectorAll('.legend-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            const activeLegendItem = document.querySelector(`.legend-item[data-risk-type="${selectedRiskType}"]`);
-            if (activeLegendItem) {
-                activeLegendItem.classList.add('active');
-            }
-        }
-
-        // Event listener per il cambio del rischio nel selettore
-        riskSelector.addEventListener('change', (event) => {
-            updateRiskInfoAndMapDisplay(event.target.value);
-        });
-
-        // Funzione per aggiornare la colorazione della mappa in base al rischio selezionato
-        function updateMapColoration(selectedRiskType) {
-            // Rimuovi tutti i layer specifici per rischio precedentemente aggiunti
-            riskSpecificFillLayer.clearLayers();
-
-            if (currentComuneFeature) {
-                // Rimuovi il layer di criticità generale prima di aggiungere quello specifico o rimettere il generale
-                if (criticitàFillLayer && leafletMap.hasLayer(criticitàFillLayer)) {
-                    leafletMap.removeLayer(criticitàFillLayer);
-                }
-
-                if (selectedRiskType === 'generale') {
-                    console.log("[updateMapColoration] Visualizzo Criticità Generale.");
-                    if (criticitàFillLayer) {
-                        criticitàFillLayer.addTo(leafletMap); // Riaggiungi il layer generale
-                    }
-                } else {
-                    console.log(`[updateMapColoration] Visualizzo Rischio Specifico: ${selectedRiskType}.`);
-                    // Per qualsiasi altro rischio, colora il comune con il colore della sua criticità generale
-                    const newRiskLayer = L.geoJSON(currentComuneFeature, {
-                        style: styleSpecificRiskFill, // Usa lo stile specifico per i rischi
-                        onEachFeature: onEachFeature
-                    });
-                    riskSpecificFillLayer.addLayer(newRiskLayer);
-                    riskSpecificFillLayer.addTo(leafletMap);
-                }
-            } else {
-                console.warn("[updateMapColoration] currentComuneFeature non disponibile.");
-            }
-        }
-
-        // Funzione per popolare la legenda dei rischi (aggiornata)
-        function populateRiskLegend(comuneNormalizedName) {
-            riskLegendContainer.innerHTML = '';
-            const comuneInfo = currentComuneFirebaseData; // Ora prendiamo i dati dal comune caricato
-
-            if (comuneInfo && comuneInfo.rischi) {
-                document.getElementById('risk-legend').style.display = 'block';
-
-                const criticità = criticitàMap[comuneNormalizedName]; // Prende da criticitàMap popolata da Firebase
-                const colorHex = getHexColor(coloriBase[criticità] || '#ccc');
-
-                const generalItem = document.createElement('div');
-                generalItem.classList.add('legend-item');
-                generalItem.setAttribute('data-risk-type', 'generale');
-                generalItem.innerHTML = `
-                    <div class="legend-color-box" style="background-color: ${colorHex};"></div>
-                    <span class="legend-text">Rischio Generale: ${criticità}</span>
-                `;
-                generalItem.addEventListener('click', () => {
-                    riskSelector.value = 'generale';
-                    updateRiskInfoAndMapDisplay('generale');
-                });
-                riskLegendContainer.appendChild(generalItem);
-
-                for (const riskType in comuneInfo.rischi) {
-                    if (riskType !== 'generale') {
-                        const item = document.createElement('div');
-                        item.classList.add('legend-item');
-                        item.setAttribute('data-risk-type', riskType);
-                        item.innerHTML = `
-                            <div class="legend-color-box" style="background-color: ${colorHex};"></div>
-                            <span class="legend-text">${riskType.charAt(0).toUpperCase() + riskType.slice(1).replace(/([A-Z])/g, ' $1').trim()}</span>
-                        `;
-                        item.addEventListener('click', () => {
-                            riskSelector.value = riskType;
-                            updateRiskInfoAndMapDisplay(riskType);
-                        });
-                        riskLegendContainer.appendChild(item);
-                    }
-                }
-            } else {
-                document.getElementById('risk-legend').style.display = 'none';
-            }
-        }
-
-        // Funzione displayComuneInfo (aggiornata per usare currentComuneFirebaseData)
-        async function displayComuneInfo(comuneOriginalName) {
-            const normalizedComuneName = normalizeComuneName(comuneOriginalName);
-            currentComuneNormalizedName = normalizedComuneName;
-            console.log(`[displayComuneInfo] Comune originale: ${comuneOriginalName}, Normalizzato: ${normalizedComuneName}`);
-
-            const foundFeature = geojsonDataGlobal.features.find(feature =>
-                feature.properties.normalizedName === normalizedComuneName
+        searchInput.addEventListener('input', () => {
+            const searchTerm = normalizeComuneName(searchInput.value);
+            const filteredComuni = allComuni.filter(comune =>
+                comune.normalizedName.includes(searchTerm)
             );
+            populateComuneList(filteredComuni);
+        });
 
-            // Rimuovi layer esistenti prima di aggiungerne di nuovi
-            if (comuneOutlineLayer) leafletMap.removeLayer(comuneOutlineLayer);
-            if (criticitàFillLayer) leafletMap.removeLayer(criticitàFillLayer);
-            emergencyMarkersLayer.clearLayers();
-            riskSpecificFillLayer.clearLayers();
-            if (leafletMap.hasLayer(L.control.layers)) { // Rimuovi il controllo layer esistente
-                leafletMap.removeControl(L.control.layers);
+        // --- Gestione Selezione Comune e Caricamento Dati ---
+
+        async function selectComune(comune) {
+            if (selectedComune) {
+                const prevSelectedLi = comuniList.querySelector(`li[data-normalized-name="${selectedComune.normalizedName}"]`);
+                if (prevSelectedLi) {
+                    prevSelectedLi.classList.remove('selected');
+                }
             }
-            overlays = {}; // Reset overlays
 
-            if (foundFeature) {
-                currentComuneFeature = foundFeature;
-                pageTitle.textContent = `Criticità del Comune di ${foundFeature.properties.name}`;
-                comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
+            selectedComune = comune;
+            const currentSelectedLi = comuniList.querySelector(`li[data-normalized-name="${selectedComune.normalizedName}"]`);
+            if (currentSelectedLi) {
+                currentSelectedLi.classList.add('selected');
+            }
 
-                // RECUPERA I DATI SPECIFICI DEL COMUNE DA FIREBASE
-                const comuneFirebaseSnapshot = await comuniRef.child(normalizedComuneName).once('value');
-                currentComuneFirebaseData = comuneFirebaseSnapshot.val(); // Salva i dati nella variabile globale
+            currentComuneName.textContent = selectedComune.originalName;
+            comuneDetailsForm.style.display = 'block';
+            responseMessage.textContent = ''; // Pulisci i messaggi precedenti
 
-                if (currentComuneFirebaseData) {
-                    const criticità = currentComuneFirebaseData.criticitàBase || 'Non disponibile';
-                    comuneCriticityDisplay.textContent = `Base: ${criticità}`;
-                    console.log(`[displayComuneInfo] Criticità trovata per ${foundFeature.properties.name}: ${criticità}`);
+            // Carica i dati del comune selezionato da Firebase
+            try {
+                const snapshot = await comuniRef.child(selectedComune.normalizedName).once('value');
+                const data = snapshot.val();
+                console.log("Dati comune caricati da Firebase:", data);
+                loadComuneDataIntoForm(data);
+            } catch (error) {
+                console.error("Errore nel caricamento dati del comune:", error);
+                showMessage(responseMessage, "Errore nel caricamento dei dati del comune.", "error");
+                loadComuneDataIntoForm(null); // Pulisci il form se c'è un errore
+            }
+        }
 
-                    // Crea i layer per il bordo e il riempimento del comune
-                    comuneOutlineLayer = L.geoJSON(currentComuneFeature, {
-                        style: styleComuneOutline,
-                        onEachFeature: onEachFeature
-                    });
-                    criticitàFillLayer = L.geoJSON(currentComuneFeature, {
-                        style: styleCriticitàFill,
-                        onEachFeature: onEachFeature
-                    });
+        function loadComuneDataIntoForm(data) {
+            // Reset di tutti i campi
+            criticitySelect.value = 'A1'; // Default
+            rischioGeneraleInput.value = '';
+            shelterInfoTextarea.value = '';
+            puntiMappaList.innerHTML = ''; // Pulisci i punti mappa esistenti
 
-                    comuneOutlineLayer.addTo(leafletMap);
-                    criticitàFillLayer.addTo(leafletMap);
-                    leafletMap.fitBounds(comuneOutlineLayer.getBounds().pad(0.5));
+            // Deseleziona tutte le checkbox dei rischi e nascondi le descrizioni
+            document.querySelectorAll('#risk-checkboxes input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            riskDescriptionsContainer.innerHTML = '';
 
-                    // Popola selettore rischi, legenda e mostra info
-                    populateRiskSelector(normalizedComuneName);
-                    populateRiskLegend(normalizedComuneName);
-                    updateRiskInfoAndMapDisplay(riskSelector.value); // Inizializza con il rischio generale
 
-                    shelterInfoElement.textContent = currentComuneFirebaseData.accoglienza || "Informazioni aree accoglienza non disponibili.";
+            if (data) {
+                criticitySelect.value = data.criticitàBase || 'A1';
+                rischioGeneraleInput.value = data.rischi ? (data.rischi.generale || '') : '';
+                shelterInfoTextarea.value = data.accoglienza || '';
 
-                    // Visualizza i punti mappa da Firebase
-                    if (currentComuneFirebaseData.puntiMappa && currentComuneFirebaseData.puntiMappa.length > 0) {
-                        currentComuneFirebaseData.puntiMappa.forEach(punto => {
-                            let markerIcon;
-                            if (punto.tipo === 'raccolta') {
-                                markerIcon = emergencyIcon;
-                            } else if (punto.tipo === 'accoglienza') {
-                                markerIcon = shelterIcon;
-                            } else {
-                                markerIcon = L.Icon.Default; // Fallback
+                // Carica i rischi specifici
+                if (data.rischi) {
+                    for (const riskType in data.rischi) {
+                        if (riskType !== 'generale') {
+                            const checkbox = document.getElementById(`risk-checkbox-${riskType}`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                addRiskDescriptionField(riskType, data.rischi[riskType]);
                             }
-
-                            const marker = L.marker([punto.lat, punto.lon], { icon: markerIcon })
-                                .bindPopup(`<b>${punto.nome}</b><br>Tipo: ${punto.tipo}`);
-                            emergencyMarkersLayer.addLayer(marker);
-                        });
-                        overlays["Aree di Emergenza/Accoglienza"] = emergencyMarkersLayer;
-                        emergencyMarkersLayer.addTo(leafletMap);
-
-                        // Abilita il pulsante di navigazione solo se ci sono punti
-                        navigationButton.removeEventListener('click', navigateToShelter); // Evita duplicati
-                        navigationButton.addEventListener('click', navigateToShelter);
-                        navigationButton.style.display = 'block';
-
-                    } else {
-                        shelterInfoElement.textContent += " (Nessun punto specifico su mappa disponibile).";
-                        navigationButton.style.display = 'none';
+                        }
                     }
+                }
 
+                // Carica i punti mappa
+                if (data.puntiMappa && Array.isArray(data.puntiMappa)) {
+                    data.puntiMappa.forEach(punto => {
+                        addPuntoMappaRow(punto);
+                    });
+                }
+            }
+        }
+
+        // --- Gestione Salvataggio Dati Comune ---
+
+        saveButton.addEventListener('click', async () => {
+            if (!selectedComune) {
+                showMessage(responseMessage, "Seleziona un comune per salvare i dati.", "error");
+                return;
+            }
+
+            const criticitàBase = criticitySelect.value;
+            const rischioGenerale = rischioGeneraleInput.value.trim();
+            const accoglienza = shelterInfoTextarea.value.trim();
+
+            const rischiSpecifici = { generale: rischioGenerale };
+            document.querySelectorAll('#risk-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                const riskType = checkbox.dataset.riskType;
+                const riskDescriptionInput = document.getElementById(`risk-description-input-${riskType}`);
+                if (riskDescriptionInput) {
+                    rischiSpecifici[riskType] = riskDescriptionInput.value.trim();
+                }
+            });
+
+            const puntiMappa = [];
+            document.querySelectorAll('.punto-mappa-item').forEach(item => {
+                const tipo = item.querySelector('[name="punto-tipo"]').value;
+                const nome = item.querySelector('[name="punto-nome"]').value.trim();
+                const lat = parseFloat(item.querySelector('[name="punto-lat"]').value);
+                const lon = parseFloat(item.querySelector('[name="punto-lon"]').value);
+                const note = item.querySelector('[name="punto-note"]').value.trim();
+
+                if (tipo && nome && !isNaN(lat) && !isNaN(lon)) {
+                    puntiMappa.push({ tipo, nome, lat, lon, note });
+                }
+            });
+
+
+            const comuneData = {
+                criticitàBase: criticitàBase,
+                rischi: rischiSpecifici,
+                accoglienza: accoglienza,
+                puntiMappa: puntiMappa, // Aggiunto il campo puntiMappa
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP // Aggiungi timestamp
+            };
+
+            try {
+                await comuniRef.child(selectedComune.normalizedName).set(comuneData);
+                showMessage(responseMessage, `Dati per ${selectedComune.originalName} salvati con successo!`, "success");
+            } catch (error) {
+                console.error("Errore nel salvataggio dei dati:", error);
+                showMessage(responseMessage, "Errore nel salvataggio dei dati. " + error.message, "error");
+            }
+        });
+
+        // --- Gestione Eliminazione Dati Comune ---
+
+        deleteButton.addEventListener('click', async () => {
+            if (!selectedComune) {
+                showMessage(responseMessage, "Seleziona un comune per eliminare i dati.", "error");
+                return;
+            }
+
+            if (confirm(`Sei sicuro di voler eliminare TUTTI i dati per il comune di ${selectedComune.originalName}? Questa azione non è reversibile.`)) {
+                try {
+                    await comuniRef.child(selectedComune.normalizedName).remove();
+                    showMessage(responseMessage, `Dati per ${selectedComune.originalName} eliminati con successo!`, "success");
+                    loadComuneDataIntoForm(null); // Pulisci il form
+                    selectedComune = null;
+                    comuneDetailsForm.style.display = 'none'; // Nascondi il form
+                    // Rimuovi la classe 'selected' dalla lista
+                    document.querySelectorAll('#comune-list li').forEach(li => li.classList.remove('selected'));
+
+                } catch (error) {
+                    console.error("Errore nell'eliminazione dei dati:", error);
+                    showMessage(responseMessage, "Errore nell'eliminazione dei dati. " + error.message, "error");
+                }
+            }
+        });
+
+        // --- Gestione Colori Base ---
+
+        async function loadCriticityOptions() {
+            const criticityOptions = [
+                'A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'
+            ]; // Puoi anche caricare queste da Firebase se vuoi renderle dinamiche
+
+            criticitySelect.innerHTML = criticityOptions.map(opt =>
+                `<option value="${opt}">${opt}</option>`
+            ).join('');
+        }
+
+        async function loadColorSettings() {
+            try {
+                const snapshot = await coloriRef.once('value');
+                const data = snapshot.val();
+                if (data && data.coloriBase) {
+                    for (const criticity in data.coloriBase) {
+                        const selectElement = document.getElementById(`color-${criticity.toLowerCase()}`);
+                        if (selectElement) {
+                            selectElement.value = data.coloriBase[criticity];
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error("Errore nel caricamento delle impostazioni colore:", error);
+                showMessage(colorsResponseMessage, "Errore nel caricamento dei colori.", "error");
+            }
+        }
+
+        saveColorsButton.addEventListener('click', async () => {
+            const coloriBase = {};
+            const criticityOptions = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2']; // Assicurati che siano coerenti
+            criticityOptions.forEach(crit => {
+                const selectElement = document.getElementById(`color-${crit.toLowerCase()}`);
+                if (selectElement) {
+                    coloriBase[crit] = selectElement.value;
+                }
+            });
+
+            try {
+                await coloriRef.update({ coloriBase: coloriBase });
+                showMessage(colorsResponseMessage, "Colori salvati con successo!", "success");
+            } catch (error) {
+                console.error("Errore nel salvataggio dei colori:", error);
+                showMessage(colorsResponseMessage, "Errore nel salvataggio dei colori. " + error.message, "error");
+            }
+        });
+
+        updateTimestampButton.addEventListener('click', async () => {
+            try {
+                await coloriRef.update({ dataCreazione: firebase.database.ServerValue.TIMESTAMP });
+                showMessage(colorsResponseMessage, "Timestamp aggiornato con successo!", "success");
+            } catch (error) {
+                console.error("Errore nell'aggiornamento del timestamp:", error);
+                showMessage(colorsResponseMessage, "Errore nell'aggiornamento del timestamp. " + error.message, "error");
+            }
+        });
+
+        // --- Gestione Rischi Specifici (Checkbox e Testarea) ---
+
+        function loadPredefinedRisksCheckboxes() {
+            riskCheckboxesContainer.innerHTML = ''; // Pulisci prima di aggiungere
+            predefinedRisks.forEach(risk => {
+                const normalizedRiskType = normalizeRiskType(risk);
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.innerHTML = `
+                    <label>
+                        <input type="checkbox" id="risk-checkbox-${normalizedRiskType}" data-risk-type="${normalizedRiskType}">
+                        ${risk}
+                    </label>
+                `;
+                riskCheckboxesContainer.appendChild(checkboxDiv);
+
+                const checkbox = document.getElementById(`risk-checkbox-${normalizedRiskType}`);
+                checkbox.addEventListener('change', (event) => {
+                    if (event.target.checked) {
+                        addRiskDescriptionField(normalizedRiskType);
+                    } else {
+                        removeRiskDescriptionField(normalizedRiskType);
+                    }
+                });
+            });
+        }
+
+        function normalizeRiskType(riskName) {
+            return riskName.toLowerCase().replace(/[^a-z0-9]/g, ''); // Rimuove spazi e caratteri speciali
+        }
+
+        function addRiskDescriptionField(riskType, initialValue = '') {
+            if (document.getElementById(`risk-description-input-${riskType}`)) {
+                // Se il campo esiste già, aggiorna solo il valore se non vuoto
+                if (initialValue) {
+                    document.getElementById(`risk-description-input-${riskType}`).value = initialValue;
+                }
+                return;
+            }
+
+            const div = document.createElement('div');
+            div.classList.add('form-group');
+            div.id = `risk-description-group-${riskType}`;
+            div.innerHTML = `
+                <label for="risk-description-input-${riskType}">Descrizione ${getRiskDisplayName(riskType)}:</label>
+                <textarea id="risk-description-input-${riskType}" placeholder="Descrizione specifica per ${getRiskDisplayName(riskType)}">${initialValue}</textarea>
+            `;
+            riskDescriptionsContainer.appendChild(div);
+        }
+
+        function removeRiskDescriptionField(riskType) {
+            const divToRemove = document.getElementById(`risk-description-group-${riskType}`);
+            if (divToRemove) {
+                riskDescriptionsContainer.removeChild(divToRemove);
+            }
+        }
+
+        function getRiskDisplayName(normalizedRiskType) {
+            const foundRisk = predefinedRisks.find(risk => normalizeRiskType(risk) === normalizedRiskType);
+            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1);
+        }
+
+        // --- Gestione Punti Mappa Dinamici ---
+
+        addPuntoButton.addEventListener('click', () => addPuntoMappaRow());
+
+        function addPuntoMappaRow(punto = {}) {
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('punto-mappa-item');
+            itemDiv.innerHTML = `
+                <button type="button" class="remove-punto-btn"><i class="fas fa-times-circle"></i> Rimuovi</button>
+                <div class="form-group">
+                    <label>Tipo di Area:</label>
+                    <select name="punto-tipo">
+                        ${predefinedAreaTypes.map(type => `<option value="${type}" ${punto.tipo === type ? 'selected' : ''}>${type}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nome / Via (Indirizzo):</label>
+                    <input type="text" name="punto-nome" value="${punto.nome || ''}" placeholder="Es: Piazza Duomo, Via Roma 123">
+                </div>
+                <div class="form-group lat-lon-group">
+                    <div>
+                        <label>Latitudine:</label>
+                        <input type="number" name="punto-lat" step="any" value="${punto.lat || ''}" placeholder="Es: 40.6409">
+                    </div>
+                    <div>
+                        <label>Longitudine:</label>
+                        <input type="number" name="punto-lon" step="any" value="${punto.lon || ''}" placeholder="Es: 15.7997">
+                    </div>
+                    <button type="button" class="geocode-btn"><i class="fas fa-map-marker-alt"></i> Trova Lat/Lon</button>
+                </div>
+                <div class="form-group">
+                    <label>Note:</label>
+                    <textarea name="punto-note" placeholder="Eventuali note relative al punto">${punto.note || ''}</textarea>
+                </div>
+            `;
+            puntiMappaList.appendChild(itemDiv);
+
+            // Aggiungi event listener per rimuovere il punto
+            itemDiv.querySelector('.remove-punto-btn').addEventListener('click', () => {
+                itemDiv.remove();
+            });
+
+            // Aggiungi event listener per il geocoding
+            itemDiv.querySelector('.geocode-btn').addEventListener('click', async (event) => {
+                const nomeInput = itemDiv.querySelector('[name="punto-nome"]');
+                const latInput = itemDiv.querySelector('[name="punto-lat"]');
+                const lonInput = itemDiv.querySelector('[name="punto-lon"]');
+                const address = nomeInput.value.trim();
+
+                if (address) {
+                    event.target.textContent = 'Cercando...';
+                    event.target.disabled = true;
+                    try {
+                        // Utilizza l'API OpenStreetMap Nominatim per il geocoding
+                        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', Potenza, Basilicata, Italia')}`); // Aggiungi la regione per migliorare la precisione
+                        const data = await response.json();
+
+                        if (data && data.length > 0) {
+                            latInput.value = parseFloat(data[0].lat).toFixed(6);
+                            lonInput.value = parseFloat(data[0].lon).toFixed(6);
+                            showMessage(responseMessage, `Coordinate trovate per "${address}"`, "success");
+                        } else {
+                            showMessage(responseMessage, `Nessuna coordinata trovata per "${address}". Prova con un indirizzo più preciso.`, "error");
+                            latInput.value = '';
+                            lonInput.value = '';
+                        }
+                    } catch (error) {
+                        console.error("Errore geocoding:", error);
+                        showMessage(responseMessage, "Errore durante la ricerca delle coordinate. Riprova più tardi.", "error");
+                    } finally {
+                        event.target.textContent = 'Trova Lat/Lon';
+                        event.target.disabled = false;
+                    }
                 } else {
-                    // Dati del comune non trovati in Firebase
-                    comuneCriticityDisplay.textContent = "Base: Non disponibile";
-                    riskInfoElement.textContent = "Informazioni sui rischi non disponibili per questo comune.";
-                    shelterInfoElement.textContent = "Informazioni sulle aree di accoglienza non disponibili per questo comune.";
-                    navigationButton.style.display = 'none';
-                    document.getElementById('risk-selector-container').style.display = 'none';
-                    document.getElementById('risk-legend').style.display = 'none';
-                    infoMessage.textContent = 'Dati dettagliati non trovati in Firebase per questo comune.';
-
-                    // Mostra solo il bordo del comune
-                    comuneOutlineLayer = L.geoJSON(currentComuneFeature, {
-                        style: styleComuneOutline,
-                        onEachFeature: onEachFeature
-                    }).addTo(leafletMap);
-                    leafletMap.fitBounds(comuneOutlineLayer.getBounds().pad(0.5));
+                    showMessage(responseMessage, "Inserisci un nome/indirizzo per cercare le coordinate.", "error");
                 }
-
-                // Aggiungi i controlli layer alla mappa solo se ci sono overlays da mostrare
-                if (Object.keys(overlays).length > 0 || Object.keys(baseLayers).length > 0) {
-                    L.control.layers(baseLayers, overlays).addTo(leafletMap);
-                }
-
-
-            } else {
-                pageTitle.textContent = "Comune non trovato";
-                comuneNameDisplay.textContent = "Comune non trovato";
-                comuneCriticityDisplay.textContent = "";
-                infoMessage.textContent = "Il comune specificato nell'URL non è stato trovato nel GeoJSON.";
-                riskInfoElement.textContent = "Nessuna informazione disponibile.";
-                shelterInfoElement.textContent = "Nessuna informazione disponibile.";
-                leafletMap.setView([40.6393, 15.8054], 8); // Centra sulla Basilicata
-                document.getElementById('risk-selector-container').style.display = 'none';
-                document.getElementById('risk-legend').style.display = 'none';
-                navigationButton.style.display = 'none';
-            }
+            });
         }
 
-        // Funzione per navigare all'area di accoglienza più vicina (o al primo punto mappa)
-        function navigateToShelter() {
-            if (currentComuneFirebaseData && currentComuneFirebaseData.puntiMappa && currentComuneFirebaseData.puntiMappa.length > 0) {
-                const firstPoint = currentComuneFirebaseData.puntiMappa[0];
-                const destination = `${firstPoint.lat},${firstPoint.lon}`;
-                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
-                window.open(googleMapsUrl, '_blank');
-            } else {
-                alert("Nessun punto di accoglienza disponibile per la navigazione.");
-            }
-        }
+
+        // Inizializza l'applicazione
+        loadInitialData();
     </script>
-
 </body>
 
 </html>
