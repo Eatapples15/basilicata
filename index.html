@@ -4,19 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Seleziona Colori Criticità</title>
+    <title>Seleziona Colori Criticità per Rischio</title>
     <style>
         body {
             font-family: sans-serif;
             margin: 20px;
-            display: flex; /* Utilizza flexbox per allineare i contenuti */
-            flex-direction: column; /* Impila gli elementi verticalmente */
-            align-items: center; /* Centra gli elementi orizzontalmente */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h2 {
             margin-bottom: 20px;
             color: #333;
+            text-align: center;
         }
 
         form {
@@ -30,7 +31,7 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             background-color: #fff;
             width: 100%;
-            max-width: 400px; /* Limita la larghezza del form */
+            max-width: 400px;
         }
 
         label {
@@ -43,7 +44,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             width: 100%;
-            box-sizing: border-box; /* Includi padding e border nella larghezza */
+            box-sizing: border-box;
         }
 
         button {
@@ -73,16 +74,16 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            justify-content: space-between; /* Spazia label e select */
+            justify-content: space-between;
         }
 
         .base-color-picker label {
-            flex-shrink: 0; /* Impedisce alla label di restringersi */
-            width: 30px; /* Larghezza fissa per le label A1, A2, etc. */
+            flex-shrink: 0;
+            width: 30px;
         }
 
         .base-color-picker select {
-            flex-grow: 1; /* Permette alla select di occupare lo spazio rimanente */
+            flex-grow: 1;
         }
 
         #logo-container {
@@ -105,7 +106,7 @@
             background-color: #f9f9f9;
             text-align: center;
             width: 100%;
-            max-width: 600px; /* Larghezza massima per la sezione */
+            max-width: 600px;
         }
 
         .navigation-section h3 {
@@ -115,17 +116,17 @@
 
         .navigation-buttons {
             display: flex;
-            flex-wrap: wrap; /* Permette ai bottoni di andare a capo */
+            flex-wrap: wrap;
             justify-content: center;
             gap: 15px;
         }
 
         .navigation-buttons a {
-            text-decoration: none; /* Rimuove la sottolineatura dai link */
+            text-decoration: none;
         }
 
         .navigation-buttons button {
-            background-color: #28a745; /* Un bel verde per i bottoni di navigazione */
+            background-color: #28a745;
             padding: 12px 25px;
             font-size: 1.1em;
             border-radius: 6px;
@@ -135,7 +136,7 @@
 
         .navigation-buttons button:hover {
             background-color: #218838;
-            transform: translateY(-2px); /* Effetto leggero al passaggio del mouse */
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -146,9 +147,19 @@
         <img src="Logo regione.png" alt="Logo Regione Basilicata">
     </div>
 
-    <h2>Seleziona Colori Criticità [RISCHIO...]</h2>
+    <h2>Seleziona Colori Criticità</h2>
 
     <form id="color-form">
+        <div style="margin-bottom: 15px;">
+            <label for="risk-type-select">Seleziona Tipo di Rischio:</label>
+            <select id="risk-type-select" name="risk-type">
+                <option value="Idrogeologico">Idrogeologico</option>
+                <option value="IdrogeologicoTemporali">Idrogeologico (da Temporali)</option>
+                <option value="Idraulico">Idraulico</option>
+                <option value="Incendio">Incendio</option>
+            </select>
+        </div>
+
         <div id="base-color-pickers">
             <label>Colori per Base:</label>
             <div class="base-color-picker">
@@ -227,18 +238,19 @@
         <h3>Navigazione rapida (per test)</h3>
         <p>Questa sezione è temporanea e serve per facilitare la navigazione tra le diverse visualizzazioni della piattaforma durante la fase di test.</p>
         <div class="navigation-buttons">
-            <a href="https://eatapples15.github.io/basilicata/visualizza.html"><button>Visualizza Regione Completa</button></a>
-            <a href="https://eatapples15.github.io/basilicata/comune.html?comune=Potenza"><button>Visualizza Comune (es. Potenza)</button></a>
-            <a href="https://eatapples15.github.io/basilicata/consultazione_cittadino.html"><button>Ricerca Comune</button></a>
-   <a href="https://eatapples15.github.io/basilicata/consultazione_operatori.html"><button>AREA RISERVATA ENTI</button></a>
-             <a href="https://simonpc.regione.basilicata.it/home"><button>SIMONPC</button></a>
+            <a href="visualizza.html?risk=Idrogeologico"><button>Visualizza Regione - Idrogeologico</button></a>
+            <a href="visualizza.html?risk=IdrogeologicoTemporali"><button>Visualizza Regione - Temporali</button></a>
+            <a href="visualizza.html?risk=Idraulico"><button>Visualizza Regione - Idraulico</button></a>
+            <a href="visualizza.html?risk=Incendio"><button>Visualizza Regione - Incendio</button></a>
+            <a href="consultazione_cittadino.html"><button>Ricerca Comune</button></a>
+            <a href="consultazione_operatori.html"><button>AREA RISERVATA ENTI</button></a>
+            <a href="https://simonpc.regione.basilicata.it/home"><button>SIMONPC</button></a>
         </div>
     </div>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
 
     <script>
-        // Your web app's Firebase configuration (IDENTICO A visualizza.html)
         const firebaseConfig = {
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
             authDomain: "bollettinoregionale.firebaseapp.com",
@@ -247,48 +259,102 @@
             storageBucket: "bollettinoregionale.appspot.com",
             messagingSenderId: "765538370497",
             appId: "1:765538370497:web:9c4f569754c0df01cc2540",
-            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
         };
 
-        // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
         const colorForm = document.getElementById('color-form');
         const messageDiv = document.getElementById('message');
         const baseColorPickers = document.querySelectorAll('.base-color-picker');
+        const riskTypeSelect = document.getElementById('risk-type-select');
+        const titleElement = document.querySelector('h2'); // Per aggiornare il titolo
+
+        // Funzione per caricare i colori del rischio selezionato
+        function loadColorsForSelectedRisk() {
+            const selectedRisk = riskTypeSelect.value;
+            titleElement.textContent = `Seleziona Colori Criticità per Rischio: ${selectedRisk}`;
+
+            // Ora cerchiamo i colori sotto `colori/rischi/`
+            database.ref(`colori/rischi/${selectedRisk}`).once('value')
+                .then(snapshot => {
+                    const coloriBase = snapshot.val();
+                    if (coloriBase) {
+                        baseColorPickers.forEach(picker => {
+                            const base = picker.querySelector('label').textContent.slice(0, -1);
+                            const selectElement = picker.querySelector('select');
+                            if (coloriBase[base]) {
+                                selectElement.value = coloriBase[base];
+                            } else {
+                                // Reset a un valore di default se non trovato
+                                selectElement.value = 'green';
+                            }
+                        });
+                        messageDiv.textContent = `Colori per ${selectedRisk} caricati.`;
+                        messageDiv.style.color = 'gray'; // Messaggio informativo
+                        messageDiv.onclick = null;
+                        messageDiv.style.cursor = 'default';
+                    } else {
+                        // Se non ci sono colori salvati per questo rischio, resetta i selettori
+                        baseColorPickers.forEach(picker => {
+                            picker.querySelector('select').value = 'green'; // Default a verde
+                        });
+                        messageDiv.textContent = `Nessun colore salvato per ${selectedRisk}. Imposta i colori predefiniti.`;
+                        messageDiv.style.color = 'orange';
+                        messageDiv.onclick = null;
+                        messageDiv.style.cursor = 'default';
+                    }
+                })
+                .catch(error => {
+                    console.error("Errore nel caricamento dei colori:", error);
+                    messageDiv.textContent = 'Errore nel caricamento dei colori. Riprova più tardi.';
+                    messageDiv.style.color = 'red';
+                    messageDiv.onclick = null;
+                    messageDiv.style.cursor = 'default';
+                });
+        }
+
+        // Carica i colori all'avvio della pagina (per il rischio predefinito)
+        window.addEventListener('load', loadColorsForSelectedRisk);
+
+        // Aggiungi un listener per il cambio del tipo di rischio
+        riskTypeSelect.addEventListener('change', loadColorsForSelectedRisk);
 
         colorForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
+            const selectedRisk = riskTypeSelect.value;
             const coloriBase = {};
             baseColorPickers.forEach(picker => {
-                const base = picker.querySelector('label').textContent.slice(0, -1); // Rimuove i due punti
+                const base = picker.querySelector('label').textContent.slice(0, -1);
                 const color = picker.querySelector('select').value;
                 coloriBase[base] = color;
             });
 
-            const datiColori = {
-                coloriBase: coloriBase,
-                dataCreazione: new Date().toISOString() // Aggiungi la data/ora
-            };
+            // Oggetto da salvare sotto il nodo `/colori/`
+            const updateData = {};
+            // Salva i colori per il rischio selezionato sotto `colori/rischi/<tipoRischio>`
+            updateData[`rischi/${selectedRisk}`] = coloriBase;
+            // Salva il timestamp di creazione/aggiornamento sotto `colori/dataCreazione`
+            updateData['dataCreazione'] = new Date().toISOString();
 
-            database.ref('colori').set(datiColori) // Usa .set() per sovrascrivere i dati precedenti
+            // Effettua l'aggiornamento a livello del nodo `/colori/`
+            database.ref('colori').update(updateData)
                 .then(() => {
-                    messageDiv.textContent = 'Colori salvati con successo!';
-                    messageDiv.style.cursor = 'pointer'; // Rendi il testo cliccabile
+                    messageDiv.textContent = `Colori per ${selectedRisk} salvati con successo! Clicca per visualizzare la mappa.`;
+                    messageDiv.style.cursor = 'pointer';
                     messageDiv.style.color = 'green';
                     messageDiv.onclick = function () {
-                        window.location.href = 'https://eatapples15.github.io/basilicata/visualizza.html';
+                        // Reindirizza alla pagina di visualizzazione con il rischio selezionato
+                        window.location.href = `visualizza.html?risk=${selectedRisk}`;
                     };
-                    colorForm.reset();
                 })
                 .catch(error => {
                     console.error("Errore nel salvataggio dei colori:", error);
-                    messageDiv.textContent = 'Errore nel salvataggio dei colori.';
-                    messageDiv.style.cursor = 'default'; // Rimuovi il cursore cliccabile in caso di errore
+                    messageDiv.textContent = `Errore nel salvataggio dei colori per ${selectedRisk}.`;
+                    messageDiv.style.cursor = 'default';
                     messageDiv.style.color = 'red';
-                    messageDiv.onclick = null; // Rimuovi qualsiasi handler di click in caso di errore
+                    messageDiv.onclick = null;
                 });
         });
     </script>
