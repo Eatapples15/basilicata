@@ -4,38 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pannello Amministrazione Dati Comuni</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <title>Pannello di Amministrazione Comuni</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         body {
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            padding: 20px;
-            align-items: center;
-            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+            color: #333;
         }
 
         .container {
-            width: 100%;
-            max-width: 1200px;
-            background-color: #fff;
+            max-width: 900px;
+            margin: 20px auto;
+            background-color: #ffffff;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        h1, h2, h3 {
-            color: #333;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
+        h1, h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
         }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         label {
@@ -45,487 +40,859 @@
             color: #555;
         }
 
-        select, input[type="text"], textarea {
-            width: calc(100% - 20px);
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: calc(100% - 22px);
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
             font-size: 1em;
-            box-sizing: border-box; /* Per includere padding e border nella larghezza */
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #007bff;
+            outline: none;
         }
 
         textarea {
-            min-height: 80px;
             resize: vertical;
+            min-height: 80px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: center;
         }
 
         button {
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
+            padding: 10px 20px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
+            background-color: #007bff;
+            color: white;
             font-size: 1em;
-            transition: background-color 0.3s ease;
-            margin-right: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
         }
 
         button:hover {
             background-color: #0056b3;
+            transform: translateY(-2px);
         }
 
-        button.delete-button {
-            background-color: #dc3545;
+        button:active {
+            transform: translateY(0);
         }
 
-        button.delete-button:hover {
-            background-color: #c82333;
-        }
-
-        button#add-risk-btn, button#add-shelter-point-btn {
-            background-color: #28a745;
-            margin-top: 10px;
-        }
-        button#add-risk-btn:hover, button#add-shelter-point-btn:hover {
-            background-color: #218838;
-        }
-
-        .risk-item, .shelter-point-item {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: flex-end;
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid #eee;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        }
-        .risk-item input[type="text"], .risk-item textarea {
-            flex: 1 1 48%; /* Per due colonne */
-            min-width: 250px;
-        }
-        .shelter-point-item input[type="text"] {
-            flex: 1 1 30%;
-            min-width: 150px;
-        }
-        .shelter-point-item select {
-            flex: 1 1 150px;
-        }
-
-        #leaflet-map {
-            height: 400px;
-            width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            margin-top: 20px;
-        }
-
-        #status-message {
+        .message {
             margin-top: 20px;
             padding: 10px;
             border-radius: 5px;
-            font-weight: bold;
             text-align: center;
+            font-weight: bold;
         }
 
-        .status-success {
+        .message.success {
             background-color: #d4edda;
             color: #155724;
+            border: 1px solid #c3e6cb;
         }
 
-        .status-error {
+        .message.error {
             background-color: #f8d7da;
             color: #721c24;
+            border: 1px solid #f5c6cb;
         }
+
+        #comune-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            max-height: 300px; /* Limita altezza */
+            overflow-y: auto; /* Aggiunge scroll */
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+
+        #comune-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s ease;
+            cursor: pointer;
+        }
+
+        #comune-list li:last-child {
+            border-bottom: none;
+        }
+
+        #comune-list li:hover {
+            background-color: #f9f9f9;
+        }
+
+        #comune-list li.selected {
+            background-color: #e0f2f7;
+            font-weight: bold;
+            border-left: 5px solid #007bff;
+            padding-left: 10px;
+        }
+
+        #search-input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        /* Stili per la sezione dei rischi */
+        .rischi-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            cursor: pointer;
+            color: #444;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 8px;
+            width: auto;
+            transform: scale(1.1);
+        }
+
+        /* Stili per la sezione dei punti mappa */
+        .punti-mappa-container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .punto-mappa-item {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .punto-mappa-item .form-group {
+            margin-bottom: 10px;
+        }
+
+        .punto-mappa-item .form-group label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .punto-mappa-item .form-group input,
+        .punto-mappa-item .form-group select,
+        .punto-mappa-item .form-group textarea {
+            width: calc(100% - 18px); /* Adjust for padding/border */
+            padding: 8px;
+            font-size: 0.9em;
+        }
+
+        .remove-punto-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        .remove-punto-btn:hover {
+            background-color: #c82333;
+        }
+
+        .add-punto-btn {
+            background-color: #28a745;
+            margin-top: 15px;
+            display: block; /* For full width button */
+            width: 100%;
+        }
+
+        .add-punto-btn:hover {
+            background-color: #218838;
+        }
+
+        .geocode-btn {
+            background-color: #17a2b8;
+            margin-left: 10px;
+            padding: 8px 12px;
+            font-size: 0.9em;
+            vertical-align: middle;
+            display: inline-block;
+            width: auto; /* Allow button to size naturally */
+        }
+        .geocode-btn:hover {
+            background-color: #138496;
+        }
+
+        .lat-lon-group {
+            display: flex;
+            align-items: flex-end; /* Align inputs and button at the bottom */
+            gap: 10px;
+        }
+        .lat-lon-group > div {
+            flex-grow: 1;
+        }
+        .lat-lon-group input {
+            width: 100%;
+        }
+        .lat-lon-group button {
+            flex-shrink: 0;
+            margin-bottom: 1px; /* Visual alignment */
+        }
+
     </style>
 </head>
 
 <body>
-
     <div class="container">
-        <h1>Pannello Amministrazione Dati Comuni</h1>
+        <h1>Pannello di Amministrazione Comuni</h1>
 
         <div class="form-group">
-            <label for="comune-selector">Seleziona Comune:</label>
-            <select id="comune-selector"></select>
+            <label for="comune-select">Seleziona Comune:</label>
+            <input type="text" id="search-input" placeholder="Cerca comune...">
+            <ul id="comune-list">
+                </ul>
         </div>
 
+        <div id="comune-details-form" style="display: none;">
+            <h2>Dettagli per <span id="current-comune-name"></span></h2>
+
+            <div class="form-group">
+                <label for="criticity-select">Criticità Base:</label>
+                <select id="criticity-select">
+                    </select>
+            </div>
+
+            <div class="rischi-container">
+                <h3>Informazioni sui Rischi Specifici</h3>
+                <div class="form-group">
+                    <label for="rischio-generale-input">Rischio Generale:</label>
+                    <textarea id="rischio-generale-input" placeholder="Descrizione generale dei rischi"></textarea>
+                </div>
+                <div class="checkbox-group" id="risk-checkboxes">
+                    </div>
+                <div id="risk-descriptions-container">
+                    </div>
+            </div>
+
+            <div class="punti-mappa-container">
+                <h3>Aree di Emergenza / Punti di Raccolta</h3>
+                <div id="punti-mappa-list">
+                    </div>
+                <button type="button" class="add-punto-btn" id="add-punto-button"><i class="fas fa-plus-circle"></i> Aggiungi Punto Mappa</button>
+            </div>
+
+
+            <div class="form-group">
+                <label for="shelter-info-textarea">Info Aree di Accoglienza / Punti di Raccolta (Testo Libero):</label>
+                <textarea id="shelter-info-textarea"
+                    placeholder="Descrizione generale delle aree di accoglienza e punti di raccolta"></textarea>
+            </div>
+
+            <div class="button-group">
+                <button type="button" id="save-button"><i class="fas fa-save"></i> Salva Dati</button>
+                <button type="button" id="delete-button" style="background-color: #dc3545;"><i class="fas fa-trash"></i> Elimina Dati Comune</button>
+            </div>
+
+            <div class="message" id="response-message"></div>
+        </div>
+
+        <hr style="margin: 40px 0; border: 0; border-top: 1px solid #eee;">
+
+        <h2>Gestione Colori Base e Timestamp</h2>
         <div class="form-group">
-            <label for="criticity-base-selector">Base di Criticità:</label>
-            <select id="criticity-base-selector">
-                <option value="">Seleziona Base</option>
-                <option value="A1">A1</option>
-                <option value="A2">A2</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-                <option value="D">D</option>
-                <option value="E1">E1</option>
-                <option value="E2">E2</option>
+            <label for="color-a1">Colore A1:</label>
+            <select id="color-a1">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
             </select>
         </div>
-
-        <h2>Informazioni sui Rischi</h2>
-        <div id="risks-container">
-            <div class="risk-item">
-                <label>Tipo Rischio:</label>
-                <input type="text" class="risk-type" value="generale" readonly>
-                <label>Descrizione:</label>
-                <textarea class="risk-description" placeholder="Descrizione rischio generale..."></textarea>
-            </div>
-        </div>
-        <button id="add-risk-btn">Aggiungi Rischio Specifico</button>
-
-        <h2>Aree di Accoglienza / Punti di Raccolta</h2>
         <div class="form-group">
-            <label for="shelter-description">Descrizione Generale Aree di Accoglienza:</label>
-            <textarea id="shelter-description" placeholder="Descrizione completa delle aree di accoglienza..."></textarea>
+            <label for="color-a2">Colore A2:</label>
+            <select id="color-a2">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
         </div>
-
-        <h3>Punti Mappa (Aree/Punti di Raccolta)</h3>
-        <p>Clicca sulla mappa per ottenere Latitudine e Longitudine.</p>
-        <div id="leaflet-map"></div>
-        <div id="shelter-points-container">
-            </div>
-        <button id="add-shelter-point-btn">Aggiungi Punto Mappa</button>
-
-        <hr style="margin-top: 30px; margin-bottom: 20px;">
-        <button id="save-data-btn">Salva Dati Comune</button>
-        <div id="status-message"></div>
+        <div class="form-group">
+            <label for="color-b">Colore B:</label>
+            <select id="color-b">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-c">Colore C:</label>
+            <select id="color-c">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-d">Colore D:</label>
+            <select id="color-d">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-e1">Colore E1:</label>
+            <select id="color-e1">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="color-e2">Colore E2:</label>
+            <select id="color-e2">
+                <option value="green">Verde</option>
+                <option value="yellow">Giallo</option>
+                <option value="orange">Arancione</option>
+                <option value="red">Rosso</option>
+            </select>
+        </div>
+        <div class="button-group">
+            <button type="button" id="save-colors-button"><i class="fas fa-palette"></i> Salva Colori</button>
+            <button type="button" id="update-timestamp-button"><i class="fas fa-clock"></i> Aggiorna Timestamp Dati</button>
+        </div>
+        <div class="message" id="colors-response-message"></div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
     <script>
         // Your web app's Firebase configuration
         // **ATTENZIONE**: Sostituisci "YOUR_FIREBASE_API_KEY" con la tua VERA API Key di Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28", // <-- SOSTITUISCI CON LA TUA CHIAVE API
+            apiKey: "YOUR_FIREBASE_API_KEY", // <-- SOSTITUISCI CON LA TUA CHIAVE API
             authDomain: "bollettinoregionale.firebaseapp.com",
             projectId: "bollettinoregionale",
             databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
             storageBucket: "bollettinoregionale.appspot.com",
             messagingSenderId: "765538370497",
             appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
         };
 
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const comuniRef = database.ref('comuni_data'); // Riferimento al nodo principale per i dati dei comuni
-
-        // Inizializza Leaflet Map
-        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8); // Centra sulla Basilicata
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(leafletMap);
-
-        let currentComuneGeoJson = null; // Memorizza la feature GeoJSON del comune selezionato
-        let comuneOutlineLayer = null; // Layer per il bordo del comune
-        let shelterMarkersLayer = new L.LayerGroup().addTo(leafletMap); // Layer per i marker dei punti di accoglienza
+        const comuniRef = database.ref('comuni_data');
+        const coloriRef = database.ref('colori');
 
         // Elementi HTML
-        const comuneSelector = document.getElementById('comune-selector');
-        const criticityBaseSelector = document.getElementById('criticity-base-selector');
-        const risksContainer = document.getElementById('risks-container');
-        const addRiskBtn = document.getElementById('add-risk-btn');
-        const shelterDescription = document.getElementById('shelter-description');
-        const shelterPointsContainer = document.getElementById('shelter-points-container');
-        const addShelterPointBtn = document.getElementById('add-shelter-point-btn');
-        const saveDataBtn = document.getElementById('save-data-btn');
-        const statusMessage = document.getElementById('status-message');
+        const searchInput = document.getElementById('search-input');
+        const comuniList = document.getElementById('comune-list');
+        const comuneDetailsForm = document.getElementById('comune-details-form');
+        const currentComuneName = document.getElementById('current-comune-name');
+        const criticitySelect = document.getElementById('criticity-select');
+        const rischioGeneraleInput = document.getElementById('rischio-generale-input');
+        const riskCheckboxesContainer = document.getElementById('risk-checkboxes');
+        const riskDescriptionsContainer = document.getElementById('risk-descriptions-container');
+        const shelterInfoTextarea = document.getElementById('shelter-info-textarea');
+        const saveButton = document.getElementById('save-button');
+        const deleteButton = document.getElementById('delete-button');
+        const responseMessage = document.getElementById('response-message');
+        const saveColorsButton = document.getElementById('save-colors-button');
+        const updateTimestampButton = document.getElementById('update-timestamp-button');
+        const colorsResponseMessage = document.getElementById('colors-response-message');
+        const puntiMappaList = document.getElementById('punti-mappa-list');
+        const addPuntoButton = document.getElementById('add-punto-button');
 
-        // Normalizzazione dei nomi dei comuni
+
+        let allComuni = []; // Array per memorizzare tutti i comuni dal GeoJSON
+        let selectedComune = null; // Il comune attualmente selezionato
+
+        // Nuova lista di rischi predefiniti
+        const predefinedRisks = [
+            "Rischio idraulico",
+            "Rischio diga",
+            "Rischio idrogeologico",
+            "Rischio incendi",
+            "Rischio Sismico",
+            "Rischio neve",
+            "Rischio Industriale",
+            "Rischio Maremoto",
+            "Rischio ambientale"
+        ];
+
+        // Tipi di aree predefiniti per i punti mappa
+        const predefinedAreaTypes = [
+            "Area di attesa",
+            "Area di accoglienza",
+            "Area di ammassamento",
+            "Edifici strategici",
+            "Punti critici"
+        ];
+
+        // Funzione di normalizzazione (identica a quella usata nella pagina di visualizzazione)
         function normalizeComuneName(nome) {
             if (!nome) return "";
             return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
-        // Carica la lista dei comuni dal GeoJSON e popola il selettore
-        fetch('limits_R_17_municipalities.geojson')
-            .then(res => res.json())
-            .then(geojsonData => {
-                const comuni = geojsonData.features
-                    .map(feature => ({
-                        originalName: feature.properties.name,
-                        normalizedName: normalizeComuneName(feature.properties.name),
-                        feature: feature // Salva l'intera feature per un accesso più facile
-                    }))
-                    .sort((a, b) => a.originalName.localeCompare(b.originalName)); // Ordina alfabeticamente
+        // Funzione per mostrare messaggi
+        function showMessage(element, message, type) {
+            element.textContent = message;
+            element.className = `message ${type}`;
+            setTimeout(() => {
+                element.textContent = '';
+                element.className = 'message';
+            }, 5000);
+        }
 
-                comuni.forEach(comune => {
-                    const option = document.createElement('option');
-                    option.value = comune.normalizedName;
-                    option.textContent = comune.originalName;
-                    comuneSelector.appendChild(option);
-                });
+        // --- Gestione Caricamento e Visualizzazione Comuni ---
 
-                // Memorizza i dati GeoJSON globalmente per un accesso rapido
-                window.allComuniGeoData = comuni;
+        // Carica la lista dei comuni dal GeoJSON e i dati da Firebase all'avvio
+        async function loadInitialData() {
+            try {
+                // Carica il GeoJSON
+                const response = await fetch('limits_R_17_municipalities.geojson');
+                const geojsonData = await response.json();
+                allComuni = geojsonData.features.map(feature => ({
+                    originalName: feature.properties.name,
+                    normalizedName: normalizeComuneName(feature.properties.name)
+                })).sort((a, b) => a.originalName.localeCompare(b.originalName)); // Ordina alfabeticamente
 
-                // Carica i dati del primo comune all'avvio
-                if (comuni.length > 0) {
-                    loadComuneData(comuni[0].normalizedName);
-                }
-            })
-            .catch(error => {
-                console.error("Errore nel caricamento del GeoJSON:", error);
-                statusMessage.textContent = 'Errore nel caricamento della lista comuni.';
-                statusMessage.classList.add('status-error');
+                populateComuneList(allComuni);
+
+                // Carica le criticità e i colori (dalla configurazione dell'admin)
+                await loadCriticityOptions();
+                await loadColorSettings();
+                await loadPredefinedRisksCheckboxes(); // Carica le checkbox dei rischi
+            } catch (error) {
+                console.error("Errore nel caricamento dati iniziali:", error);
+                showMessage(responseMessage, "Errore nel caricamento dei dati iniziali.", "error");
+            }
+        }
+
+        function populateComuneList(comuniToDisplay) {
+            comuniList.innerHTML = '';
+            comuniToDisplay.forEach(comune => {
+                const li = document.createElement('li');
+                li.textContent = comune.originalName;
+                li.dataset.normalizedName = comune.normalizedName;
+                li.addEventListener('click', () => selectComune(comune));
+                comuniList.appendChild(li);
             });
+        }
 
-        // Event Listener per il cambio del comune
-        comuneSelector.addEventListener('change', (event) => {
-            const selectedComuneNormalizedName = event.target.value;
-            loadComuneData(selectedComuneNormalizedName);
+        searchInput.addEventListener('input', () => {
+            const searchTerm = normalizeComuneName(searchInput.value);
+            const filteredComuni = allComuni.filter(comune =>
+                comune.normalizedName.includes(searchTerm)
+            );
+            populateComuneList(filteredComuni);
         });
 
-        // Funzione per caricare i dati di un comune da Firebase e popolare il form
-        async function loadComuneData(normalizedComuneName) {
-            statusMessage.textContent = 'Caricamento dati...';
-            statusMessage.classList.remove('status-success', 'status-error');
+        // --- Gestione Selezione Comune e Caricamento Dati ---
 
-            const comuneDataRef = comuniRef.child(normalizedComuneName);
-            const snapshot = await comuneDataRef.once('value');
-            const data = snapshot.val();
-            console.log(`Dati caricati per ${normalizedComuneName}:`, data);
+        async function selectComune(comune) {
+            if (selectedComune) {
+                const prevSelectedLi = comuniList.querySelector(`li[data-normalized-name="${selectedComune.normalizedName}"]`);
+                if (prevSelectedLi) {
+                    prevSelectedLi.classList.remove('selected');
+                }
+            }
 
-            // Resetta il form
-            criticityBaseSelector.value = '';
-            risksContainer.innerHTML = `
-                <div class="risk-item">
-                    <label>Tipo Rischio:</label>
-                    <input type="text" class="risk-type" value="generale" readonly>
-                    <label>Descrizione:</label>
-                    <textarea class="risk-description" placeholder="Descrizione rischio generale..."></textarea>
-                </div>
-            `; // Reimposta solo il campo "generale"
-            shelterDescription.value = '';
-            shelterPointsContainer.innerHTML = '';
-            shelterMarkersLayer.clearLayers(); // Pulisci i marker sulla mappa
+            selectedComune = comune;
+            const currentSelectedLi = comuniList.querySelector(`li[data-normalized-name="${selectedComune.normalizedName}"]`);
+            if (currentSelectedLi) {
+                currentSelectedLi.classList.add('selected');
+            }
+
+            currentComuneName.textContent = selectedComune.originalName;
+            comuneDetailsForm.style.display = 'block';
+            responseMessage.textContent = ''; // Pulisci i messaggi precedenti
+
+            // Carica i dati del comune selezionato da Firebase
+            try {
+                const snapshot = await comuniRef.child(selectedComune.normalizedName).once('value');
+                const data = snapshot.val();
+                console.log("Dati comune caricati da Firebase:", data);
+                loadComuneDataIntoForm(data);
+            } catch (error) {
+                console.error("Errore nel caricamento dati del comune:", error);
+                showMessage(responseMessage, "Errore nel caricamento dei dati del comune.", "error");
+                loadComuneDataIntoForm(null); // Pulisci il form se c'è un errore
+            }
+        }
+
+        function loadComuneDataIntoForm(data) {
+            // Reset di tutti i campi
+            criticitySelect.value = 'A1'; // Default
+            rischioGeneraleInput.value = '';
+            shelterInfoTextarea.value = '';
+            puntiMappaList.innerHTML = ''; // Pulisci i punti mappa esistenti
+
+            // Deseleziona tutte le checkbox dei rischi e nascondi le descrizioni
+            document.querySelectorAll('#risk-checkboxes input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            riskDescriptionsContainer.innerHTML = '';
+
 
             if (data) {
-                criticityBaseSelector.value = data.criticitàBase || '';
-                shelterDescription.value = data.accoglienza || '';
+                criticitySelect.value = data.criticitàBase || 'A1';
+                rischioGeneraleInput.value = data.rischi ? (data.rischi.generale || '') : '';
+                shelterInfoTextarea.value = data.accoglienza || '';
 
-                // Popola i rischi
+                // Carica i rischi specifici
                 if (data.rischi) {
-                    // Cerca il campo generale e aggiornalo
-                    const generalRiskTextarea = risksContainer.querySelector('.risk-item .risk-type[value="generale"]').nextElementSibling;
-                    if (generalRiskTextarea) {
-                        generalRiskTextarea.value = data.rischi.generale || '';
-                    }
-
-                    for (const type in data.rischi) {
-                        if (type !== 'generale') {
-                            addRiskField(type, data.rischi[type]);
+                    for (const riskType in data.rischi) {
+                        if (riskType !== 'generale') {
+                            const checkbox = document.getElementById(`risk-checkbox-${riskType}`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                addRiskDescriptionField(riskType, data.rischi[riskType]);
+                            }
                         }
                     }
                 }
 
-                // Popola i punti mappa
-                if (data.puntiMappa && data.puntiMappa.length > 0) {
-                    data.puntiMappa.forEach(point => addShelterPointField(point));
-                }
-
-                statusMessage.textContent = 'Dati caricati con successo.';
-                statusMessage.classList.add('status-success');
-            } else {
-                statusMessage.textContent = 'Nessun dato trovato per questo comune. Inserisci le informazioni.';
-                statusMessage.classList.add('status-info'); // Una classe per info non un errore
-            }
-
-            // Aggiorna la mappa con il bordo del comune
-            const selectedComuneData = window.allComuniGeoData.find(c => c.normalizedName === normalizedComuneName);
-            if (selectedComuneData) {
-                currentComuneGeoJson = selectedComuneData.feature;
-                if (comuneOutlineLayer) {
-                    leafletMap.removeLayer(comuneOutlineLayer);
-                }
-                comuneOutlineLayer = L.geoJSON(currentComuneGeoJson, {
-                    style: {
-                        fillColor: 'transparent',
-                        weight: 3,
-                        opacity: 1,
-                        color: 'blue',
-                        fillOpacity: 0
-                    }
-                }).addTo(leafletMap);
-                leafletMap.fitBounds(comuneOutlineLayer.getBounds().pad(0.2)); // Centra e zooma sul comune
-            } else {
-                console.warn(`GeoJSON non trovato per ${normalizedComuneName}`);
-                if (comuneOutlineLayer) {
-                    leafletMap.removeLayer(comuneOutlineLayer);
+                // Carica i punti mappa
+                if (data.puntiMappa && Array.isArray(data.puntiMappa)) {
+                    data.puntiMappa.forEach(punto => {
+                        addPuntoMappaRow(punto);
+                    });
                 }
             }
         }
 
-        // Funzione per aggiungere un campo di rischio (per rischi specifici)
-        function addRiskField(type = '', description = '') {
-            const riskItem = document.createElement('div');
-            riskItem.classList.add('risk-item');
-            riskItem.innerHTML = `
-                <label>Tipo Rischio:</label>
-                <input type="text" class="risk-type" value="${type}" placeholder="es. idrogeologico">
-                <label>Descrizione:</label>
-                <textarea class="risk-description" placeholder="Descrizione del rischio...">${description}</textarea>
-                <button type="button" class="delete-button">Rimuovi Rischio</button>
-            `;
-            riskItem.querySelector('.delete-button').addEventListener('click', () => riskItem.remove());
-            risksContainer.appendChild(riskItem);
-        }
+        // --- Gestione Salvataggio Dati Comune ---
 
-        // Funzione per aggiungere un campo punto mappa (Aree/Punti di Raccolta)
-        function addShelterPointField(point = { lat: '', lon: '', nome: '', tipo: 'raccolta' }) {
-            const pointItem = document.createElement('div');
-            pointItem.classList.add('shelter-point-item');
-            pointItem.innerHTML = `
-                <label>Nome:</label>
-                <input type="text" class="point-name" value="${point.nome}" placeholder="Nome del punto">
-                <label>Latitudine:</label>
-                <input type="text" class="point-lat" value="${point.lat}" placeholder="Latitudine">
-                <label>Longitudine:</label>
-                <input type="text" class="point-lon" value="${point.lon}" placeholder="Longitudine">
-                <label>Tipo:</label>
-                <select class="point-type">
-                    <option value="raccolta" ${point.tipo === 'raccolta' ? 'selected' : ''}>Punto di Raccolta</option>
-                    <option value="accoglienza" ${point.tipo === 'accoglienza' ? 'selected' : ''}>Area di Accoglienza</option>
-                </select>
-                <button type="button" class="delete-button">Rimuovi Punto</button>
-            `;
-            pointItem.querySelector('.delete-button').addEventListener('click', () => {
-                pointItem.remove();
-                updateShelterMarkers(); // Rimuovi il marker dalla mappa
-            });
-            shelterPointsContainer.appendChild(pointItem);
-            updateShelterMarkers(); // Aggiorna i marker sulla mappa quando si aggiunge un campo
-        }
-
-        // Event Listener per aggiungere un campo rischio
-        addRiskBtn.addEventListener('click', () => addRiskField());
-
-        // Event Listener per aggiungere un campo punto mappa
-        addShelterPointBtn.addEventListener('click', () => addShelterPointField());
-
-        // Event Listener per salvare i dati
-        saveDataBtn.addEventListener('click', async () => {
-            const selectedComuneNormalizedName = comuneSelector.value;
-            if (!selectedComuneNormalizedName) {
-                alert('Seleziona un comune prima di salvare.');
+        saveButton.addEventListener('click', async () => {
+            if (!selectedComune) {
+                showMessage(responseMessage, "Seleziona un comune per salvare i dati.", "error");
                 return;
             }
 
-            statusMessage.textContent = 'Salvataggio dati...';
-            statusMessage.classList.remove('status-success', 'status-error');
+            const criticitàBase = criticitySelect.value;
+            const rischioGenerale = rischioGeneraleInput.value.trim();
+            const accoglienza = shelterInfoTextarea.value.trim();
 
-            const dataToSave = {
-                criticitàBase: criticityBaseSelector.value,
-                rischi: {},
-                accoglienza: shelterDescription.value,
-                puntiMappa: []
+            const rischiSpecifici = { generale: rischioGenerale };
+            document.querySelectorAll('#risk-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                const riskType = checkbox.dataset.riskType;
+                const riskDescriptionInput = document.getElementById(`risk-description-input-${riskType}`);
+                if (riskDescriptionInput) {
+                    rischiSpecifici[riskType] = riskDescriptionInput.value.trim();
+                }
+            });
+
+            const puntiMappa = [];
+            document.querySelectorAll('.punto-mappa-item').forEach(item => {
+                const tipo = item.querySelector('[name="punto-tipo"]').value;
+                const nome = item.querySelector('[name="punto-nome"]').value.trim();
+                const lat = parseFloat(item.querySelector('[name="punto-lat"]').value);
+                const lon = parseFloat(item.querySelector('[name="punto-lon"]').value);
+                const note = item.querySelector('[name="punto-note"]').value.trim();
+
+                if (tipo && nome && !isNaN(lat) && !isNaN(lon)) {
+                    puntiMappa.push({ tipo, nome, lat, lon, note });
+                }
+            });
+
+
+            const comuneData = {
+                criticitàBase: criticitàBase,
+                rischi: rischiSpecifici,
+                accoglienza: accoglienza,
+                puntiMappa: puntiMappa, // Aggiunto il campo puntiMappa
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP // Aggiungi timestamp
             };
 
-            // Raccogli i dati dei rischi
-            document.querySelectorAll('.risk-item').forEach(item => {
-                const type = item.querySelector('.risk-type').value.trim();
-                const description = item.querySelector('.risk-description').value.trim();
-                if (type) {
-                    dataToSave.rischi[type] = description;
-                }
-            });
-
-            // Raccogli i dati dei punti mappa
-            document.querySelectorAll('.shelter-point-item').forEach(item => {
-                const name = item.querySelector('.point-name').value.trim();
-                const lat = parseFloat(item.querySelector('.point-lat').value);
-                const lon = parseFloat(item.querySelector('.point-lon').value);
-                const type = item.querySelector('.point-type').value;
-
-                if (name && !isNaN(lat) && !isNaN(lon)) {
-                    dataToSave.puntiMappa.push({
-                        nome: name,
-                        lat: lat,
-                        lon: lon,
-                        tipo: type
-                    });
-                }
-            });
-
-            console.log("Dati da salvare:", dataToSave);
-
             try {
-                await comuniRef.child(selectedComuneNormalizedName).set(dataToSave);
-                statusMessage.textContent = 'Dati salvati con successo!';
-                statusMessage.classList.add('status-success');
+                await comuniRef.child(selectedComune.normalizedName).set(comuneData);
+                showMessage(responseMessage, `Dati per ${selectedComune.originalName} salvati con successo!`, "success");
             } catch (error) {
                 console.error("Errore nel salvataggio dei dati:", error);
-                statusMessage.textContent = `Errore nel salvataggio: ${error.message}`;
-                statusMessage.classList.add('status-error');
+                showMessage(responseMessage, "Errore nel salvataggio dei dati. " + error.message, "error");
             }
         });
 
-        // Mappa: Clicca per ottenere Lat/Lon
-        leafletMap.on('click', (e) => {
-            const lat = e.latlng.lat.toFixed(6);
-            const lon = e.latlng.lng.toFixed(6);
+        // --- Gestione Eliminazione Dati Comune ---
 
-            // Trova l'ultimo punto mappa aggiunto o il primo vuoto e popola i campi
-            const lastPointItem = shelterPointsContainer.lastElementChild;
-            if (lastPointItem) {
-                lastPointItem.querySelector('.point-lat').value = lat;
-                lastPointItem.querySelector('.point-lon').value = lon;
-                updateShelterMarkers(); // Aggiorna i marker dopo aver popolato
-            } else {
-                // Se non ci sono campi, aggiungine uno nuovo e popolalo
-                addShelterPointField({ lat: lat, lon: lon, nome: '', tipo: 'raccolta' });
+        deleteButton.addEventListener('click', async () => {
+            if (!selectedComune) {
+                showMessage(responseMessage, "Seleziona un comune per eliminare i dati.", "error");
+                return;
             }
-            statusMessage.textContent = `Coordinate selezionate: Lat ${lat}, Lon ${lon}`;
-            statusMessage.classList.remove('status-success', 'status-error');
+
+            if (confirm(`Sei sicuro di voler eliminare TUTTI i dati per il comune di ${selectedComune.originalName}? Questa azione non è reversibile.`)) {
+                try {
+                    await comuniRef.child(selectedComune.normalizedName).remove();
+                    showMessage(responseMessage, `Dati per ${selectedComune.originalName} eliminati con successo!`, "success");
+                    loadComuneDataIntoForm(null); // Pulisci il form
+                    selectedComune = null;
+                    comuneDetailsForm.style.display = 'none'; // Nascondi il form
+                    // Rimuovi la classe 'selected' dalla lista
+                    document.querySelectorAll('#comune-list li').forEach(li => li.classList.remove('selected'));
+
+                } catch (error) {
+                    console.error("Errore nell'eliminazione dei dati:", error);
+                    showMessage(responseMessage, "Errore nell'eliminazione dei dati. " + error.message, "error");
+                }
+            }
         });
 
-        // Aggiorna i marker sulla mappa in base ai punti nel form
-        function updateShelterMarkers() {
-            shelterMarkersLayer.clearLayers(); // Pulisci tutti i marker esistenti
-            document.querySelectorAll('.shelter-point-item').forEach(item => {
-                const name = item.querySelector('.point-name').value.trim();
-                const lat = parseFloat(item.querySelector('.point-lat').value);
-                const lon = parseFloat(item.querySelector('.point-lon').value);
-                const type = item.querySelector('.point-type').value;
+        // --- Gestione Colori Base ---
 
-                if (name && !isNaN(lat) && !isNaN(lon)) {
-                    let markerIcon;
-                    // Assicurati che questi percorsi siano corretti per le icone!
-                    if (type === 'raccolta') {
-                        markerIcon = L.icon({ iconUrl: 'ico/disaster_earthquake_32px_icon_bluebox.png', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32], shadowUrl: 'ico/marker-shadow.png', shadowSize: [41, 41] });
-                    } else if (type === 'accoglienza') {
-                        markerIcon = L.icon({ iconUrl: 'ico/cluster_shelter_32px_icon_bluebox.png', iconSize: [32, 32], iconAnchor: [16, 32], popupAnchor: [0, -32], shadowUrl: 'ico/marker-shadow.png', shadowSize: [41, 41] });
-                    } else {
-                        markerIcon = L.Icon.Default;
+        async function loadCriticityOptions() {
+            const criticityOptions = [
+                'A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'
+            ]; // Puoi anche caricare queste da Firebase se vuoi renderle dinamiche
+
+            criticitySelect.innerHTML = criticityOptions.map(opt =>
+                `<option value="${opt}">${opt}</option>`
+            ).join('');
+        }
+
+        async function loadColorSettings() {
+            try {
+                const snapshot = await coloriRef.once('value');
+                const data = snapshot.val();
+                if (data && data.coloriBase) {
+                    for (const criticity in data.coloriBase) {
+                        const selectElement = document.getElementById(`color-${criticity.toLowerCase()}`);
+                        if (selectElement) {
+                            selectElement.value = data.coloriBase[criticity];
+                        }
                     }
+                }
+            } catch (error) {
+                console.error("Errore nel caricamento delle impostazioni colore:", error);
+                showMessage(colorsResponseMessage, "Errore nel caricamento dei colori.", "error");
+            }
+        }
 
-                    const marker = L.marker([lat, lon], { icon: markerIcon })
-                        .bindPopup(`<b>${name}</b><br>Tipo: ${type}<br>Lat: ${lat}, Lon: ${lon}`);
-                    shelterMarkersLayer.addLayer(marker);
+        saveColorsButton.addEventListener('click', async () => {
+            const coloriBase = {};
+            const criticityOptions = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2']; // Assicurati che siano coerenti
+            criticityOptions.forEach(crit => {
+                const selectElement = document.getElementById(`color-${crit.toLowerCase()}`);
+                if (selectElement) {
+                    coloriBase[crit] = selectElement.value;
+                }
+            });
+
+            try {
+                await coloriRef.update({ coloriBase: coloriBase });
+                showMessage(colorsResponseMessage, "Colori salvati con successo!", "success");
+            } catch (error) {
+                console.error("Errore nel salvataggio dei colori:", error);
+                showMessage(colorsResponseMessage, "Errore nel salvataggio dei colori. " + error.message, "error");
+            }
+        });
+
+        updateTimestampButton.addEventListener('click', async () => {
+            try {
+                await coloriRef.update({ dataCreazione: firebase.database.ServerValue.TIMESTAMP });
+                showMessage(colorsResponseMessage, "Timestamp aggiornato con successo!", "success");
+            } catch (error) {
+                console.error("Errore nell'aggiornamento del timestamp:", error);
+                showMessage(colorsResponseMessage, "Errore nell'aggiornamento del timestamp. " + error.message, "error");
+            }
+        });
+
+        // --- Gestione Rischi Specifici (Checkbox e Testarea) ---
+
+        function loadPredefinedRisksCheckboxes() {
+            riskCheckboxesContainer.innerHTML = ''; // Pulisci prima di aggiungere
+            predefinedRisks.forEach(risk => {
+                const normalizedRiskType = normalizeRiskType(risk);
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.innerHTML = `
+                    <label>
+                        <input type="checkbox" id="risk-checkbox-${normalizedRiskType}" data-risk-type="${normalizedRiskType}">
+                        ${risk}
+                    </label>
+                `;
+                riskCheckboxesContainer.appendChild(checkboxDiv);
+
+                const checkbox = document.getElementById(`risk-checkbox-${normalizedRiskType}`);
+                checkbox.addEventListener('change', (event) => {
+                    if (event.target.checked) {
+                        addRiskDescriptionField(normalizedRiskType);
+                    } else {
+                        removeRiskDescriptionField(normalizedRiskType);
+                    }
+                });
+            });
+        }
+
+        function normalizeRiskType(riskName) {
+            return riskName.toLowerCase().replace(/[^a-z0-9]/g, ''); // Rimuove spazi e caratteri speciali
+        }
+
+        function addRiskDescriptionField(riskType, initialValue = '') {
+            if (document.getElementById(`risk-description-input-${riskType}`)) {
+                // Se il campo esiste già, aggiorna solo il valore se non vuoto
+                if (initialValue) {
+                    document.getElementById(`risk-description-input-${riskType}`).value = initialValue;
+                }
+                return;
+            }
+
+            const div = document.createElement('div');
+            div.classList.add('form-group');
+            div.id = `risk-description-group-${riskType}`;
+            div.innerHTML = `
+                <label for="risk-description-input-${riskType}">Descrizione ${getRiskDisplayName(riskType)}:</label>
+                <textarea id="risk-description-input-${riskType}" placeholder="Descrizione specifica per ${getRiskDisplayName(riskType)}">${initialValue}</textarea>
+            `;
+            riskDescriptionsContainer.appendChild(div);
+        }
+
+        function removeRiskDescriptionField(riskType) {
+            const divToRemove = document.getElementById(`risk-description-group-${riskType}`);
+            if (divToRemove) {
+                riskDescriptionsContainer.removeChild(divToRemove);
+            }
+        }
+
+        function getRiskDisplayName(normalizedRiskType) {
+            const foundRisk = predefinedRisks.find(risk => normalizeRiskType(risk) === normalizedRiskType);
+            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1);
+        }
+
+        // --- Gestione Punti Mappa Dinamici ---
+
+        addPuntoButton.addEventListener('click', () => addPuntoMappaRow());
+
+        function addPuntoMappaRow(punto = {}) {
+            const itemDiv = document.createElement('div');
+            itemDiv.classList.add('punto-mappa-item');
+            itemDiv.innerHTML = `
+                <button type="button" class="remove-punto-btn"><i class="fas fa-times-circle"></i> Rimuovi</button>
+                <div class="form-group">
+                    <label>Tipo di Area:</label>
+                    <select name="punto-tipo">
+                        ${predefinedAreaTypes.map(type => `<option value="${type}" ${punto.tipo === type ? 'selected' : ''}>${type}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nome / Via (Indirizzo):</label>
+                    <input type="text" name="punto-nome" value="${punto.nome || ''}" placeholder="Es: Piazza Duomo, Via Roma 123">
+                </div>
+                <div class="form-group lat-lon-group">
+                    <div>
+                        <label>Latitudine:</label>
+                        <input type="number" name="punto-lat" step="any" value="${punto.lat || ''}" placeholder="Es: 40.6409">
+                    </div>
+                    <div>
+                        <label>Longitudine:</label>
+                        <input type="number" name="punto-lon" step="any" value="${punto.lon || ''}" placeholder="Es: 15.7997">
+                    </div>
+                    <button type="button" class="geocode-btn"><i class="fas fa-map-marker-alt"></i> Trova Lat/Lon</button>
+                </div>
+                <div class="form-group">
+                    <label>Note:</label>
+                    <textarea name="punto-note" placeholder="Eventuali note relative al punto">${punto.note || ''}</textarea>
+                </div>
+            `;
+            puntiMappaList.appendChild(itemDiv);
+
+            // Aggiungi event listener per rimuovere il punto
+            itemDiv.querySelector('.remove-punto-btn').addEventListener('click', () => {
+                itemDiv.remove();
+            });
+
+            // Aggiungi event listener per il geocoding
+            itemDiv.querySelector('.geocode-btn').addEventListener('click', async (event) => {
+                const nomeInput = itemDiv.querySelector('[name="punto-nome"]');
+                const latInput = itemDiv.querySelector('[name="punto-lat"]');
+                const lonInput = itemDiv.querySelector('[name="punto-lon"]');
+                const address = nomeInput.value.trim();
+
+                if (address) {
+                    event.target.textContent = 'Cercando...';
+                    event.target.disabled = true;
+                    try {
+                        // Utilizza l'API OpenStreetMap Nominatim per il geocoding
+                        const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + ', Potenza, Basilicata, Italia')}`); // Aggiungi la regione per migliorare la precisione
+                        const data = await response.json();
+
+                        if (data && data.length > 0) {
+                            latInput.value = parseFloat(data[0].lat).toFixed(6);
+                            lonInput.value = parseFloat(data[0].lon).toFixed(6);
+                            showMessage(responseMessage, `Coordinate trovate per "${address}"`, "success");
+                        } else {
+                            showMessage(responseMessage, `Nessuna coordinata trovata per "${address}". Prova con un indirizzo più preciso.`, "error");
+                            latInput.value = '';
+                            lonInput.value = '';
+                        }
+                    } catch (error) {
+                        console.error("Errore geocoding:", error);
+                        showMessage(responseMessage, "Errore durante la ricerca delle coordinate. Riprova più tardi.", "error");
+                    } finally {
+                        event.target.textContent = 'Trova Lat/Lon';
+                        event.target.disabled = false;
+                    }
+                } else {
+                    showMessage(responseMessage, "Inserisci un nome/indirizzo per cercare le coordinate.", "error");
                 }
             });
         }
 
-        // Aggiungi listener per l'input per aggiornare i marker dinamicamente
-        shelterPointsContainer.addEventListener('input', (event) => {
-            if (event.target.classList.contains('point-lat') ||
-                event.target.classList.contains('point-lon') ||
-                event.target.classList.contains('point-name') ||
-                event.target.classList.contains('point-type')) {
-                updateShelterMarkers();
-            }
-        });
 
+        // Inizializza l'applicazione
+        loadInitialData();
     </script>
-
 </body>
 
 </html>
