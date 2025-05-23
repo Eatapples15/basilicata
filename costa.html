@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portale di Protezione Civile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles if needed, but Tailwind should cover most */
+        .card-link {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl p-8 md:p-12 max-w-4xl w-full text-center">
+        <div class="mb-8">
+            <img src="https://placehold.co/150x150/007bff/ffffff?text=Logo" alt="Logo Protezione Civile" class="mx-auto mb-4 rounded-full shadow-md">
+            <h1 class="text-4xl font-bold text-blue-800 mb-2">Portale di Protezione Civile</h1>
+            <p class="text-gray-600 text-lg">Accesso rapido alle informazioni e strumenti</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <div class="bg-blue-500 text-white p-6 rounded-lg shadow-lg card-link">
+                <h2 class="text-2xl font-semibold mb-4"><i class="fas fa-user-shield mr-2"></i>Operatore Autorizzato</h2>
+                <ul class="space-y-3">
+                    <li>
+                        <a href="/basilicata/index.html" class="block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium">
+                            <i class="fas fa-map-marked-alt mr-2"></i>Mappa Operatori
+                        </a>
+                    </li>
+                    <li>
+                        <a href="salvacomuni.html" class="block bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium">
+                            <i class="fas fa-cogs mr-2"></i>Gestione Dati Comuni (Admin)
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-green-500 text-white p-6 rounded-lg shadow-lg card-link">
+                <h2 class="text-2xl font-semibold mb-4"><i class="fas fa-building mr-2"></i>Enti</h2>
+                <ul class="space-y-3">
+                    <li>
+                        <label for="comune-select" class="block text-white text-sm font-medium mb-1">Seleziona Comune (Costa Ionica):</label>
+                        <select id="comune-select" class="w-full p-2 rounded-md text-gray-800 focus:outline-none focus:ring-2 focus:ring-green-700">
+                            <option value="">Caricamento comuni...</option>
+                        </select>
+                        <button id="go-to-comune-btn" class="mt-3 block w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md font-medium">
+                            <i class="fas fa-arrow-right mr-2"></i>Vai al Comune
+                        </button>
+                    </li>
+                    <li>
+                        <a href="consultazione.html" class="block bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md font-medium">
+                            <i class="fas fa-users mr-2"></i>Consultazione Operatori
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-yellow-500 text-gray-800 p-6 rounded-lg shadow-lg card-link">
+                <h2 class="text-2xl font-semibold mb-4"><i class="fas fa-hand-holding-heart mr-2"></i>Cittadini</h2>
+                <p class="text-yellow-900 mb-4">Informazioni e risorse utili per la cittadinanza.</p>
+                <a href="cittadini.html" class="block bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded-md font-medium">
+                    <i class="fas fa-info-circle mr-2"></i>Scopri di più
+                </a>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const comuneSelect = document.getElementById('comune-select');
+            const goToComuneBtn = document.getElementById('go-to-comune-btn');
+
+            // Funzione per normalizzare i nomi dei comuni
+            function normalizeComuneName(nome) {
+                if (!nome) return "";
+                return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            }
+
+            // Lista dei comuni della costa ionica della Basilicata (nomi normalizzati)
+            const comuniCostaIonica = [
+                "policoro",
+                "novasiri",
+                "bernalda", // Include Metaponto
+                "pisticci", // Include Marconia e Pisticci Scalo
+                "scanzanojonico",
+                "rotondella", // Ha frazioni sulla costa
+                "tursi" // Ha frazioni sulla costa (es. Policoro Scalo)
+            ];
+
+            // Carica i comuni della Basilicata dal GeoJSON e filtra per la costa ionica
+            try {
+                const geoJsonPath = '/basilicata/limits_R_17_municipalities.geojson'; // Assicurati che il percorso sia corretto
+                console.log(`Tentativo di caricare GeoJSON da: ${geoJsonPath}`);
+                const response = await fetch(geoJsonPath);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const geojsonData = await response.json();
+                const comuniLucani = geojsonData.features
+                    .filter(feature => feature.properties.name) // Assicurati che il nome esista
+                    .map(feature => ({
+                        originalName: feature.properties.name,
+                        normalizedName: normalizeComuneName(feature.properties.name)
+                    }))
+                    .sort((a, b) => a.originalName.localeCompare(b.originalName));
+
+                // Filtra solo i comuni della costa ionica
+                const filteredComuni = comuniLucani.filter(comune =>
+                    comuniCostaIonica.includes(comune.normalizedName)
+                );
+
+                comuneSelect.innerHTML = '<option value="">Seleziona un comune...</option>'; // Resetta e aggiungi l'opzione di default
+                if (filteredComuni.length > 0) {
+                    filteredComuni.forEach(comune => {
+                        const option = document.createElement('option');
+                        option.value = comune.normalizedName;
+                        option.textContent = comune.originalName;
+                        comuneSelect.appendChild(option);
+                    });
+                } else {
+                    comuneSelect.innerHTML = '<option value="">Nessun comune trovato sulla costa ionica</option>';
+                    goToComuneBtn.disabled = true;
+                }
+
+            } catch (error) {
+                console.error("Errore nel caricamento o nel filtro dei comuni lucani:", error);
+                comuneSelect.innerHTML = '<option value="">Errore nel caricamento comuni</option>';
+                goToComuneBtn.disabled = true;
+            }
+
+            // Listener per il pulsante "Vai al Comune"
+            goToComuneBtn.addEventListener('click', () => {
+                const selectedNormalizedName = comuneSelect.value;
+                if (selectedNormalizedName) {
+                    window.location.href = `comune.html?comune=${selectedNormalizedName}`;
+                } else {
+                    // Utilizza un messaggio personalizzato invece di alert()
+                    const messageBox = document.createElement('div');
+                    messageBox.className = 'fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center';
+                    messageBox.innerHTML = `
+                        <div class="bg-white p-6 rounded-lg shadow-xl text-center">
+                            <p class="text-lg font-semibold mb-4">Per favore, seleziona un comune dalla lista.</p>
+                            <button id="close-message-box" class="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-md">OK</button>
+                        </div>
+                    `;
+                    document.body.appendChild(messageBox);
+                    document.getElementById('close-message-box').addEventListener('click', () => {
+                        messageBox.remove();
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
