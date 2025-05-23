@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultazione Operatori - Portale Protezione Civile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* gray-200 */
+        }
+        th {
+            background-color: #e0f2f7; /* blue-50 */
+            color: #2563eb; /* blue-600 */
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc; /* gray-50 */
+        }
+        tr:hover {
+            background-color: #eff6ff; /* blue-100 */
+        }
+        .section-card {
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2563eb; /* blue-600 */
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #bfdbfe; /* blue-200 */
+            padding-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-6xl mx-auto bg-white rounded-lg shadow-xl p-6 md:p-8">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-green-800 mb-2">Consultazione Operatori</h1>
+            <p class="text-gray-600">Elenco degli operatori autorizzati e dettagli di contatto.</p>
+            <a href="index.html" class="inline-block mt-4 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>Torna alla Home</a>
+        </header>
+
+        <div class="section-card">
+            <h2 class="section-title text-green-600"><i class="fas fa-users mr-2"></i>Elenco Operatori</h2>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Ruolo</th>
+                            <th>Ente di Appartenenza</th>
+                            <th>Comune di Riferimento</th>
+                            <th>Contatto Principale</th>
+                            <th>Contatto Alternativo</th>
+                            <th>Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Marco Verdi</td>
+                            <td>Responsabile Operativo</td>
+                            <td>Protezione Civile Comunale</td>
+                            <td>Policoro</td>
+                            <td>+39 345 1234567</td>
+                            <td>marco.verdi@pec.it</td>
+                            <td>Disponibile h24 per emergenze</td>
+                        </tr>
+                        <tr>
+                            <td>Laura Neri</td>
+                            <td>Coordinatore Volontari</td>
+                            <td>Associazione Volontariato Alfa</td>
+                            <td>Nova Siri</td>
+                            <td>+39 333 9876543</td>
+                            <td>laura.neri@email.com</td>
+                            <td>Specializzata in ricerca e soccorso</td>
+                        </tr>
+                        <tr>
+                            <td>Giovanni Rossi</td>
+                            <td>Vigile del Fuoco</td>
+                            <td>Comando Provinciale VV.F.</td>
+                            <td>Potenza</td>
+                            <td>+39 0971 123456</td>
+                            <td>giovanni.rossi@vigilidelfuoco.it</td>
+                            <td>Esperto in incendi boschivi</td>
+                        </tr>
+                        <tr>
+                            <td>Anna Bianchi</td>
+                            <td>Funzionario Tecnico</td>
+                            <td>Ufficio Tecnico Comunale</td>
+                            <td>Matera</td>
+                            <td>+39 0835 765432</td>
+                            <td>anna.bianchi@comune.matera.it</td>
+                            <td>Referente per rischio idrogeologico</td>
+                        </tr>
+                        <tr>
+                            <td>Roberto Esposito</td>
+                            <td>Agente di Polizia Locale</td>
+                            <td>Polizia Locale</td>
+                            <td>Policoro</td>
+                            <td>+39 320 1122334</td>
+                            <td>roberto.esposito@polizialocale.it</td>
+                            <td>Gestione viabilità in emergenza</td>
+                        </tr>
+                        <tr>
+                            <td>Sara Gialli</td>
+                            <td>Volontaria Sanitaria</td>
+                            <td>Croce Rossa Italiana</td>
+                            <td>Nova Siri</td>
+                            <td>+39 340 5566778</td>
+                            <td>sara.gialli@cri.it</td>
+                            <td>Supporto medico e psicologico</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
