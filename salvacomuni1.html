@@ -529,7 +529,7 @@
                 <h3>Procedure Operative per Ente</h3>
                 <p>Queste procedure sono associate al rischio specifico selezionato.</p>
                 <div id="procedures-for-entities-list">
-                    </div>
+                </div>
             </div>
 
 
@@ -544,7 +544,7 @@
             <div class="emergency-contacts-admin-container">
                 <h3>Contatti di Emergenza</h3>
                 <div id="emergency-contacts-list">
-                    </div>
+                </div>
                 <button type="button" class="add-contact-btn" id="add-contact-button"><i class="fas fa-plus-circle"></i>
                     Aggiungi Contatto</button>
             </div>
@@ -902,26 +902,33 @@
                 const contatto2 = item.querySelector('[name="contact-alt"]').value.trim();
 
                 if (ruolo && (contatto1 || contatto2)) { // Almeno un contatto deve esserci
-                    contattiEmergenza.push({ ruolo, nome, contatto1, contatto2 });
+                    contattiEmergenza.push({
+                        ruolo,
+                        nome,
+                        contatto1,
+                        contatto2
+                    });
                 }
             });
 
 
             const comuneData = {
-                criticità: criticità, // Usiamo 'criticità' come chiave nel database
+                nome: selectedComune.originalName, // Salviamo il nome originale
+                criticità: criticità, // Modificato da criticitàBase a criticità
                 rischi: rischiSpecifici,
-                procedure: proceduresData, // Aggiunto il nodo delle procedure
-                aree_emergenza: areeEmergenza, // Modificato nome nodo
-                contatti_emergenza: contattiEmergenza, // Aggiunto il nodo dei contatti
-                lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                procedure_operative: proceduresData, // Aggiunto le procedure operative
+                aree_emergenza: areeEmergenza, // Modificato da puntiMappa ad aree_emergenza
+                contatti_emergenza: contattiEmergenza // Aggiunto i contatti di emergenza
             };
 
             try {
+                // Usa il nome normalizzato come chiave principale
                 await comuniRef.child(selectedComune.normalizedName).set(comuneData);
                 showMessage(responseMessage, `Dati per ${selectedComune.originalName} salvati con successo!`, "success");
+                console.log("Dati salvati:", comuneData);
             } catch (error) {
                 console.error("Errore nel salvataggio dei dati:", error);
-                showMessage(responseMessage, "Errore nel salvataggio dei dati. " + error.message, "error");
+                showMessage(responseMessage, `Errore nel salvataggio dei dati per ${selectedComune.originalName}.`, "error");
             }
         });
 
@@ -933,423 +940,394 @@
                 return;
             }
 
-            if (confirm(`Sei sicuro di voler eliminare TUTTI i dati per il comune di ${selectedComune.originalName}? Questa azione non è reversibile.`)) {
+            if (confirm(`Sei sicuro di voler eliminare TUTTI i dati per ${selectedComune.originalName}? Questa operazione è irreversibile.`)) {
                 try {
                     await comuniRef.child(selectedComune.normalizedName).remove();
                     showMessage(responseMessage, `Dati per ${selectedComune.originalName} eliminati con successo!`, "success");
-                    loadComuneDataIntoForm(null);
-                    selectedComune = null;
+                    // Resetta il form e la selezione
                     comuneDetailsForm.style.display = 'none';
-                    document.querySelectorAll('#comune-list li').forEach(li => li.classList.remove('selected'));
-
+                    selectedComune = null;
+                    const prevSelectedLi = comuniList.querySelector(`li.selected`);
+                    if (prevSelectedLi) {
+                        prevSelectedLi.classList.remove('selected');
+                    }
+                    searchInput.value = ''; // Pulisce la barra di ricerca
+                    populateComuneList(allComuni); // Ricarica la lista completa
                 } catch (error) {
                     console.error("Errore nell'eliminazione dei dati:", error);
-                    showMessage(responseMessage, "Errore nell'eliminazione dei dati. " + error.message, "error");
+                    showMessage(responseMessage, `Errore nell'eliminazione dei dati per ${selectedComune.originalName}.`, "error");
                 }
             }
         });
 
-        // --- Gestione Rischi Specifici (Checkbox e Dettagli) ---
+        // --- Funzioni per la Gestione dei Rischi Specifici ---
 
         function loadPredefinedRisksCheckboxes() {
-            riskCheckboxesContainer.innerHTML = '';
+            riskCheckboxesContainer.innerHTML = ''; // Pulisci prima di popolare
             predefinedRisks.forEach(risk => {
-                const normalizedRiskType = normalizeRiskType(risk);
-                const checkboxDiv = document.createElement('div');
-                checkboxDiv.innerHTML = `
-                    <label>
-                        <input type="checkbox" id="risk-checkbox-${normalizedRiskType}" data-risk-type="${normalizedRiskType}">
-                        ${risk}
-                    </label>
-                `;
-                riskCheckboxesContainer.appendChild(checkboxDiv);
+                const normalizedRisk = normalizeRiskType(risk);
+                const div = document.createElement('div');
+                div.innerHTML = `
+                <label>
+                    <input type="checkbox" id="risk-checkbox-${normalizedRisk}" data-risk-type="${normalizedRisk}">
+                    ${risk}
+                </label>
+            `;
+                riskCheckboxesContainer.appendChild(div);
 
-                const checkbox = document.getElementById(`risk-checkbox-${normalizedRiskType}`);
-                checkbox.addEventListener('change', (event) => {
+                // Aggiungi listener per mostrare/nascondere la sezione di dettaglio del rischio
+                div.querySelector(`#risk-checkbox-${normalizedRisk}`).addEventListener('change', (event) => {
                     if (event.target.checked) {
-                        addRiskDescriptionField(normalizedRiskType);
-                        addProceduresForRisk(normalizedRiskType); // Aggiungi la sezione procedure quando il rischio è selezionato
+                        addRiskDescriptionField(normalizedRisk);
                     } else {
-                        removeRiskDescriptionField(normalizedRiskType);
-                        removeProceduresForRisk(normalizedRiskType); // Rimuovi la sezione procedure
+                        removeRiskDescriptionField(normalizedRisk);
+                        // Rimuovi anche le procedure associate
+                        const proceduresSection = document.getElementById(`procedures-for-${normalizedRisk}`);
+                        if (proceduresSection) {
+                            proceduresSection.remove();
+                        }
                     }
-                    // Mostra/Nascondi il container delle procedure generali in base alle checkbox attive
-                    updateOperatorProceduresVisibility();
+                    // Controlla se ci sono sezioni di procedure attive per mostrare/nascondere il container generale
+                    toggleOperatorProceduresContainerVisibility();
                 });
             });
         }
 
-        // Funzione per aggiornare la visibilità del container delle procedure
-        function updateOperatorProceduresVisibility() {
-            const anyRiskChecked = document.querySelectorAll('#risk-checkboxes input[type="checkbox"]:checked').length > 0;
-            operatorProceduresAdminContainer.style.display = anyRiskChecked ? 'block' : 'none';
-        }
-
-        function addRiskDescriptionField(riskType, initialData = {}) {
-            let initialAlertStatus = 'N/D';
-            let initialAlertMessage = '';
-            let initialGuidelines = { before: [], during: [], after: [] };
-
-            if (typeof initialData === 'string') { // Vecchio formato, solo il messaggio
-                initialAlertMessage = initialData;
-            } else if (typeof initialData === 'object' && initialData !== null) {
-                initialAlertStatus = initialData.alertStatus || 'N/D';
-                initialAlertMessage = initialData.alertMessage || '';
-                initialGuidelines = initialData.guidelines || { before: [], during: [], after: [] };
-            }
-
-            // Controlla se il campo esiste già per evitare duplicati
-            if (document.getElementById(`risk-description-group-${riskType}`)) {
-                // Se esiste, aggiorna i valori
-                const section = document.getElementById(`risk-description-group-${riskType}`);
-                section.querySelector('[name="alert-status"]').value = initialAlertStatus;
-                section.querySelector('[name="alert-message"]').value = initialAlertMessage;
-
-                // Aggiorna le linee guida
-                ['before', 'during', 'after'].forEach(period => {
-                    const guidelineContainer = section.querySelector(`.guidelines-group[data-period="${period}"] .guideline-inputs-container`);
-                    if (guidelineContainer) {
-                        guidelineContainer.innerHTML = ''; // Pulisci prima
-                        (initialGuidelines[period] || []).forEach(item => {
-                            addGuidelineInput(guidelineContainer, item);
-                        });
-                        // Assicurati che ci sia almeno un input vuoto per aggiungere
-                        if (guidelineContainer.children.length === 0 || guidelineContainer.lastElementChild.querySelector('input').value !== '') {
-                            addGuidelineInput(guidelineContainer);
-                        }
-                    }
-                });
-
-                // Carica anche le procedure per questo rischio se non già caricate
-                loadProceduresForRisk(riskType);
-                return; // Esce dalla funzione dopo l'aggiornamento
-            }
-
-            const div = document.createElement('div');
-            div.classList.add('risk-details-section'); // Classe per stile specifico
-            div.id = `risk-description-group-${riskType}`;
-            div.innerHTML = `
-                <h4>Dettagli per ${getRiskDisplayName(riskType)}</h4>
+        function addRiskDescriptionField(riskType, data = {}) {
+            const displayName = getRiskDisplayName(riskType);
+            if (!document.getElementById(`risk-description-group-${riskType}`)) {
+                const div = document.createElement('div');
+                div.className = 'risk-details-section';
+                div.id = `risk-description-group-${riskType}`;
+                div.dataset.riskType = riskType;
+                div.innerHTML = `
+                <h4>Dettagli per: ${displayName} <button type="button" class="remove-risk-details-btn" data-risk-type="${riskType}" style="background-color: #dc3545; color: white; padding: 4px 8px; font-size: 0.7em; float: right;">Rimuovi</button></h4>
                 <div class="form-group">
                     <label for="alert-status-${riskType}">Stato Allerta:</label>
                     <select id="alert-status-${riskType}" name="alert-status">
-                        ${alertStatuses.map(status => `<option value="${status}" ${initialAlertStatus === status ? 'selected' : ''}>${status}</option>`).join('')}
+                        ${alertStatuses.map(status => `<option value="${status}">${status}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="alert-message-${riskType}">Messaggio di Allerta:</label>
-                    <textarea id="alert-message-${riskType}" name="alert-message" placeholder="Messaggio di allerta specifico per questo rischio">${initialAlertMessage}</textarea>
+                    <label for="alert-message-${riskType}">Messaggio Allerta:</label>
+                    <textarea id="alert-message-${riskType}" name="alert-message" placeholder="Messaggio specifico per questo rischio"></textarea>
                 </div>
-
                 <div class="guidelines-group" data-period="before">
-                    <label>Linee guida (Prima):</label>
-                    <div class="guideline-inputs-container">
-                        ${(initialGuidelines.before || []).map(item => `
-                            <div class="guideline-input">
-                                <input type="text" value="${item}" placeholder="Azione prima dell'evento">
-                                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button type="button" class="add-guideline-btn" data-period="before"><i class="fas fa-plus-circle"></i> Aggiungi Azione</button>
+                    <label>Cosa fare PRIMA:</label>
+                    <div id="guidelines-before-${riskType}"></div>
+                    <button type="button" class="add-guideline-btn" data-risk-type="${riskType}" data-period="before" style="background-color: #6c757d; margin-top: 5px; width: auto; padding: 5px 10px; font-size: 0.8em;">Aggiungi linea guida</button>
                 </div>
                 <div class="guidelines-group" data-period="during">
-                    <label>Linee guida (Durante):</label>
-                    <div class="guideline-inputs-container">
-                        ${(initialGuidelines.during || []).map(item => `
-                            <div class="guideline-input">
-                                <input type="text" value="${item}" placeholder="Azione durante l'evento">
-                                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button type="button" class="add-guideline-btn" data-period="during"><i class="fas fa-plus-circle"></i> Aggiungi Azione</button>
+                    <label>Cosa fare DURANTE:</label>
+                    <div id="guidelines-during-${riskType}"></div>
+                    <button type="button" class="add-guideline-btn" data-risk-type="${riskType}" data-period="during" style="background-color: #6c757d; margin-top: 5px; width: auto; padding: 5px 10px; font-size: 0.8em;">Aggiungi linea guida</button>
                 </div>
                 <div class="guidelines-group" data-period="after">
-                    <label>Linee guida (Dopo):</label>
-                    <div class="guideline-inputs-container">
-                        ${(initialGuidelines.after || []).map(item => `
-                            <div class="guideline-input">
-                                <input type="text" value="${item}" placeholder="Azione dopo l'evento">
-                                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <button type="button" class="add-guideline-btn" data-period="after"><i class="fas fa-plus-circle"></i> Aggiungi Azione</button>
+                    <label>Cosa fare DOPO:</label>
+                    <div id="guidelines-after-${riskType}"></div>
+                    <button type="button" class="add-guideline-btn" data-risk-type="${riskType}" data-period="after" style="background-color: #6c757d; margin-top: 5px; width: auto; padding: 5px 10px; font-size: 0.8em;">Aggiungi linea guida</button>
                 </div>
             `;
-            riskDescriptionsContainer.appendChild(div);
+                riskDescriptionsContainer.appendChild(div);
 
-            // Aggiungi un input vuoto per ogni sezione guidelines se non ce ne sono o l'ultimo non è vuoto
-            ['before', 'during', 'after'].forEach(period => {
-                const container = div.querySelector(`.guidelines-group[data-period="${period}"] .guideline-inputs-container`);
-                if (container.children.length === 0 || container.lastElementChild.querySelector('input').value !== '') {
-                    addGuidelineInput(container);
+                // Pre-popola i dati se disponibili
+                if (data.alertStatus) {
+                    div.querySelector('[name="alert-status"]').value = data.alertStatus;
                 }
-            });
-
-            // Aggiungi listener per i bottoni "Aggiungi Azione" e "Rimuovi"
-            div.querySelectorAll('.add-guideline-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    const container = event.target.closest('.guidelines-group').querySelector('.guideline-inputs-container');
-                    addGuidelineInput(container);
+                if (data.alertMessage) {
+                    div.querySelector('[name="alert-message"]').value = data.alertMessage;
+                }
+                if (data.guidelines) {
+                    ['before', 'during', 'after'].forEach(period => {
+                        if (data.guidelines[period] && Array.isArray(data.guidelines[period])) {
+                            data.guidelines[period].forEach(guideline => {
+                                addGuidelineInput(riskType, period, guideline);
+                            });
+                        }
+                    });
+                }
+                // Aggiungi almeno un campo vuoto se non ci sono linee guida per un periodo
+                ['before', 'during', 'after'].forEach(period => {
+                    if (!data.guidelines || !data.guidelines[period] || data.guidelines[period].length === 0) {
+                        addGuidelineInput(riskType, period);
+                    }
                 });
-            });
 
-            div.querySelectorAll('.remove-guideline-btn').forEach(button => {
-                button.addEventListener('click', (event) => {
-                    event.target.closest('.guideline-input').remove();
+
+                // Aggiungi listener per il pulsante "Rimuovi" della sezione rischio
+                div.querySelector('.remove-risk-details-btn').addEventListener('click', () => {
+                    const checkbox = document.getElementById(`risk-checkbox-${riskType}`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        removeRiskDescriptionField(riskType);
+                        const proceduresSection = document.getElementById(`procedures-for-${riskType}`);
+                        if (proceduresSection) {
+                            proceduresSection.remove();
+                        }
+                        toggleOperatorProceduresContainerVisibility();
+                    }
                 });
-            });
 
-            // Assicurati di caricare le procedure per questo rischio
-            loadProceduresForRisk(riskType);
-        }
+                // Aggiungi listener per i pulsanti "Aggiungi linea guida"
+                div.querySelectorAll('.add-guideline-btn').forEach(button => {
+                    button.addEventListener('click', (event) => {
+                        const rType = event.target.dataset.riskType;
+                        const period = event.target.dataset.period;
+                        addGuidelineInput(rType, period);
+                    });
+                });
 
-        function removeRiskDescriptionField(riskType) {
-            const divToRemove = document.getElementById(`risk-description-group-${riskType}`);
-            if (divToRemove) {
-                divToRemove.remove();
+                // Aggiungi la sezione delle procedure operative per questo rischio
+                addOperatorProceduresSection(riskType, data.procedures || {});
+                toggleOperatorProceduresContainerVisibility();
             }
         }
 
-        function addGuidelineInput(container, initialValue = '') {
+        function removeRiskDescriptionField(riskType) {
+            const riskSection = document.getElementById(`risk-description-group-${riskType}`);
+            if (riskSection) {
+                riskSection.remove();
+                // Rimuovi anche la checkbox selezionata
+                const checkbox = document.getElementById(`risk-checkbox-${riskType}`);
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
+                // Rimuovi anche le procedure associate
+                const proceduresSection = document.getElementById(`procedures-for-${riskType}`);
+                if (proceduresSection) {
+                    proceduresSection.remove();
+                }
+                toggleOperatorProceduresContainerVisibility();
+            }
+        }
+
+        function addGuidelineInput(riskType, period, value = '') {
+            const container = document.getElementById(`guidelines-${period}-${riskType}`);
             const div = document.createElement('div');
-            div.classList.add('guideline-input');
+            div.className = 'guideline-input';
             div.innerHTML = `
-                <input type="text" value="${initialValue}" placeholder="Azione">
-                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
+                <input type="text" value="${value}" placeholder="Linea guida per fase ${period}">
+                <button type="button" class="remove-guideline-btn" style="background-color: #dc3545; color: white; padding: 5px 8px; font-size: 0.8em;">
+                    <i class="fas fa-minus"></i>
+                </button>
             `;
             container.appendChild(div);
-
             div.querySelector('.remove-guideline-btn').addEventListener('click', () => {
                 div.remove();
+                // Se non ci sono più campi, aggiungine uno vuoto
+                if (container.children.length === 0) {
+                    addGuidelineInput(riskType, period);
+                }
             });
         }
 
-        // --- Gestione Punti Mappa ---
+        // --- Funzioni per la Gestione delle Aree di Emergenza / Punti Mappa ---
 
         addPuntoButton.addEventListener('click', () => addPuntoMappaRow());
 
-        function addPuntoMappaRow(initialData = {}) {
+        function addPuntoMappaRow(data = {}) {
             const div = document.createElement('div');
-            div.classList.add('punto-mappa-item');
+            div.className = 'punto-mappa-item';
+            const uniqueId = `punto-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             div.innerHTML = `
-                <h4>Nuovo Punto Mappa</h4>
-                <button type="button" class="remove-punto-btn"><i class="fas fa-times-circle"></i></button>
+                <button type="button" class="remove-punto-btn"><i class="fas fa-times"></i> Rimuovi</button>
                 <div class="form-group">
-                    <label>Tipologia:</label>
-                    <select name="punto-tipo">
-                        ${predefinedAreaTypes.map(type => `<option value="${type}" ${initialData.tipologia === type ? 'selected' : ''}>${type}</option>`).join('')}
+                    <label for="${uniqueId}-tipo">Tipologia Area:</label>
+                    <select id="${uniqueId}-tipo" name="punto-tipo">
+                        ${predefinedAreaTypes.map(type => `<option value="${type}">${type}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Nome:</label>
-                    <input type="text" name="punto-nome" value="${initialData.nome || ''}" placeholder="Es: Palestra Comunale">
+                    <label for="${uniqueId}-nome">Nome Area/Punto:</label>
+                    <input type="text" id="${uniqueId}-nome" name="punto-nome" placeholder="Es. Campo sportivo comunale">
                 </div>
                 <div class="form-group">
-                    <label>Ubicazione (Via/Indirizzo):</label>
-                    <input type="text" name="punto-ubicazione" value="${initialData.ubicazione || ''}" placeholder="Es: Via Roma 10">
+                    <label for="${uniqueId}-ubicazione">Ubicazione/Indirizzo:</label>
+                    <input type="text" id="${uniqueId}-ubicazione" name="punto-ubicazione" placeholder="Es. Via Roma, 10">
                 </div>
                 <div class="form-group lat-lon-group">
                     <div>
-                        <label>Latitudine:</label>
-                        <input type="number" step="any" name="punto-lat" value="${initialData.lat || ''}" placeholder="Latitudine">
+                        <label for="${uniqueId}-lat">Latitudine:</label>
+                        <input type="number" id="${uniqueId}-lat" name="punto-lat" step="any" placeholder="Es. 40.6413">
                     </div>
                     <div>
-                        <label>Longitudine:</label>
-                        <input type="number" step="any" name="punto-lon" value="${initialData.lon || ''}" placeholder="Longitudine">
+                        <label for="${uniqueId}-lon">Longitudine:</label>
+                        <input type="number" id="${uniqueId}-lon" name="punto-lon" step="any" placeholder="Es. 15.7946">
                     </div>
-                    <button type="button" class="geocode-btn"><i class="fas fa-map-marker-alt"></i> Geocodifica</button>
+                    <button type="button" class="geocode-btn" data-id="${uniqueId}"><i class="fas fa-map-marker-alt"></i> Geocodifica</button>
                 </div>
                 <div class="form-group">
-                    <label>Note:</label>
-                    <textarea name="punto-note" placeholder="Note aggiuntive sul punto">${initialData.note || ''}</textarea>
+                    <label for="${uniqueId}-note">Note Aggiuntive:</label>
+                    <textarea id="${uniqueId}-note" name="punto-note" placeholder="Descrizione o informazioni utili"></textarea>
                 </div>
             `;
             puntiMappaList.appendChild(div);
 
+            // Pre-popola i dati se disponibili
+            if (data.tipologia) div.querySelector('[name="punto-tipo"]').value = data.tipologia;
+            if (data.nome) div.querySelector('[name="punto-nome"]').value = data.nome;
+            if (data.ubicazione) div.querySelector('[name="punto-ubicazione"]').value = data.ubicazione;
+            if (data.lat) div.querySelector('[name="punto-lat"]').value = data.lat;
+            if (data.lon) div.querySelector('[name="punto-lon"]').value = data.lon;
+            if (data.note) div.querySelector('[name="punto-note"]').value = data.note;
+
             div.querySelector('.remove-punto-btn').addEventListener('click', () => div.remove());
 
-            // Geocodifica con OpenStreetMap Nominatim
+            // Listener per il pulsante di geocodifica
             div.querySelector('.geocode-btn').addEventListener('click', async (event) => {
-                const ubicazioneInput = div.querySelector('[name="punto-ubicazione"]');
-                const latInput = div.querySelector('[name="punto-lat"]');
-                const lonInput = div.querySelector('[name="punto-lon"]');
-                const address = ubicazioneInput.value.trim() + ", " + selectedComune.originalName + ", Basilicata, Italia";
+                const id = event.target.dataset.id;
+                const addressInput = document.getElementById(`${id}-ubicazione`);
+                const latInput = document.getElementById(`${id}-lat`);
+                const lonInput = document.getElementById(`${id}-lon`);
+                const address = addressInput.value.trim();
 
                 if (address) {
                     try {
-                        const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
-                        const data = await response.json();
-                        if (data && data.length > 0) {
-                            latInput.value = data[0].lat;
-                            lonInput.value = data[0].lon;
-                            showMessage(responseMessage, "Coordinate trovate!", "success");
+                        const osmResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}, ${selectedComune.originalName}, Basilicata, Italia`);
+                        const osmData = await osmResponse.json();
+
+                        if (osmData && osmData.length > 0) {
+                            latInput.value = parseFloat(osmData[0].lat).toFixed(6);
+                            lonInput.value = parseFloat(osmData[0].lon).toFixed(6);
+                            showMessage(responseMessage, "Geocodifica riuscita!", "success");
                         } else {
-                            showMessage(responseMessage, "Indirizzo non trovato. Inserisci le coordinate manualmente o prova un indirizzo più preciso.", "error");
+                            showMessage(responseMessage, "Indirizzo non trovato. Inserire lat/lon manualmente o provare un indirizzo più preciso.", "error");
                         }
                     } catch (error) {
-                        console.error("Errore geocodifica:", error);
-                        showMessage(responseMessage, "Errore nella geocodifica dell'indirizzo.", "error");
+                        console.error("Errore durante la geocodifica:", error);
+                        showMessage(responseMessage, "Errore durante la geocodifica.", "error");
                     }
                 } else {
-                    showMessage(responseMessage, "Inserisci un indirizzo per la geocodifica.", "error");
+                    showMessage(responseMessage, "Inserisci un indirizzo per geocodificare.", "error");
                 }
             });
         }
 
-        // --- Gestione Procedure Operative per Ente ---
 
-        // Questa funzione viene chiamata quando un rischio è selezionato/deselezionato
-        function addProceduresForRisk(riskType) {
-            const existingSection = document.getElementById(`procedures-for-risk-${riskType}`);
-            if (existingSection) {
-                // Se la sezione esiste già, significa che i dati sono già caricati o sono stati ripristinati
-                // Non facciamo nulla o ricarichiamo se necessario (ma loadComuneDataIntoForm dovrebbe già gestirlo)
-                return;
-            }
+        // --- Funzioni per la Gestione delle Procedure Operative per Ente ---
 
-            const riskDisplayName = getRiskDisplayName(riskType);
-            const div = document.createElement('div');
-            div.id = `procedures-for-risk-${riskType}`;
-            div.classList.add('procedures-per-entity-container');
-            div.innerHTML = `
-                <h5>Procedure per Rischio: ${riskDisplayName}</h5>
-                <p>Inserisci le procedure specifiche per ogni ente.</p>
-                <div class="entity-procedures-wrapper">
-                    </div>
-            `;
-            proceduresForEntitiesList.appendChild(div);
-
-            const entityProceduresWrapper = div.querySelector('.entity-procedures-wrapper');
-            operatorEntities.forEach(entity => {
-                const normalizedEntity = normalizeEntityName(entity);
-                const entityDiv = document.createElement('div');
-                entityDiv.classList.add('procedure-input-group');
-                entityDiv.dataset.entityName = normalizedEntity;
-                entityDiv.innerHTML = `
-                    <label>${entity}:</label>
-                    <div class="procedure-inputs-container">
-                        </div>
-                    <button type="button" class="add-procedure-btn" data-entity-name="${normalizedEntity}"><i class="fas fa-plus-circle"></i> Aggiungi Procedura</button>
-                `;
-                entityProceduresWrapper.appendChild(entityDiv);
-
-                entityDiv.querySelector('.add-procedure-btn').addEventListener('click', (event) => {
-                    const container = event.target.closest('.procedure-input-group').querySelector('.procedure-inputs-container');
-                    addProcedureInput(container);
-                });
-
-                // Aggiungi un input vuoto di default per ogni ente
-                addProcedureInput(entityDiv.querySelector('.procedure-inputs-container'));
-            });
-
-            // Assicurati che il container principale sia visibile
-            operatorProceduresAdminContainer.style.display = 'block';
-        }
-
-        function removeProceduresForRisk(riskType) {
-            const divToRemove = document.getElementById(`procedures-for-risk-${riskType}`);
-            if (divToRemove) {
-                divToRemove.remove();
-            }
-        }
-
-        function addProcedureInput(container, initialValue = '') {
-            const div = document.createElement('div');
-            div.classList.add('procedure-input-wrapper');
-            div.innerHTML = `
-                <input type="text" value="${initialValue}" placeholder="Descrizione della procedura">
-                <button type="button" class="remove-procedure-btn"><i class="fas fa-minus-circle"></i></button>
-            `;
-            container.appendChild(div);
-
-            div.querySelector('.remove-procedure-btn').addEventListener('click', () => {
-                div.remove();
-            });
-        }
-
-        // Funzione per caricare le procedure esistenti per un rischio specifico
-        function loadProceduresForRisk(riskType) {
-            // Ottieni i dati delle procedure dal comune selezionato
-            const proceduresData = selectedComune ? selectedComune.data.procedure : null;
-
-            if (proceduresData && proceduresData[riskType]) {
-                const riskProcedures = proceduresData[riskType];
-                const riskSectionDiv = document.getElementById(`procedures-for-risk-${riskType}`);
-                if (riskSectionDiv) {
-                    operatorEntities.forEach(entity => {
-                        const normalizedEntity = normalizeEntityName(entity);
-                        const entityProcedures = riskProcedures[normalizedEntity];
-                        const container = riskSectionDiv.querySelector(`.procedure-input-group[data-entity-name="${normalizedEntity}"] .procedure-inputs-container`);
-
-                        if (container) {
-                            container.innerHTML = ''; // Pulisci prima
-
-                            if (entityProcedures && Array.isArray(entityProcedures)) {
-                                entityProcedures.forEach(procedure => {
-                                    addProcedureInput(container, procedure);
-                                });
-                            }
-                            // Assicurati che ci sia sempre un input vuoto per aggiungere nuove procedure
-                            if (container.children.length === 0 || container.lastElementChild.querySelector('input').value !== '') {
-                                addProcedureInput(container);
-                            }
-                        }
-                    });
-                }
+        function toggleOperatorProceduresContainerVisibility() {
+            const checkedRisks = document.querySelectorAll('#risk-checkboxes input[type="checkbox"]:checked');
+            if (checkedRisks.length > 0) {
+                operatorProceduresAdminContainer.style.display = 'block';
             } else {
-                // Se non ci sono procedure per questo rischio, assicurati che i campi siano vuoti con un input per l'aggiunta
-                const riskSectionDiv = document.getElementById(`procedures-for-risk-${riskType}`);
-                if (riskSectionDiv) {
-                    operatorEntities.forEach(entity => {
-                        const entityDiv = riskSectionDiv.querySelector(`.procedure-input-group[data-entity-name="${normalizeEntityName(entity)}"]`);
-                        if (entityDiv) {
-                            const container = entityDiv.querySelector('.procedure-inputs-container');
-                            container.innerHTML = '';
-                            addProcedureInput(container);
-                        }
-                    });
-                }
+                operatorProceduresAdminContainer.style.display = 'none';
             }
         }
 
-        // --- Gestione Contatti di Emergenza ---
+        function addOperatorProceduresSection(riskType, data = {}) {
+            const displayName = getRiskDisplayName(riskType);
+            const normalizedRisk = normalizeRiskType(riskType);
+
+            if (!document.getElementById(`procedures-for-${normalizedRisk}`)) {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = 'procedures-per-entity-container';
+                sectionDiv.id = `procedures-for-${normalizedRisk}`;
+                sectionDiv.dataset.riskType = normalizedRisk;
+                sectionDiv.innerHTML = `<h5>Procedure Operative per: ${displayName}</h5>`;
+
+                operatorEntities.forEach(entity => {
+                    const normalizedEntity = normalizeEntityName(entity);
+                    const entityGroup = document.createElement('div');
+                    entityGroup.className = 'procedure-input-group';
+                    entityGroup.dataset.entityName = normalizedEntity;
+                    entityGroup.innerHTML = `
+                        <label>${entity}:</label>
+                        <div id="procedures-list-${normalizedRisk}-${normalizedEntity}"></div>
+                        <button type="button" class="add-procedure-btn" data-risk-type="${normalizedRisk}" data-entity-name="${normalizedEntity}">Aggiungi Procedura</button>
+                    `;
+                    sectionDiv.appendChild(entityGroup);
+
+                    const proceduresContainer = entityGroup.querySelector(`#procedures-list-${normalizedRisk}-${normalizedEntity}`);
+
+                    // Popola le procedure esistenti
+                    if (data[normalizedEntity] && Array.isArray(data[normalizedEntity])) {
+                        data[normalizedEntity].forEach(proc => {
+                            addProcedureInput(proceduresContainer, proc);
+                        });
+                    }
+
+                    // Aggiungi un campo vuoto se non ci sono procedure esistenti per l'ente
+                    if (!data[normalizedEntity] || data[normalizedEntity].length === 0) {
+                        addProcedureInput(proceduresContainer);
+                    }
+
+                    // Listener per il pulsante "Aggiungi Procedura"
+                    entityGroup.querySelector('.add-procedure-btn').addEventListener('click', (event) => {
+                        addProcedureInput(proceduresContainer);
+                    });
+                });
+                proceduresForEntitiesList.appendChild(sectionDiv);
+            }
+        }
+
+        function addProcedureInput(container, value = '') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'procedure-input-wrapper';
+            wrapper.innerHTML = `
+                <input type="text" value="${value}" placeholder="Descrivi la procedura">
+                <button type="button" class="remove-procedure-btn"><i class="fas fa-times"></i></button>
+            `;
+            container.appendChild(wrapper);
+
+            wrapper.querySelector('.remove-procedure-btn').addEventListener('click', () => {
+                wrapper.remove();
+                // Se non ci sono più campi, aggiungine uno vuoto
+                if (container.children.length === 0) {
+                    addProcedureInput(container);
+                }
+            });
+        }
+
+
+        // --- Funzioni per la Gestione dei Contatti di Emergenza ---
 
         addContactButton.addEventListener('click', () => addEmergencyContactRow());
 
-        function addEmergencyContactRow(initialData = {}) {
+        function addEmergencyContactRow(data = {}) {
             const div = document.createElement('div');
-            div.classList.add('emergency-contact-item');
+            div.className = 'emergency-contact-item';
+            const uniqueId = `contact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             div.innerHTML = `
-                <h4>Contatto di Emergenza</h4>
-                <button type="button" class="remove-contact-btn"><i class="fas fa-times-circle"></i></button>
+                <button type="button" class="remove-contact-btn"><i class="fas fa-times"></i> Rimuovi</button>
                 <div class="form-group">
-                    <label>Ruolo:</label>
-                    <select name="contact-role">
-                        ${emergencyContactRoles.map(role => `<option value="${role}" ${initialData.ruolo === role ? 'selected' : ''}>${role}</option>`).join('')}
+                    <label for="${uniqueId}-role">Ruolo/Ente:</label>
+                    <select id="${uniqueId}-role" name="contact-role">
+                        ${emergencyContactRoles.map(role => `<option value="${role}">${role}</option>`).join('')}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Nome e Cognome:</label>
-                    <input type="text" name="contact-name" value="${initialData.nome || ''}" placeholder="Es: Mario Rossi">
+                    <label for="${uniqueId}-name">Nome Referente (opzionale):</label>
+                    <input type="text" id="${uniqueId}-name" name="contact-name" placeholder="Nome Cognome">
                 </div>
                 <div class="form-group">
-                    <label>Contatto Principale:</label>
-                    <input type="text" name="contact-main" value="${initialData.contatto1 || ''}" placeholder="Es: 3331234567">
+                    <label for="${uniqueId}-main">Contatto Principale (Tel/Email):</label>
+                    <input type="text" id="${uniqueId}-main" name="contact-main" placeholder="Es. 08351234567 o email@esempio.com" required>
                 </div>
                 <div class="form-group">
-                    <label>Contatto Alternativo:</label>
-                    <input type="text" name="contact-alt" value="${initialData.contatto2 || ''}" placeholder="Es: 0835123456 (opzionale)">
+                    <label for="${uniqueId}-alt">Contatto Alternativo (opzionale):</label>
+                    <input type="text" id="${uniqueId}-alt" name="contact-alt" placeholder="Es. 3331234567">
                 </div>
             `;
             emergencyContactsList.appendChild(div);
 
-            div.querySelector('.remove-contact-btn').addEventListener('click', () => div.remove());
+            // Pre-popola i dati se disponibili
+            if (data.ruolo) div.querySelector('[name="contact-role"]').value = data.ruolo;
+            if (data.nome) div.querySelector('[name="contact-name"]').value = data.nome;
+            if (data.contatto1) div.querySelector('[name="contact-main"]').value = data.contatto1;
+            if (data.contatto2) div.querySelector('[name="contact-alt"]').value = data.contatto2;
+
+            div.querySelector('.remove-contact-btn').addEventListener('click', () => {
+                div.remove();
+                // Assicurati che ci sia sempre almeno un campo di contatto se la lista si svuota
+                if (emergencyContactsList.children.length === 0) {
+                    addEmergencyContactRow();
+                }
+            });
         }
 
-        // Inizializza l'applicazione
+
+        // Inizializzazione al caricamento della pagina
         loadInitialData();
 
     </script>
