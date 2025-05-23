@@ -157,7 +157,7 @@
                 <option value="IdrogeologicoTemporali">Idrogeologico (da Temporali)</option>
                 <option value="Idraulico">Idraulico</option>
                 <option value="Incendio">Incendio</option>
-                </select>
+            </select>
         </div>
 
         <div id="base-color-pickers">
@@ -238,12 +238,12 @@
         <h3>Navigazione rapida (per test)</h3>
         <p>Questa sezione è temporanea e serve per facilitare la navigazione tra le diverse visualizzazioni della piattaforma durante la fase di test.</p>
         <div class="navigation-buttons">
-            <a href="https://eatapples15.github.io/basilicata/visualizza.html?risk=Idrogeologico"><button>Visualizza Regione - Idrogeologico</button></a>
-            <a href="https://eatapples15.github.io/basilicata/visualizza.html?risk=IdrogeologicoTemporali"><button>Visualizza Regione - Temporali</button></a>
-            <a href="https://eatapples15.github.io/basilicata/visualizza.html?risk=Idraulico"><button>Visualizza Regione - Idraulico</button></a>
-            <a href="https://eatapples15.github.io/basilicata/visualizza.html?risk=Incendio"><button>Visualizza Regione - Incendio</button></a>
-            <a href="https://eatapples15.github.io/basilicata/consultazione_cittadino.html"><button>Ricerca Comune</button></a>
-            <a href="https://eatapples15.github.io/basilicata/consultazione_operatori.html"><button>AREA RISERVATA ENTI</button></a>
+            <a href="visualizza.html?risk=Idrogeologico"><button>Visualizza Regione - Idrogeologico</button></a>
+            <a href="visualizza.html?risk=IdrogeologicoTemporali"><button>Visualizza Regione - Temporali</button></a>
+            <a href="visualizza.html?risk=Idraulico"><button>Visualizza Regione - Idraulico</button></a>
+            <a href="visualizza.html?risk=Incendio"><button>Visualizza Regione - Incendio</button></a>
+            <a href="consultazione_cittadino.html"><button>Ricerca Comune</button></a>
+            <a href="consultazione_operatori.html"><button>AREA RISERVATA ENTI</button></a>
             <a href="https://simonpc.regione.basilicata.it/home"><button>SIMONPC</button></a>
         </div>
     </div>
@@ -275,7 +275,8 @@
             const selectedRisk = riskTypeSelect.value;
             titleElement.textContent = `Seleziona Colori Criticità per Rischio: ${selectedRisk}`;
 
-            database.ref(`coloriPerRischio/${selectedRisk}`).once('value')
+            // Ora cerchiamo i colori sotto `colori/rischi/`
+            database.ref(`colori/rischi/${selectedRisk}`).once('value')
                 .then(snapshot => {
                     const coloriBase = snapshot.val();
                     if (coloriBase) {
@@ -330,20 +331,23 @@
                 coloriBase[base] = color;
             });
 
-            // Salva i colori per il rischio selezionato e aggiorna il timestamp globale
-            database.ref(`coloriPerRischio/${selectedRisk}`).set(coloriBase)
-                .then(() => {
-                    return database.ref('dataUltimoAggiornamento').set(new Date().toISOString());
-                })
+            // Oggetto da salvare sotto il nodo `/colori/`
+            const updateData = {};
+            // Salva i colori per il rischio selezionato sotto `colori/rischi/<tipoRischio>`
+            updateData[`rischi/${selectedRisk}`] = coloriBase;
+            // Salva il timestamp di creazione/aggiornamento sotto `colori/dataCreazione`
+            updateData['dataCreazione'] = new Date().toISOString();
+
+            // Effettua l'aggiornamento a livello del nodo `/colori/`
+            database.ref('colori').update(updateData)
                 .then(() => {
                     messageDiv.textContent = `Colori per ${selectedRisk} salvati con successo! Clicca per visualizzare la mappa.`;
                     messageDiv.style.cursor = 'pointer';
                     messageDiv.style.color = 'green';
                     messageDiv.onclick = function () {
                         // Reindirizza alla pagina di visualizzazione con il rischio selezionato
-                        window.location.href = `https://eatapples15.github.io/basilicata/visualizza.html?risk=${selectedRisk}`;
+                        window.location.href = `visualizza.html?risk=${selectedRisk}`;
                     };
-                    // Non resetta il form, così l'operatore vede i colori salvati
                 })
                 .catch(error => {
                     console.error("Errore nel salvataggio dei colori:", error);
