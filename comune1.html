@@ -77,13 +77,14 @@
             text-align: center;
         }
 
+        /* Colori dinamici basati sulle classi */
         .color-green {
             background-color: #28a745;
         }
 
         .color-yellow {
             background-color: #ffc107;
-            color: #333;
+            color: #333; /* Testo più scuro per contrasto su giallo */
         }
 
         .color-orange {
@@ -209,8 +210,7 @@
         </div>
 
         <div class="info-card">
-            <h2>Aree di Accoglienza e Punti di Raccolta</h2>
-            <p id="shelter-info-display"></p>
+            <h2>Aree di Emergenza / Punti di Raccolta</h2>
             <div id="punti-mappa-display">
                 </div>
             <p class="no-data" id="no-punti-mappa-message" style="display: none;">Nessun punto mappa disponibile per questo comune.</p>
@@ -221,15 +221,13 @@
             <h2>Allerte Attuali</h2>
             <div id="alerts-list">
                 <div class="alert-item">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div>
-                        <strong>Allerta di esempio:</strong>
+                    <i class="fas fa-info-circle"></i> <div>
+                        <strong>Nessuna Allerta Attiva:</strong>
                         <p>Non ci sono allerte attive al momento per il comune di <span id="alert-comune-name-placeholder"></span>. Controllare regolarmente per aggiornamenti.</p>
                     </div>
                 </div>
             </div>
-            <p class="no-data" id="no-alerts-message" style="display: none;">Nessuna allerta attiva per questo comune.</p>
-        </div>
+            </div>
 
         <div class="timestamp">
             Dati aggiornati al: <span id="last-updated">Caricamento...</span>
@@ -256,7 +254,7 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const comuniRef = database.ref('comuni_data');
-        const coloriRef = database.ref('colori');
+        const coloriRef = database.ref('colori'); // Riferimento al nodo 'colori' per le impostazioni globali
 
         // Elementi HTML
         const comuneNameElement = document.getElementById('comune-name');
@@ -265,13 +263,15 @@
         const rischioGeneraleDisplay = document.getElementById('rischio-generale-display');
         const rischiSpecificiList = document.getElementById('rischi-specifici-list');
         const noRisksMessage = document.getElementById('no-risks-message');
-        const shelterInfoDisplay = document.getElementById('shelter-info-display');
+        // shelterInfoDisplay non è più usato esplicitamente ma il contenuto è in puntiMappaDisplay
+        // const shelterInfoDisplay = document.getElementById('shelter-info-display'); 
         const puntiMappaDisplay = document.getElementById('punti-mappa-display');
         const noPuntiMappaMessage = document.getElementById('no-punti-mappa-message');
         const lastUpdatedElement = document.getElementById('last-updated');
         const alertsList = document.getElementById('alerts-list');
-        const noAlertsMessage = document.getElementById('no-alerts-message');
+        const noAlertsMessage = document.getElementById('no-alerts-message'); // Non usato al momento, alertsList ha già un default
         const alertComuneNamePlaceholder = document.getElementById('alert-comune-name-placeholder');
+
 
         let map = null; // Variabile per la mappa Leaflet
 
@@ -281,6 +281,7 @@
             return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
+        // Funzione per ottenere il parametro dall'URL
         function getParameterByName(name, url = window.location.href) {
             name = name.replace(/[\[\]]/g, '\\$&');
             const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
@@ -289,6 +290,32 @@
             if (!results[2]) return '';
             return decodeURIComponent(results[2].replace(/\+/g, ' '));
         }
+
+        // Funzione per ottenere il nome visualizzato del rischio da quello normalizzato
+        function getRiskDisplayNameFromNormalized(normalizedRiskType) {
+            // Lista dei rischi predefiniti (deve essere identica a quella in admin.html)
+            const predefinedRisks = [
+                "Rischio idraulico", "Rischio diga", "Rischio idrogeologico",
+                "Rischio incendi", "Rischio Sismico", "Rischio neve",
+                "Rischio Industriale", "Rischio Maremoto", "Rischio ambientale"
+            ];
+            // Trova il rischio originale confrontando la versione normalizzata
+            const foundRisk = predefinedRisks.find(risk => normalizeComuneName(risk) === normalizedRiskType);
+            // Se trovato, ritorna il nome originale, altrimenti prova a "de-normalizzare" o ritorna il normalizzato
+            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1).replace(/([A-Z])/g, ' $1').trim();
+        }
+
+        // Funzione per ottenere la descrizione testuale del colore di criticità
+        function getColorDescription(color) {
+            switch (color) {
+                case 'green': return 'di attenzione ordinaria, senza particolari criticità imminenti. Si raccomanda cautela e monitoraggio.';
+                case 'yellow': return 'di moderata attenzione, con possibili criticità locali. Si invita a prestare attenzione e a seguire le indicazioni delle autorità.';
+                case 'orange': return 'di attenzione elevata, con criticità significative e potenziale impatto. È consigliabile adottare misure precauzionali e tenersi informati.';
+                case 'red': return 'di allerta massima, con grave rischio e necessità di precauzioni immediate. Seguire strettamente le direttive delle autorità e, se necessario, attuare i piani di emergenza.';
+                default: return 'non definita. Contattare le autorità competenti per maggiori informazioni.';
+            }
+        }
+
 
         async function loadComuneData() {
             const comuneParam = getParameterByName('comune');
@@ -300,7 +327,7 @@
             const normalizedComuneName = normalizeComuneName(comuneParam);
             let originalComuneName = comuneParam; // Default all'input URL
 
-            // Tenta di ottenere il nome originale del comune dal GeoJSON
+            // Tenta di ottenere il nome originale del comune dal GeoJSON per una visualizzazione corretta
             try {
                 const response = await fetch('limits_R_17_municipalities.geojson');
                 const geojsonData = await response.json();
@@ -316,6 +343,7 @@
             alertComuneNamePlaceholder.textContent = originalComuneName; // Aggiorna placeholder allerta
 
             try {
+                // Esegui entrambe le query a Firebase in parallelo per ottimizzare i tempi
                 const [comuneSnapshot, coloriSnapshot] = await Promise.all([
                     comuniRef.child(normalizedComuneName).once('value'),
                     coloriRef.once('value')
@@ -323,16 +351,15 @@
 
                 const comuneData = comuneSnapshot.val();
                 const coloriData = coloriSnapshot.val();
-                const coloriBase = coloriData ? coloriData.coloriBase : {};
+                const coloriBase = coloriData ? coloriData.coloriBase : {}; // Ottieni i colori base salvati in Firebase
 
                 // --- Criticità Base ---
                 if (comuneData && comuneData.criticitàBase) {
                     const criticity = comuneData.criticitàBase;
-                    const color = coloriBase[criticity] || 'green'; // Default a verde se non trovato
+                    const color = coloriBase[criticity] || 'green'; // Ottieni il colore mappato o default verde
                     criticityDisplay.textContent = criticity;
                     criticityDisplay.className = `criticity-box color-${color}`;
-                    // Puoi personalizzare le descrizioni qui o caricarle da Firebase
-                    criticityDescription.textContent = `Il livello di criticità base per il comune è ${criticity}. Questo indica una situazione ${getColorDescription(color)}.`;
+                    criticityDescription.textContent = `Il livello di criticità base per il comune è "${criticity}". Questo indica una situazione ${getColorDescription(color)}`;
                 } else {
                     criticityDisplay.textContent = "N/D";
                     criticityDisplay.className = "criticity-box"; // Nessun colore se N/D
@@ -363,15 +390,14 @@
                         }
                     }
                     if (!hasSpecificRisks && !comuneData.rischi.generale) {
-                         noRisksMessage.style.display = 'block';
+                        noRisksMessage.style.display = 'block';
                     }
                 } else {
                     rischioGeneraleDisplay.textContent = 'Nessuna informazione sui rischi disponibile.';
                     noRisksMessage.style.display = 'block';
                 }
 
-                // --- Aree di Accoglienza e Punti di Raccolta ---
-                shelterInfoDisplay.textContent = comuneData && comuneData.accoglienza ? comuneData.accoglienza : 'Nessuna informazione generale sulle aree di accoglienza.';
+                // --- Aree di Emergenza / Punti di Raccolta ---
                 puntiMappaDisplay.innerHTML = ''; // Pulisci i punti mappa esistenti
                 noPuntiMappaMessage.style.display = 'none';
 
@@ -382,7 +408,7 @@
                         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                     }).addTo(map);
                 } else {
-                    // Rimuovi tutti i marker e layer esistenti prima di aggiungerne di nuovi
+                    // Rimuovi tutti i layer esistenti (marker, ecc.) prima di aggiungerne di nuovi
                     map.eachLayer(layer => {
                         if (layer instanceof L.Marker || layer instanceof L.CircleMarker) {
                             map.removeLayer(layer);
@@ -396,7 +422,7 @@
                         const puntoItemDiv = document.createElement('div');
                         puntoItemDiv.classList.add('punto-mappa-item');
                         puntoItemDiv.innerHTML = `
-                            <span class="punto-type">${punto.tipo || 'Punto'}</span>
+                            <span class="punto-type">${punto.tipo || 'Punto di Emergenza'}</span>
                             <p class="punto-address"><strong>Indirizzo:</strong> ${punto.nome || 'N/D'}</p>
                             <p class="punto-coords"><strong>Latitudine:</strong> ${punto.lat || 'N/D'}, <strong>Longitudine:</strong> ${punto.lon || 'N/D'}</p>
                             ${punto.note ? `<p class="punto-notes"><strong>Note:</strong> ${punto.note}</p>` : ''}
@@ -417,20 +443,15 @@
                     noPuntiMappaMessage.style.display = 'block';
                 }
 
-                // --- Allerte Attuali (Esempio) ---
-                // Qui dovresti implementare una logica per caricare le allerte reali,
-                // magari da un altro nodo Firebase o un'API esterna.
-                // Per ora, mostriamo solo un messaggio di esempio.
-                alertsList.innerHTML = `
-                    <div class="alert-item">
-                        <i class="fas fa-exclamation-triangle"></i>
-                        <div>
-                            <strong>Allerta di esempio:</strong>
-                            <p>Non ci sono allerte attive al momento per il comune di ${originalComuneName}. Controllare regolarmente per aggiornamenti.</p>
-                        </div>
-                    </div>
-                `;
-                noAlertsMessage.style.display = 'none'; // Mostra il messaggio di esempio
+                // --- Allerte Attuali (Mockup) ---
+                // Per ora, manteniamo il messaggio di default.
+                // In un'implementazione reale, qui si caricherebbero le allerte da un'altra fonte (es. nodo 'allerte' in Firebase)
+                // e si ciclerebbe per mostrare le allerte specifiche per il comune.
+                // alertsList.innerHTML = ''; // Se volessi rimuovere il messaggio di default per poi aggiungere le allerte vere
+                // if (no real alerts) {
+                //     alertsList.innerHTML = `<div class="alert-item"><i class="fas fa-info-circle"></i><div><strong>Nessuna Allerta Attiva:</strong><p>Non ci sono allerte attive al momento per il comune di ${originalComuneName}. Controllare regolarmente per aggiornamenti.</p></div></div>`;
+                // }
+
 
                 // --- Timestamp ---
                 if (comuneData && comuneData.lastUpdated) {
@@ -443,34 +464,12 @@
             } catch (error) {
                 console.error("Errore nel caricamento dei dati del comune:", error);
                 comuneNameElement.textContent = `Errore nel caricamento dei dati per ${originalComuneName}`;
-                // Puoi mostrare un messaggio di errore all'utente qui
+                // Potresti mostrare un messaggio di errore più visibile all'utente
+                alert("Si è verificato un errore durante il caricamento dei dati del comune. Riprova più tardi.");
             }
         }
 
-        function getColorDescription(color) {
-            switch (color) {
-                case 'green': return 'di attenzione ordinaria, senza particolari criticità imminenti.';
-                case 'yellow': return 'di moderata attenzione, con possibili criticità locali.';
-                case 'orange': return 'di attenzione elevata, con criticità significative e potenziale impatto.';
-                case 'red': return 'di allerta massima, con grave rischio e necessità di precauzioni immediate.';
-                default: return 'non definita.';
-            }
-        }
-
-        // Funzione inversa per ottenere il nome visualizzato del rischio
-        function getRiskDisplayNameFromNormalized(normalizedRiskType) {
-            // Lista dei rischi predefiniti (deve essere identica a quella in admin.html)
-            const predefinedRisks = [
-                "Rischio idraulico", "Rischio diga", "Rischio idrogeologico",
-                "Rischio incendi", "Rischio Sismico", "Rischio neve",
-                "Rischio Industriale", "Rischio Maremoto", "Rischio ambientale"
-            ];
-            const foundRisk = predefinedRisks.find(risk => normalizeComuneName(risk) === normalizedRiskType);
-            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1).replace(/([A-Z])/g, ' $1').trim();
-        }
-
-
-        // Inizializza la pagina
+        // Inizializza la pagina al caricamento
         loadComuneData();
     </script>
 </body>
