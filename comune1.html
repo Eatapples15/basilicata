@@ -244,11 +244,15 @@
         }
 
         .legend-item.active {
-            background-color: #e0f2f7; /* Sfondo leggermente colorato per l'elemento attivo */
-            border: 1px solid #007bff; /* Bordo più evidente per l'elemento selezionato */
+            background-color: #e0f2f7;
+            /* Sfondo leggermente colorato per l'elemento attivo */
+            border: 1px solid #007bff;
+            /* Bordo più evidente per l'elemento selezionato */
         }
-         .legend-item.active .legend-color-box {
-            border: 2px solid #0056b3; /* Bordo più evidente per l'elemento selezionato */
+
+        .legend-item.active .legend-color-box {
+            border: 2px solid #0056b3;
+            /* Bordo più evidente per l'elemento selezionato */
         }
     </style>
 </head>
@@ -265,7 +269,7 @@
             <div class="info-section" id="risk-selector-container">
                 <label for="risk-selector">Seleziona Tipo di Rischio:</label>
                 <select id="risk-selector">
-                    </select>
+                </select>
             </div>
 
             <div class="info-section">
@@ -290,7 +294,7 @@
             <div id="risk-legend">
                 <h3>Legenda Rischi del Comune</h3>
                 <div id="legend-items-container">
-                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -301,10 +305,10 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <script>
-        // Your web app's Firebase configuration (IDENTICO ALLE ALTRE PAGINE)
-        // **ATTENZIONE**: Sostituisci "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28" con la tua VERA API Key di Firebase
+        // Your web app's Firebase configuration
+        // **ATTENZIONE**: Sostituisci "YOUR_FIREBASE_API_KEY" con la tua VERA API Key di Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28", // <-- SOSTITUISCI CON LA TUA CHIAVE API
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28", // <-- SOSTITUISCI CON LA TUA CHIAVE API (la stessa di admin.html)
             authDomain: "bollettinoregionale.firebaseapp.com",
             projectId: "bollettinoregionale",
             databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
@@ -317,6 +321,8 @@
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        const comuniRef = database.ref('comuni_data'); // Riferimento al nodo dei dati dei comuni
+        const coloriRef = database.ref('colori'); // Riferimento al nodo dei colori
 
         const leafletMap = L.map('leaflet-map');
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -340,6 +346,7 @@
         let coloriBase = {}; // Mappa delle criticità ai nomi dei colori (es. 'A1' -> 'green')
         let currentComuneNormalizedName = null;
         let currentComuneFeature = null; // Memorizza la feature GeoJSON del comune corrente
+        let currentComuneFirebaseData = null; // NUOVO: Dati del comune corrente da Firebase
 
         // Layer per i controlli e la visualizzazione
         let baseLayers = {};
@@ -362,9 +369,9 @@
                 case 'yellow': return '#FFFF00';
                 case 'orange': return '#FFA500';
                 case 'red': return '#FF0000';
-                case 'blue': return '#0000FF'; // Aggiunto per esempio
-                case 'purple': return '#800080'; // Aggiunto per esempio
-                case 'brown': return '#A52A2A'; // Aggiunto per esempio
+                case 'blue': return '#0000FF';
+                case 'purple': return '#800080';
+                case 'brown': return '#A52A2A';
                 default:
                     console.warn(`Colore non riconosciuto: ${colorName}. Usando grigio di default.`);
                     return '#ccc'; // Grigio di default
@@ -436,86 +443,9 @@
             return comune ? decodeURIComponent(comune) : null;
         }
 
-        // Dati informativi per comune (ORA CON AREE DI ATTESA/EMERGENZA E RISCHI CATEGORIZZATI)
-        const infoComuni = {
-            "potenza": {
-                rischi: {
-                    generale: "Principali rischi: sismico, idrogeologico (frane e alluvioni in alcune zone).",
-                    idrogeologico: "Rischio idrogeologico: frane e alluvioni possibili lungo il fiume Basento e in aree collinari con forte pendenza.",
-                    sismico: "Rischio sismico: Potenza si trova in una zona ad alta sismicità. Importante seguire le norme di sicurezza.",
-                    incendi: "Rischio incendi boschivi: elevato durante i mesi estivi, soprattutto nelle aree periurbane."
-                },
-                accoglienza: "Aree di accoglienza designate: Centro Polifunzionale di C.da Macchia Romana, Campo CONI. Punti di raccolta in Piazza Prefettura, Piazza Zara.",
-                puntiMappa: [
-                    { lat: 40.6409, lon: 15.7997, nome: "Piazza Prefettura (Punto Raccolta)", tipo: "raccolta" },
-                    { lat: 40.6418, lon: 15.7951, nome: "Piazza Zara (Punto Raccolta)", tipo: "raccolta" },
-                    { lat: 40.6622, lon: 15.8205, nome: "Centro Polifunzionale Macchia Romana (Area Accoglienza)", tipo: "accoglienza" },
-                    { lat: 40.6385, lon: 15.7980, nome: "Campo CONI (Area Accoglienza)", tipo: "accoglienza" }
-                ]
-            },
-            "matera": {
-                rischi: {
-                    generale: "Principali rischi: sismico, idrogeologico (zone dei Sassi e lungo il Torrente Gravina).",
-                    idrogeologico: "Rischio idrogeologico: possibile esondazione del Torrente Gravina e instabilità dei versanti nei Sassi.",
-                    sismico: "Rischio sismico: zona a sismicità media. Edifici storici richiedono attenzione.",
-                    incendi: "Rischio incendi: moderato, con attenzione alle aree rurali circostanti."
-                },
-                accoglienza: "Aree di accoglienza designate: Palazzetto dello Sport in Via delle Nazioni Unite, Centro Giovanile. Punti di raccolta in Piazza Vittorio Veneto, Piazza Pascoli.",
-                puntiMappa: [
-                    { lat: 40.6657, lon: 16.6074, nome: "Piazza Vittorio Veneto (Punto Raccolta)", tipo: "raccolta" },
-                    { lat: 40.6650, lon: 16.6110, nome: "Piazza Pascoli (Punto Raccolta)", tipo: "raccolta" },
-                    { lat: 40.6720, lon: 16.5960, nome: "Palazzetto dello Sport (Area Accoglienza)", tipo: "accoglienza" }
-                ]
-            },
-            "policoro": {
-                rischi: {
-                    generale: "Principali rischi: alluvioni (vicinanza al mare e fiumi), rischio costiero. Sismico moderato.",
-                    idrogeologico: "Rischio alluvionale elevato a causa della pianura costiera e della vicinanza a corsi d'acqua come l'Agri e il Sinni. Rischio costiero dovuto a mareggiate e erosione.",
-                    sismico: "Rischio sismico: moderato, ma è importante la prevenzione.",
-                    incendi: "Rischio incendi: nelle aree agricole e costiere, soprattutto in estate."
-                },
-                accoglienza: "Aree di accoglienza: Palazzetto dello Sport. Punti di raccolta: Piazza Heraclea, lungomare.",
-                puntiMappa: [
-                    { lat: 40.1800, lon: 16.6660, nome: "Piazza Heraclea (Punto Raccolta)", tipo: "raccolta" },
-                    { lat: 40.1870, lon: 16.6620, nome: "Palazzetto dello Sport (Area Accoglienza)", tipo: "accoglienza" }
-                ]
-            },
-            "melfi": {
-                rischi: {
-                    generale: "Principali rischi: sismico, vulcanico (vicinanza al Vulture), idrogeologico.",
-                    idrogeologico: "Rischio idrogeologico: frane e smottamenti possibili per la conformazione del territorio.",
-                    sismico: "Rischio sismico: Melfi è in una zona a sismicità medio-alta, necessaria attenzione.",
-                    vulcanico: "Rischio vulcanico: sebbene il Vulture sia spento, è importante monitorare fenomeni secondari (attività idrotermale, piccole emissioni di gas).",
-                    incendi: "Rischio incendi boschivi: elevato nelle aree forestali circostanti il Vulture."
-                },
-                accoglienza: "Aree di accoglienza: Centro Sportivo. Punti di raccolta: Piazza Duomo, Piazza Vescovado.",
-                puntiMappa: [
-                    { lat: 40.9990, lon: 15.6510, nome: "Piazza Duomo (Punto Raccolta)", tipo: "raccolta" },
-                    { lat: 41.0020, lon: 15.6550, nome: "Piazza Vescovado (Punto Raccolta)", tipo: "raccolta" },
-                    { lat: 40.9950, lon: 15.6450, nome: "Centro Sportivo (Area Accoglienza)", tipo: "accoglienza" }
-                ]
-            },
-            // Aggiungi altri comuni qui con i loro 'rischi' categorizzati e 'puntiMappa'
-            // Esempio per Viggiano (dovrai aggiungere la sua criticità a configurazioneCriticità se non c'è)
-            "viggiano": {
-                rischi: {
-                    generale: "Principali rischi: sismico, idrogeologico.",
-                    idrogeologico: "Rischio idrogeologico: possibili frane e smottamenti.",
-                    sismico: "Rischio sismico: zona ad alta sismicità.",
-                    incendi: "Rischio incendi: alto nelle aree boschive circostanti."
-                },
-                accoglienza: "Aree di accoglienza designate: Campo Sportivo Comunale.",
-                puntiMappa: [
-                    { lat: 40.3550, lon: 15.8900, nome: "Campo Sportivo Comunale (Area Accoglienza)", tipo: "accoglienza" }
-                ]
-            }
-        };
-
-
         // Definisci le icone personalizzate per i marker
-        // Assicurati che i percorsi delle immagini siano corretti
         const shelterIcon = L.icon({
-            iconUrl: 'ico/cluster_shelter_32px_icon_bluebox.png',
+            iconUrl: 'ico/cluster_shelter_32px_icon_bluebox.png', // Assicurati che il percorso sia corretto
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32],
@@ -524,7 +454,7 @@
         });
 
         const emergencyIcon = L.icon({
-            iconUrl: 'ico/disaster_earthquake_32px_icon_bluebox.png',
+            iconUrl: 'ico/disaster_earthquake_32px_icon_bluebox.png', // Assicurati che il percorso sia corretto
             iconSize: [32, 32],
             iconAnchor: [16, 32],
             popupAnchor: [0, -32],
@@ -532,49 +462,41 @@
             shadowSize: [41, 41]
         });
 
-        // Carica dati GeoJSON e colori Firebase all'avvio
+        // Carica dati GeoJSON e tutti i dati dei comuni e colori da Firebase all'avvio
         Promise.all([
             fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
-            database.ref('colori').once('value')
-        ]).then(([geojsonData, snapshot]) => {
+            coloriRef.once('value'), // Carica i colori base
+            comuniRef.once('value') // Carica tutti i dati dei comuni
+        ]).then(([geojsonData, coloriSnapshot, comuniDataSnapshot]) => {
             geojsonDataGlobal = geojsonData;
-            console.log("GeoJSON caricato:", geojsonDataGlobal);
 
             // Normalizza i nomi dei comuni nel GeoJSON
             geojsonDataGlobal.features.forEach(feature => {
                 if (feature.properties && feature.properties.name) {
                     feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
-                    // console.log(`GeoJSON: ${feature.properties.name} -> Normalizzato: ${feature.properties.normalizedName}`); // Log per debug
                 }
             });
 
-            if (snapshot.exists()) {
-                const datiColori = snapshot.val();
-                console.log("Dati Colori da Firebase:", datiColori);
+            if (coloriSnapshot.exists()) {
+                const datiColori = coloriSnapshot.val();
                 coloriBase = datiColori.coloriBase || {};
-                console.log("coloriBase finali:", coloriBase);
                 const timestamp = new Date(datiColori.dataCreazione);
-                lastUpdatedElement.textContent = `Dati aggiornati il: ${timestamp.toLocaleString()}`;
+                lastUpdatedElement.textContent = `Dati colori aggiornati il: ${timestamp.toLocaleString()}`;
+            } else {
+                lastUpdatedElement.textContent = 'Nessun dato colore disponibile da Firebase.';
+                console.warn("Nessun dato colore trovato in Firebase.");
+            }
 
-                // Configurazione delle criticità per comune (popolata qui)
-                const configurazioneCriticità = {
-                    'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
-                    'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
-                    'B': ["Abriola", "Accettura", "Acerenza", "Albano di Lucania", "Anzi", "Avigliano", "Banzi", "Brindisi Montagna", "Calciano", "Calvello", "Campomaggiore", "Cancellara", "Castelmezzano", "Ferrandina", "Filiano", "Forenza", "Garaguso", "Genzano di Lucania", "Grassano", "Grottole", "Irsina", "Laurenzana", "Miglionico", "Oliveto Lucano", "Oppido Lucano", "Pietragalla", "Pietrapertosa", "Pignola", "Pomarico", "Potenza", "Salandra", "San Chirico Nuovo", "San Mauro Forte", "Tito", "Tolve", "Tricarico", "Trivigno", "Vaglio Basilicata", "Matera"],
-                    'C': ["Montemurro", "Aliano", "Armento", "Calvera", "Carbone", "Castronuovo di Sant'Andrea", "Cersosimo", "Chiaromonte", "Cirigliano", "Colobraro", "Corleto Perticara", "Episcopia", "Fardella", "Francavilla in Sinni", "Gallicchio", "Gorgoglione", "Grumento Nova", "Guardia Perticara", "Marsico Nuovo", "Marsicovetere", "Missanello", "Moliterno", "Noepoli", "Paterno", "Roccanova", "San Chirico Raparo", "San Costantino Albanese", "San Giorgio Lucano", "San Martino d'Agri", "San Paolo Albanese", "San Severino Lucano", "Sant'Arcangelo", "Sarconi", "Senise", "Spinoso", "Stigliano", "Teana", "Terranova di Pollino", "Tramutola", "Tursi", "Valsinni", "Viggiano"],
-                    'D': ["Nemoli", "Castelluccio Inferiore", "Castelluccio Superiore", "Castelsaraceno", "Lagonegro", "Latronico", "Lauria", "Maratea", "Rivello", "Rotonda", "Trecchina", "Viggianello"],
-                    'E1': ["Nova Siri", "Policoro", "Rotondella", "Scanzano Jonico", "Tursi", "Montalbano Jonico", "Craco"],
-                    'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
-                };
+            // Processa i dati dei comuni caricati da Firebase
+            if (comuniDataSnapshot.exists()) {
+                window.allComuniFirebaseData = comuniDataSnapshot.val(); // Rendi accessibile globalmente
+                console.log("Dati di tutti i comuni da Firebase:", window.allComuniFirebaseData);
 
-                // Popola la criticitàMap con i nomi dei comuni normalizzati
-                for (const base in configurazioneCriticità) {
-                    const comuni = configurazioneCriticità[base];
-                    comuni.forEach(comune => {
-                        criticitàMap[normalizeComuneName(comune)] = base;
-                    });
+                // Popola la criticitàMap dai dati di Firebase
+                for (const normalizedName in window.allComuniFirebaseData) {
+                    criticitàMap[normalizedName] = window.allComuniFirebaseData[normalizedName].criticitàBase || 'Non disponibile';
                 }
-                console.log("Criticità Map popolata:", criticitàMap);
+                console.log("Criticità Map popolata da Firebase:", criticitàMap);
 
                 const targetComuneNome = getComuneFromUrl();
                 if (targetComuneNome) {
@@ -585,26 +507,26 @@
                     comuneCriticityDisplay.textContent = "";
                     riskInfoElement.textContent = "Nessuna informazione disponibile.";
                     shelterInfoElement.textContent = "Nessuna informazione disponibile.";
-                    leafletMap.setView([40.6393, 15.8054], 8); // Centra sulla Basilicata
-                    // Nascondi il selettore e la legenda se il comune non è specificato
+                    leafletMap.setView([40.6393, 15.8054], 8);
                     document.getElementById('risk-selector-container').style.display = 'none';
                     document.getElementById('risk-legend').style.display = 'none';
                     navigationButton.style.display = 'none';
                 }
 
             } else {
-                lastUpdatedElement.textContent = 'Nessun dato colore disponibile da Firebase.';
-                console.warn("Nessun dato colore trovato in Firebase.");
+                infoMessage.textContent = 'Nessun dato dei comuni disponibile da Firebase.';
+                console.warn("Nessun dato dei comuni trovato in Firebase.");
             }
         }).catch(error => {
             console.error("Errore nel caricamento dei dati:", error);
             infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
         });
 
-        // Funzione per popolare il selettore dei rischi
+
+        // Funzione per popolare il selettore dei rischi (aggiornata per usare currentComuneFirebaseData)
         function populateRiskSelector(comuneNormalizedName) {
-            riskSelector.innerHTML = ''; // Pulisci le opzioni esistenti
-            const comuneInfo = infoComuni[comuneNormalizedName];
+            riskSelector.innerHTML = '';
+            const comuneInfo = currentComuneFirebaseData; // Ora prendiamo i dati dal comune caricato
 
             if (comuneInfo && comuneInfo.rischi) {
                 document.getElementById('risk-selector-container').style.display = 'block';
@@ -618,12 +540,11 @@
                     if (riskType !== 'generale') {
                         const option = document.createElement('option');
                         option.value = riskType;
-                        // Formatta il nome del rischio per la visualizzazione (es. "idrogeologico" -> "Idrogeologico")
                         option.textContent = riskType.charAt(0).toUpperCase() + riskType.slice(1).replace(/([A-Z])/g, ' $1').trim();
                         riskSelector.appendChild(option);
                     }
                 }
-                riskSelector.value = 'generale'; // Seleziona il rischio generale di default
+                riskSelector.value = 'generale';
             } else {
                 const noOption = document.createElement('option');
                 noOption.value = '';
@@ -633,19 +554,30 @@
             }
         }
 
-        // Funzione per aggiornare il testo del rischio e la colorazione della mappa
+        // Funzione per aggiornare il testo del rischio e la colorazione della mappa (aggiornata)
         function updateRiskInfoAndMapDisplay(selectedRiskType) {
-            console.log(`[updateRiskInfoAndMapDisplay] Rischio selezionato: ${selectedRiskType}`);
-            const comuneInfo = infoComuni[currentComuneNormalizedName];
+            const comuneInfo = currentComuneFirebaseData; // Ora prendiamo i dati dal comune caricato
             if (comuneInfo && comuneInfo.rischi && comuneInfo.rischi[selectedRiskType]) {
                 riskInfoElement.textContent = comuneInfo.rischi[selectedRiskType];
             } else {
                 riskInfoElement.textContent = "Informazioni sul rischio non disponibili per il tipo selezionato.";
             }
-
-            // Aggiorna la colorazione della mappa
             updateMapColoration(selectedRiskType);
+
+            // Aggiorna lo stato "active" nella legenda
+            document.querySelectorAll('.legend-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const activeLegendItem = document.querySelector(`.legend-item[data-risk-type="${selectedRiskType}"]`);
+            if (activeLegendItem) {
+                activeLegendItem.classList.add('active');
+            }
         }
+
+        // Event listener per il cambio del rischio nel selettore
+        riskSelector.addEventListener('change', (event) => {
+            updateRiskInfoAndMapDisplay(event.target.value);
+        });
 
         // Funzione per aggiornare la colorazione della mappa in base al rischio selezionato
         function updateMapColoration(selectedRiskType) {
@@ -676,29 +608,19 @@
             } else {
                 console.warn("[updateMapColoration] currentComuneFeature non disponibile.");
             }
-
-            // Aggiorna lo stato "active" nella legenda
-            document.querySelectorAll('.legend-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            const activeLegendItem = document.querySelector(`.legend-item[data-risk-type="${selectedRiskType}"]`);
-            if (activeLegendItem) {
-                activeLegendItem.classList.add('active');
-            }
         }
 
-        // Funzione per popolare la legenda dei rischi
+        // Funzione per popolare la legenda dei rischi (aggiornata)
         function populateRiskLegend(comuneNormalizedName) {
-            riskLegendContainer.innerHTML = ''; // Pulisci la legenda esistente
-            const comuneInfo = infoComuni[comuneNormalizedName];
+            riskLegendContainer.innerHTML = '';
+            const comuneInfo = currentComuneFirebaseData; // Ora prendiamo i dati dal comune caricato
 
             if (comuneInfo && comuneInfo.rischi) {
                 document.getElementById('risk-legend').style.display = 'block';
 
-                const criticità = criticitàMap[comuneNormalizedName];
-                const colorHex = getHexColor(coloriBase[criticità] || '#ccc'); // Colore base del comune
+                const criticità = criticitàMap[comuneNormalizedName]; // Prende da criticitàMap popolata da Firebase
+                const colorHex = getHexColor(coloriBase[criticità] || '#ccc');
 
-                // Aggiungi l'elemento "Rischio Generale"
                 const generalItem = document.createElement('div');
                 generalItem.classList.add('legend-item');
                 generalItem.setAttribute('data-risk-type', 'generale');
@@ -712,7 +634,6 @@
                 });
                 riskLegendContainer.appendChild(generalItem);
 
-                // Aggiungi gli elementi per ogni rischio specifico
                 for (const riskType in comuneInfo.rischi) {
                     if (riskType !== 'generale') {
                         const item = document.createElement('div');
@@ -729,22 +650,13 @@
                         riskLegendContainer.appendChild(item);
                     }
                 }
-                // Imposta l'elemento "generale" come attivo di default nella legenda
-                document.querySelector('.legend-item[data-risk-type="generale"]').classList.add('active');
-
             } else {
-                document.getElementById('risk-legend').style.display = 'none'; // Nascondi la legenda
+                document.getElementById('risk-legend').style.display = 'none';
             }
         }
 
-
-        // Aggiungi un event listener al selettore per aggiornare le informazioni e la mappa
-        riskSelector.addEventListener('change', (event) => {
-            updateRiskInfoAndMapDisplay(event.target.value);
-        });
-
-        // Funzione per visualizzare le informazioni del comune
-        function displayComuneInfo(comuneOriginalName) {
+        // Funzione displayComuneInfo (aggiornata per usare currentComuneFirebaseData)
+        async function displayComuneInfo(comuneOriginalName) {
             const normalizedComuneName = normalizeComuneName(comuneOriginalName);
             currentComuneNormalizedName = normalizedComuneName;
             console.log(`[displayComuneInfo] Comune originale: ${comuneOriginalName}, Normalizzato: ${normalizedComuneName}`);
@@ -753,72 +665,61 @@
                 feature.properties.normalizedName === normalizedComuneName
             );
 
-            // Rimuovi tutti i layer dal controllo e dalla mappa
+            // Rimuovi layer esistenti prima di aggiungerne di nuovi
             if (comuneOutlineLayer) leafletMap.removeLayer(comuneOutlineLayer);
             if (criticitàFillLayer) leafletMap.removeLayer(criticitàFillLayer);
             emergencyMarkersLayer.clearLayers();
             riskSpecificFillLayer.clearLayers();
-
-            // Rimuovi il controllo layer esistente se presente
-            const existingLayerControl = document.querySelector('.leaflet-control-layers');
-            if (existingLayerControl) {
-                existingLayerControl.remove();
+            if (leafletMap.hasLayer(L.control.layers)) { // Rimuovi il controllo layer esistente
+                leafletMap.removeControl(L.control.layers);
             }
-            baseLayers = {};
-            overlays = {};
-
+            overlays = {}; // Reset overlays
 
             if (foundFeature) {
-                currentComuneFeature = foundFeature; // Salva la feature per uso futuro
+                currentComuneFeature = foundFeature;
                 pageTitle.textContent = `Criticità del Comune di ${foundFeature.properties.name}`;
                 comuneNameDisplay.textContent = `Comune: ${foundFeature.properties.name}`;
 
-                const criticità = criticitàMap[foundFeature.properties.normalizedName] || 'Non disponibile';
-                comuneCriticityDisplay.textContent = `Base: ${criticità}`;
-                console.log(`[displayComuneInfo] Criticità trovata per ${foundFeature.properties.name}: ${criticità}`);
+                // RECUPERA I DATI SPECIFICI DEL COMUNE DA FIREBASE
+                const comuneFirebaseSnapshot = await comuniRef.child(normalizedComuneName).once('value');
+                currentComuneFirebaseData = comuneFirebaseSnapshot.val(); // Salva i dati nella variabile globale
 
+                if (currentComuneFirebaseData) {
+                    const criticità = currentComuneFirebaseData.criticitàBase || 'Non disponibile';
+                    comuneCriticityDisplay.textContent = `Base: ${criticità}`;
+                    console.log(`[displayComuneInfo] Criticità trovata per ${foundFeature.properties.name}: ${criticità}`);
 
-                // Creo i layer GeoJSON per il comune specifico
-                comuneOutlineLayer = L.geoJSON(foundFeature, {
-                    style: styleComuneOutline,
-                    onEachFeature: onEachFeature
-                });
+                    // Crea i layer per il bordo e il riempimento del comune
+                    comuneOutlineLayer = L.geoJSON(currentComuneFeature, {
+                        style: styleComuneOutline,
+                        onEachFeature: onEachFeature
+                    });
+                    criticitàFillLayer = L.geoJSON(currentComuneFeature, {
+                        style: styleCriticitàFill,
+                        onEachFeature: onEachFeature
+                    });
 
-                // Il layer di riempimento generale, inizialmente visibile
-                criticitàFillLayer = L.geoJSON(foundFeature, {
-                    style: styleCriticitàFill,
-                    onEachFeature: onEachFeature
-                });
+                    comuneOutlineLayer.addTo(leafletMap);
+                    criticitàFillLayer.addTo(leafletMap);
+                    leafletMap.fitBounds(comuneOutlineLayer.getBounds().pad(0.5));
 
-
-                // Aggiungo i layer agli overlays e li attivo di default
-                overlays["Confine Comunale"] = comuneOutlineLayer;
-                overlays["Criticità Generale"] = criticitàFillLayer;
-
-                comuneOutlineLayer.addTo(leafletMap);
-                criticitàFillLayer.addTo(leafletMap); // Attivato di default per mostrare la criticità generale
-
-                // Centra la mappa sul comune trovato
-                leafletMap.fitBounds(comuneOutlineLayer.getBounds().pad(0.5));
-
-                // Carica e visualizza le informazioni aggiuntive
-                const comuneInfo = infoComuni[normalizedComuneName];
-                if (comuneInfo) {
+                    // Popola selettore rischi, legenda e mostra info
                     populateRiskSelector(normalizedComuneName);
-                    populateRiskLegend(normalizedComuneName); // Popola la legenda
-                    updateRiskInfoAndMapDisplay(riskSelector.value); // Aggiorna info e mappa in base al default del selettore ('generale')
+                    populateRiskLegend(normalizedComuneName);
+                    updateRiskInfoAndMapDisplay(riskSelector.value); // Inizializza con il rischio generale
 
-                    shelterInfoElement.textContent = comuneInfo.accoglienza;
+                    shelterInfoElement.textContent = currentComuneFirebaseData.accoglienza || "Informazioni aree accoglienza non disponibili.";
 
-                    if (comuneInfo.puntiMappa && comuneInfo.puntiMappa.length > 0) {
-                        comuneInfo.puntiMappa.forEach(punto => {
+                    // Visualizza i punti mappa da Firebase
+                    if (currentComuneFirebaseData.puntiMappa && currentComuneFirebaseData.puntiMappa.length > 0) {
+                        currentComuneFirebaseData.puntiMappa.forEach(punto => {
                             let markerIcon;
                             if (punto.tipo === 'raccolta') {
                                 markerIcon = emergencyIcon;
                             } else if (punto.tipo === 'accoglienza') {
                                 markerIcon = shelterIcon;
                             } else {
-                                markerIcon = L.Icon.Default;
+                                markerIcon = L.Icon.Default; // Fallback
                             }
 
                             const marker = L.marker([punto.lat, punto.lon], { icon: markerIcon })
@@ -828,8 +729,9 @@
                         overlays["Aree di Emergenza/Accoglienza"] = emergencyMarkersLayer;
                         emergencyMarkersLayer.addTo(leafletMap);
 
-                        navigationButton.removeEventListener('click', navigateToShelter); // Rimuovi listener precedente
-                        navigationButton.addEventListener('click', navigateToShelter); // Aggiungi nuovo listener
+                        // Abilita il pulsante di navigazione solo se ci sono punti
+                        navigationButton.removeEventListener('click', navigateToShelter); // Evita duplicati
+                        navigationButton.addEventListener('click', navigateToShelter);
                         navigationButton.style.display = 'block';
 
                     } else {
@@ -838,46 +740,54 @@
                     }
 
                 } else {
+                    // Dati del comune non trovati in Firebase
+                    comuneCriticityDisplay.textContent = "Base: Non disponibile";
                     riskInfoElement.textContent = "Informazioni sui rischi non disponibili per questo comune.";
                     shelterInfoElement.textContent = "Informazioni sulle aree di accoglienza non disponibili per questo comune.";
                     navigationButton.style.display = 'none';
                     document.getElementById('risk-selector-container').style.display = 'none';
                     document.getElementById('risk-legend').style.display = 'none';
+                    infoMessage.textContent = 'Dati dettagliati non trovati in Firebase per questo comune.';
+
+                    // Mostra solo il bordo del comune
+                    comuneOutlineLayer = L.geoJSON(currentComuneFeature, {
+                        style: styleComuneOutline,
+                        onEachFeature: onEachFeature
+                    }).addTo(leafletMap);
+                    leafletMap.fitBounds(comuneOutlineLayer.getBounds().pad(0.5));
                 }
 
-                // Aggiungi il controllo layer alla mappa
-                L.control.layers(baseLayers, overlays).addTo(leafletMap);
+                // Aggiungi i controlli layer alla mappa solo se ci sono overlays da mostrare
+                if (Object.keys(overlays).length > 0 || Object.keys(baseLayers).length > 0) {
+                    L.control.layers(baseLayers, overlays).addTo(leafletMap);
+                }
+
 
             } else {
-                infoMessage.textContent = `Comune "${comuneOriginalName}" non trovato nella mappa. Verifica il nome.`;
-                comuneNameDisplay.textContent = `Comune: ${comuneOriginalName}`;
-                comuneCriticityDisplay.textContent = 'Criticità: Non trovata';
-                riskInfoElement.textContent = "Informazioni sui rischi non disponibili.";
-                shelterInfoElement.textContent = "Informazioni sulle aree di accoglienza non disponibili.";
-                leafletMap.setView([40.6393, 15.8054], 8); // Torna alla vista generale della Basilicata
-                navigationButton.style.display = 'none';
+                pageTitle.textContent = "Comune non trovato";
+                comuneNameDisplay.textContent = "Comune non trovato";
+                comuneCriticityDisplay.textContent = "";
+                infoMessage.textContent = "Il comune specificato nell'URL non è stato trovato nel GeoJSON.";
+                riskInfoElement.textContent = "Nessuna informazione disponibile.";
+                shelterInfoElement.textContent = "Nessuna informazione disponibile.";
+                leafletMap.setView([40.6393, 15.8054], 8); // Centra sulla Basilicata
                 document.getElementById('risk-selector-container').style.display = 'none';
                 document.getElementById('risk-legend').style.display = 'none';
+                navigationButton.style.display = 'none';
             }
         }
 
-        // Funzione per navigare all'area di accoglienza più vicina (tramite Google Maps)
+        // Funzione per navigare all'area di accoglienza più vicina (o al primo punto mappa)
         function navigateToShelter() {
-            const comuneInfo = infoComuni[currentComuneNormalizedName];
-            if (comuneInfo && comuneInfo.puntiMappa) {
-                // Trova la prima area di accoglienza (o la più vicina se avessi coordinate GPS dell'utente)
-                const firstShelter = comuneInfo.puntiMappa.find(punto => punto.tipo === 'accoglienza');
-                if (firstShelter) {
-                    const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${firstShelter.lat},${firstShelter.lon}&travelmode=walking`;
-                    window.open(googleMapsUrl, '_blank');
-                } else {
-                    alert('Nessuna area di accoglienza disponibile per questo comune.');
-                }
+            if (currentComuneFirebaseData && currentComuneFirebaseData.puntiMappa && currentComuneFirebaseData.puntiMappa.length > 0) {
+                const firstPoint = currentComuneFirebaseData.puntiMappa[0];
+                const destination = `${firstPoint.lat},${firstPoint.lon}`;
+                const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+                window.open(googleMapsUrl, '_blank');
             } else {
-                alert('Informazioni sulle aree di accoglienza non disponibili per il comune attuale.');
+                alert("Nessun punto di accoglienza disponibile per la navigazione.");
             }
         }
-
     </script>
 
 </body>
