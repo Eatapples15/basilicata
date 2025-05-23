@@ -281,50 +281,6 @@
             flex-shrink: 0;
             margin-bottom: 1px; /* Visual alignment */
         }
-
-        /* Stili per la sezione dei colori base (separata) */
-        .color-settings-container {
-            margin-top: 40px;
-            padding: 30px;
-            background-color: #eaf0f4;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            text-align: center;
-        }
-
-        .color-settings-container h2 {
-            margin-bottom: 30px;
-            color: #2c3e50;
-        }
-
-        .color-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
-            justify-items: center;
-        }
-
-        .color-grid .form-group {
-            margin-bottom: 0;
-            text-align: left;
-            width: 100%;
-            max-width: 200px; /* Limita la larghezza di ogni select */
-        }
-
-        .color-grid label {
-            text-align: center;
-            display: block;
-            margin-bottom: 5px;
-            color: #34495e;
-            font-weight: bold;
-        }
-
-        .color-settings-container .button-group {
-            margin-top: 20px;
-            justify-content: center;
-        }
-
     </style>
 </head>
 
@@ -383,80 +339,6 @@
             <div class="message" id="response-message"></div>
         </div>
 
-        <div class="color-settings-container">
-            <h2>Configurazione Globale Colori e Timestamp</h2>
-            <div class="color-grid">
-                <div class="form-group">
-                    <label for="color-a1">Colore A1:</label>
-                    <select id="color-a1">
-                        <option value="green">Verde</option>
-                        <option value="yellow">Giallo</option>
-                        <option value="orange">Arancione</option>
-                        <option value="red">Rosso</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="color-a2">Colore A2:</label>
-                    <select id="color-a2">
-                        <option value="green">Verde</option>
-                        <option value="yellow">Giallo</option>
-                        <option value="orange">Arancione</option>
-                        <option value="red">Rosso</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="color-b">Colore B:</label>
-                    <select id="color-b">
-                        <option value="green">Verde</option>
-                        <option value="yellow">Giallo</option>
-                        <option value="orange">Arancione</option>
-                        <option value="red">Rosso</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="color-c">Colore C:</label>
-                    <select id="color-c">
-                        <option value="green">Verde</option>
-                        <option value="yellow">Giallo</option>
-                        <option value="orange">Arancione</option>
-                        <option value="red">Rosso</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="color-d">Colore D:</label>
-                    <select id="color-d">
-                        <option value="green">Verde</option>
-                        <option value="yellow">Giallo</option>
-                        <option value="orange">Arancione</option>
-                        <option value="red">Rosso</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="color-e1">Colore E1:</label>
-                    <select id="color-e1">
-                        <option value="green">Verde</option>
-                        <option value="yellow">Giallo</option>
-                        <option value="orange">Arancione</option>
-                        <option value="red">Rosso</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="color-e2">Colore E2:</label>
-                    <select id="color-e2">
-                        <option value="green">Verde</option>
-                        <option value="yellow">Giallo</option>
-                        <option value="orange">Arancione</option>
-                        <option value="red">Rosso</option>
-                    </select>
-                </div>
-            </div>
-            <div class="button-group">
-                <button type="button" id="save-colors-button"><i class="fas fa-palette"></i> Salva Colori Globali</button>
-                <button type="button" id="update-timestamp-button"><i class="fas fa-clock"></i> Aggiorna Timestamp Globale</button>
-            </div>
-            <div class="message" id="colors-response-message"></div>
-        </div>
-
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
@@ -465,7 +347,7 @@
         // Your web app's Firebase configuration
         // **ATTENZIONE**: Sostituisci "YOUR_FIREBASE_API_KEY" con la tua VERA API Key di Firebase
         const firebaseConfig = {
-            apiKey: "YOUR_FIREBASE_API_KEY", // <-- SOSTITUISCI CON LA TUA CHIAVE API
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28", // <-- SOSTITUISCI CON LA TUA CHIAVE API
             authDomain: "bollettinoregionale.firebaseapp.com",
             projectId: "bollettinoregionale",
             databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
@@ -479,7 +361,8 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const comuniRef = database.ref('comuni_data');
-        const coloriRef = database.ref('colori'); // Riferimento per i colori globali
+        // coloriRef non è più necessario qui, ma lo lascio commentato per chiarezza se dovesse servire per un'altra pagina
+        // const coloriRef = database.ref('colori'); 
 
         // Elementi HTML
         const searchInput = document.getElementById('search-input');
@@ -493,9 +376,10 @@
         const saveButton = document.getElementById('save-button');
         const deleteButton = document.getElementById('delete-button');
         const responseMessage = document.getElementById('response-message');
-        const saveColorsButton = document.getElementById('save-colors-button');
-        const updateTimestampButton = document.getElementById('update-timestamp-button');
-        const colorsResponseMessage = document.getElementById('colors-response-message');
+        // saveColorsButton e updateTimestampButton non sono più necessari qui
+        // const saveColorsButton = document.getElementById('save-colors-button');
+        // const updateTimestampButton = document.getElementById('update-timestamp-button');
+        // const colorsResponseMessage = document.getElementById('colors-response-message');
         const puntiMappaList = document.getElementById('punti-mappa-list');
         const addPuntoButton = document.getElementById('add-punto-button');
 
@@ -556,7 +440,7 @@
 
                 populateComuneList(allComuni);
                 loadPredefinedRisksCheckboxes(); // Carica le checkbox dei rischi (una volta)
-                loadColorSettings(); // Carica i colori globali
+                // loadColorSettings(); // Rimosso, non più necessario qui
             } catch (error) {
                 console.error("Errore nel caricamento dati iniziali:", error);
                 showMessage(responseMessage, "Errore nel caricamento dei dati iniziali.", "error");
@@ -726,56 +610,6 @@
                     console.error("Errore nell'eliminazione dei dati:", error);
                     showMessage(responseMessage, "Errore nell'eliminazione dei dati. " + error.message, "error");
                 }
-            }
-        });
-
-        // --- Gestione Colori Base (Globale) ---
-
-        async function loadColorSettings() {
-            try {
-                const snapshot = await coloriRef.once('value');
-                const data = snapshot.val();
-                if (data && data.coloriBase) {
-                    for (const criticity in data.coloriBase) {
-                        const selectElement = document.getElementById(`color-${criticity.toLowerCase()}`);
-                        if (selectElement) {
-                            selectElement.value = data.coloriBase[criticity];
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error("Errore nel caricamento delle impostazioni colore:", error);
-                showMessage(colorsResponseMessage, "Errore nel caricamento dei colori.", "error");
-            }
-        }
-
-        saveColorsButton.addEventListener('click', async () => {
-            const coloriBase = {};
-            const criticityOptions = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2']; // Assicurati che siano coerenti
-            criticityOptions.forEach(crit => {
-                const selectElement = document.getElementById(`color-${crit.toLowerCase()}`);
-                if (selectElement) {
-                    coloriBase[crit] = selectElement.value;
-                }
-            });
-
-            try {
-                await coloriRef.update({ coloriBase: coloriBase });
-                showMessage(colorsResponseMessage, "Colori salvati con successo!", "success");
-            } catch (error) {
-                console.error("Errore nel salvataggio dei colori:", error);
-                showMessage(colorsResponseMessage, "Errore nel salvataggio dei colori. " + error.message, "error");
-            }
-        });
-
-        updateTimestampButton.addEventListener('click', async () => {
-            try {
-                // Aggiorna anche un timestamp per la sezione globale dei colori
-                await coloriRef.update({ lastUpdatedGlobal: firebase.database.ServerValue.TIMESTAMP });
-                showMessage(colorsResponseMessage, "Timestamp globale aggiornato con successo!", "success");
-            } catch (error) {
-                console.error("Errore nell'aggiornamento del timestamp:", error);
-                showMessage(colorsResponseMessage, "Errore nell'aggiornamento del timestamp. " + error.message, "error");
             }
         });
 
