@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mappa Criticità per Rischio - Basilicata</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        #leaflet-map {
+            width: 100%;
+            max-width: 900px;
+            height: 600px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        #last-updated {
+            font-style: italic;
+            color: #777;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        #info-message {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        #region-logo {
+            max-width: 200px;
+            height: auto;
+            margin-top: 20px;
+        }
+
+        /* Stili per i popup di Leaflet */
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
+    </style>
+</head>
+
+<body>
+
+    <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
+
+    <h2 id="map-title">Mappa Criticità - Basilicata (Rischio: Caricamento...)</h2>
+
+    <div id="leaflet-map"></div>
+
+    <p id="last-updated"></p>
+    <p id="info-message"></p>
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+        };
+
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
+
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const infoMessage = document.getElementById('info-message');
+        const mapTitleElement = document.getElementById('map-title');
+
+        let geojsonDataGlobal = null;
+        let criticitàMap = {};
+        let coloriBase = {};
+        let currentRiskType = 'Idrogeologico'; // Default risk type
+
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Get risk type from URL
+        const riskFromUrl = getUrlParameter('risk');
+        if (riskFromUrl) {
+            currentRiskType = riskFromUrl;
+        }
+        mapTitleElement.textContent = `Mappa Criticità - Basilicata (Rischio: ${currentRiskType.replace(/([A-Z])/g, ' $1').trim()})`;
+
+
+        function normalizeComuneName(nome) {
+            if (!nome) return "";
+            return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function getHexColor(colorName) {
+            switch (colorName) {
+                case 'green':
+                    return '#008000';
+                case 'yellow':
+                    return '#FFFF00';
+                case 'orange':
+                    return '#FFA500';
+                case 'red':
+                    return '#FF0000';
+                default:
+                    return '#ccc';
+            }
+        }
+
+        function styleComune(feature) {
+            let normalizedComuneNome = feature.properties.normalizedName;
+            const criticità = criticitàMap[normalizedComuneNome];
+            const fillColor = coloriBase[criticità] || '#ccc';
+
+            return {
+                fillColor: getHexColor(fillColor),
+                weight: 2,
+                opacity: 1,
+                color: 'black',
+                fillOpacity: 0.8
+            };
+        }
+
+        function onEachFeature(feature, layer) {
+            if (feature.properties && feature.properties.name) {
+                const normalizedComuneNome = feature.properties.normalizedName;
+                const criticità = criticitàMap[normalizedComuneNome] || 'Non disponibile';
+                layer.bindPopup(`<b>${feature.properties.name}</b><br>Base: ${criticità}`);
+            }
+        }
+
+        // Carica dati GeoJSON, colori e criticità Firebase all'avvio
+        Promise.all([
+            fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
+            database.ref(`coloriPerRischio/${currentRiskType}`).once('value'),
+            database.ref(`criticitàComuniPerRischio/${currentRiskType}`).once('value'),
+            database.ref('dataUltimoAggiornamento').once('value') // Ottieni il timestamp globale
+        ]).then(([geojsonData, coloriSnapshot, criticitàSnapshot, timestampSnapshot]) => {
+            geojsonDataGlobal = geojsonData;
+
+            geojsonDataGlobal.features.forEach(feature => {
+                if (feature.properties && feature.properties.name) {
+                    feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
+                }
+            });
+
+            if (coloriSnapshot.exists()) {
+                coloriBase = coloriSnapshot.val();
+            } else {
+                infoMessage.textContent = `Nessun colore base trovato per il rischio "${currentRiskType}". Usando colori di default.`;
+                coloriBase = {
+                    'A1': 'red', 'A2': 'orange', 'B': 'yellow',
+                    'C': 'green', 'D': 'green', 'E1': 'green', 'E2': 'green'
+                }; // Default colors
+            }
+
+            if (criticitàSnapshot.exists()) {
+                criticitàMap = criticitàSnapshot.val();
+            } else {
+                infoMessage.textContent += ` Nessuna criticità trovata per il rischio "${currentRiskType}". La mappa potrebbe essere bianca.`;
+                // Defaulting criticitàMap to an empty object will result in grey areas
+                criticitàMap = {}; // Or set some default criticity for all if desired
+            }
+
+            // Display last updated timestamp
+            if (timestampSnapshot.exists()) {
+                const timestamp = new Date(timestampSnapshot.val());
+                lastUpdatedElement.textContent = `Dati aggiornati il: ${timestamp.toLocaleString()}`;
+            } else {
+                lastUpdatedElement.textContent = 'Data ultimo aggiornamento non disponibile.';
+            }
+
+
+            L.geoJSON(geojsonDataGlobal, {
+                style: styleComune,
+                onEachFeature: onEachFeature
+            }).addTo(leafletMap);
+
+        }).catch(error => {
+            console.error("Errore nel caricamento dei dati:", error);
+            infoMessage.textContent = 'Errore nel caricamento dei dati. Riprova più tardi.';
+        });
+    </script>
+</body>
+
+</html>
