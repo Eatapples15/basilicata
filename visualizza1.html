@@ -191,16 +191,18 @@
         const currentRiskLegend = document.getElementById('current-risk-legend');
 
         let criticitàMap = {}; // Mappa: nome comune normalizzato -> sua 'Base' (es. "potenza" -> "B")
-        let riskColorsData = {}; // Memorizza i colori per ogni base, per tipo di rischio (es. {'idrogeologico_temporali': {'A1': 'red', ...}})
+        let riskColorsData = {}; // Memorizza i colori per ogni base, per tipo di rischio (es. {'IdrogeologicoTemporali': {'A1': 'red', ...}})
         let geoJsonLayer = null; // Memorizza il layer Leaflet GeoJSON
         let loadedGeojsonData = null; // Cache per i dati GeoJSON
 
-        // Mappa i nomi delle chiavi dei rischi ai nomi da visualizzare
+        // Mappa i nomi delle chiavi dei rischi ai nomi da visualizzare.
+        // ATTENZIONE: Questi nomi DEVONO corrispondere esattamente ai nomi dei nodi su Firebase
+        // (es. "IdrogeologicoTemporali" e non "idrogeologico_temporali").
         const riskDisplayName = {
-            'idrogeologico_temporali': 'Idrogeologico (Temporali)',
-            'idrogeologico': 'Idrogeologico',
-            'idraulico': 'Idraulico',
-            'incendio': 'Incendio'
+            'IdrogeologicoTemporali': 'Idrogeologico (Temporali)',
+            'Idrogeologico': 'Idrogeologico',
+            'Idraulico': 'Idraulico',
+            'Incendio': 'Incendio'
         };
 
         // Normalizzazione dei nomi dei comuni (identica a prima)
@@ -211,7 +213,7 @@
 
         // Funzione per ottenere il codice esadecimale da un nome di colore (identica a prima)
         function getHexColor(colorName) {
-            switch (colorName) {
+            switch (colorName.toLowerCase()) { // Converti in minuscolo per confronto
                 case 'green': return '#008000';
                 case 'yellow': return '#FFFF00';
                 case 'orange': return '#FFA500';
@@ -264,13 +266,16 @@
 
                 if (snapshot.exists()) {
                     const datiColori = snapshot.val();
-                    riskColorsData = datiColori.rischi || {}; // Ottieni il nodo 'rischi'
-                    const timestamp = new Date(datiColori.dataCreazione);
+                    // MODIFICA QUI: Punta al nodo 'coloriPerRischio' invece di 'rischi'
+                    riskColorsData = datiColori.coloriPerRischio || {};
+
+                    // MODIFICA QUI: Recupera il timestamp dal nodo 'coloriPerRischio'
+                    const timestamp = new Date(datiColori.coloriPerRischio.dataUltimoAggiornamento);
                     const formattedDate = timestamp.toLocaleString();
                     lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
 
                     // Popola il menu a discesa dei rischi
-                    const riskTypes = Object.keys(riskColorsData);
+                    const riskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataUltimoAggiornamento'); // Filtra il timestamp
                     riskSelector.innerHTML = ''; // Pulisci le opzioni esistenti
 
                     if (riskTypes.length === 0) {
@@ -314,7 +319,8 @@
         // Funzione per aggiornare la mappa e la legenda in base al rischio selezionato
         function updateMapAndLegend() {
             const selectedRisk = riskSelector.value;
-            const currentRiskBaseColors = riskColorsData[selectedRisk] || {}; // Colori per il rischio selezionato
+            // Assicurati che l'oggetto dei colori per il rischio selezionato esista
+            const currentRiskBaseColors = riskColorsData[selectedRisk] || {}; 
 
             // Rimuovi il layer GeoJSON esistente dalla mappa
             if (geoJsonLayer) {
@@ -360,6 +366,7 @@
                 const normalizedComuneNome = feature.properties.normalizedName;
                 const base = getBaseForComune(normalizedComuneNome) || 'Non assegnata';
                 const selectedRisk = riskSelector.value;
+                // Assicurati di accedere correttamente al colore per la base
                 const riskColorName = riskColorsData[selectedRisk] ? (riskColorsData[selectedRisk][base] || 'N/A') : 'N/A';
                 const riskDisplayNameText = riskDisplayName[selectedRisk] || selectedRisk;
 
