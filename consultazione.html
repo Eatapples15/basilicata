@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mappa Criticità per Comune - Basilicata</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEbFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
             font-family: sans-serif;
@@ -153,7 +154,6 @@
 
         /* Stili per la nuova sezione dei rischi */
         #risk-info-container {
-            /* margin-top: 20px; */ /* Già gestito dal gap del body */
             max-height: 650px;
             overflow-y: auto;
             box-sizing: border-box; /* Include padding e border */
@@ -362,10 +362,14 @@
         // Initialize Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        const comuniRef = database.ref('comuni_data'); // Riferimento aggiunto
-        const coloriRef = database.ref('colori');     // Riferimento aggiunto
+        const comuniRef = database.ref('comuni_data'); // Riferimento per i dati dei comuni (rischi e punti mappa)
+        const coloriRef = database.ref('colori');     // Riferimento per i colori base
 
+        // Inizializza la mappa Leaflet
+        // Assicurati che l'elemento 'leaflet-map' sia visibile nel DOM al momento dell'inizializzazione
         const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8); // Vista iniziale sulla Basilicata
+
+        // Aggiungi il tile layer (OpenStreetMap)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(leafletMap);
@@ -381,11 +385,13 @@
         const riskSummaryList = document.getElementById('risk-summary-list'); // Nuovo elemento per il riepilogo
 
         let geojsonDataGlobal = null; // Memorizza i dati GeoJSON una volta caricati
-        let criticitàMap = {};
-        let coloriBase = {};
+        let criticitàMap = {}; // Mappa delle criticità base (es. A1, B, E2)
+        let coloriBase = {}; // Mappa dei colori associati alle criticità base (es. A1: green)
         let geoJsonLayerGroup = new L.LayerGroup().addTo(leafletMap); // Gruppo di layer per gestire i comuni
-        let policoroMarkers = new L.LayerGroup().addTo(leafletMap); // Gruppo di layer per i marker di Policoro
+        let comunePuntiMappa = {}; // Verrà popolato con i dati dei punti mappa da Firebase per tutti i comuni
 
+        // Layer Group per i marker dinamici del comune
+        let comuneMarkers = new L.LayerGroup().addTo(leafletMap);
 
         // Normalizzazione dei nomi dei comuni (funzione esistente, essenziale!)
         function normalizeComuneName(nome) {
@@ -414,7 +420,8 @@
         function styleComune(feature) {
             let normalizedComuneNome = feature.properties.normalizedName;
             const criticità = criticitàMap[normalizedComuneNome];
-            const fillColor = coloriBase[criticità] || 'green'; // Ottieni il colore mappato o default verde
+            // Assicurati che coloriBase[criticità] restituisca una stringa valida per il colore
+            const fillColor = coloriBase[criticità] || 'green'; // Usa il colore base o default verde
 
             return {
                 fillColor: getHexColor(fillColor),
@@ -434,36 +441,54 @@
             }
         }
 
-        // **NUOVO: Dati per i marker di Policoro (da database, simulati per ora)**
-        let comunePuntiMappa = {}; // Verrà popolato con i dati da Firebase
+        // Funzione per ottenere il nome visualizzato del rischio da quello normalizzato
+        function getRiskDisplayNameFromNormalized(normalizedRiskType) {
+            // Lista dei rischi predefiniti (deve essere identica a quella in admin.html)
+            const predefinedRisks = [
+                "Rischio idraulico", "Rischio diga", "Rischio idrogeologico",
+                "Rischio incendi", "Rischio Sismico", "Rischio neve",
+                "Rischio Industriale", "Rischio Maremoto", "Rischio ambientale"
+            ];
+            // Trova il rischio originale confrontando la versione normalizzata
+            const foundRisk = predefinedRisks.find(risk => normalizeComuneName(risk) === normalizedRiskType);
+            // Se trovato, ritorna il nome originale, altrimenti prova a "de-normalizzare" o ritorna il normalizzato
+            // Questo fallback è utile se ci sono rischi non previsti o nomi leggermente diversi
+            if (foundRisk) return foundRisk;
 
-        // Funzione per aggiungere i marker di Policoro
-        function addPolicoroMarkers() {
-            policoroMarkers.clearLayers(); // Pulisci i marker esistenti
-            const currentComuneData = comunePuntiMappa["policoro"]; // Prendi i dati dei punti mappa per Policoro
-            
-            if (currentComuneData && Array.isArray(currentComuneData) && currentComuneData.length > 0) {
-                currentComuneData.forEach(punto => {
+            // Tentativo di formattazione più leggibile se non trovato
+            return normalizedRiskType
+                .split('_') // Dividi per underscore
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalizza ogni parola
+                .join(' '); // Unisci con spazi
+        }
+
+        // Funzione per aggiungere i marker del comune corrente
+        function addComuneMarkers(normalizedComuneName) {
+            comuneMarkers.clearLayers(); // Pulisci i marker precedenti
+            // Usiamo Object.values per assicurarci che sia un array, anche se Firebase lo salva come oggetto
+            const punti = Object.values(comunePuntiMappa[normalizedComuneName] || {});
+
+            if (punti && punti.length > 0) {
+                punti.forEach(punto => {
                     if (punto.lat && punto.lon && !isNaN(punto.lat) && !isNaN(punto.lon)) {
                         const latLng = [punto.lat, punto.lon];
-                        L.marker(latLng).addTo(policoroMarkers)
-                            .bindPopup(`<strong><span class="math-inline">\{punto\.tipo \|\| 'Punto di Interesse'\}</strong\><br\></span>{punto.nome || 'N/D'}<br><span class="math-inline">\{punto\.ubicazione \|\| ''\}<br\></span>{punto.note || ''}`);
+                        L.marker(latLng).addTo(comuneMarkers)
+                            .bindPopup(`<strong>${punto.tipo || 'Punto di Interesse'}</strong><br>${punto.nome || 'N/D'}<br>${punto.ubicazione || ''}<br>${punto.note || ''}`);
                     }
                 });
             }
         }
 
-        // Funzione per rimuovere i marker di Policoro
-        function removePolicoroMarkers() {
-            policoroMarkers.clearLayers();
+        // Funzione per rimuovere i marker del comune corrente
+        function removeComuneMarkers() {
+            comuneMarkers.clearLayers();
         }
-
 
         // Carica dati GeoJSON e colori Firebase all'avvio
         Promise.all([
             fetch('limits_R_17_municipalities.geojson').then(res => res.json()),
             coloriRef.once('value'),
-            comuniRef.once('value') // Aggiungi la lettura dei dati dei comuni per i punti mappa
+            comuniRef.once('value') // Aggiungi la lettura dei dati dei comuni per i punti mappa e i rischi
         ]).then(([geojsonData, coloriSnapshot, comuniSnapshot]) => {
             geojsonDataGlobal = geojsonData; // Memorizza i dati GeoJSON globalmente
 
@@ -508,7 +533,9 @@
                 const allComuniData = comuniSnapshot.val();
                 for (const normalizedComuneName in allComuniData) {
                     if (allComuniData[normalizedComuneName].puntiMappa) {
-                        comunePuntiMappa[normalizedComuneName] = allComuniData[normalizedComuneName].puntiMappa;
+                        // Firebase potrebbe salvare gli array come oggetti se gli indici non sono contigui
+                        // Converti l'oggetto in un array se necessario
+                        comunePuntiMappa[normalizedComuneName] = Object.values(allComuniData[normalizedComuneName].puntiMappa);
                     }
                 }
                 console.log("Dati punti mappa caricati:", comunePuntiMappa);
@@ -529,7 +556,7 @@
 
             // Pulisci i layer esistenti dalla mappa all'inizio di ogni ricerca
             geoJsonLayerGroup.clearLayers();
-            removePolicoroMarkers(); // Rimuovi i marker di Policoro se presenti
+            removeComuneMarkers(); // Rimuovi i marker del comune precedente, se presenti
 
             // Reset delle sezioni informazioni a un messaggio iniziale generico
             comuneNameDisplay.textContent = '';
@@ -566,9 +593,17 @@
                         if (comuneData) {
                             displayComuneRisks(searchTerm, comuneData);
                             displayCurrentRiskSummary(searchTerm, comuneData);
+
+                            // Aggiungi i marker dei punti mappa se presenti per il comune trovato
+                            if (comunePuntiMappa[searchTerm]) {
+                                addComuneMarkers(searchTerm);
+                            } else {
+                                removeComuneMarkers(); // Nessun dato, rimuovi i marker
+                            }
                         } else {
                             comuneRisksDisplay.innerHTML = '<p>Nessun dato di rischio specifico disponibile per questo comune.</p>';
                             riskSummaryList.innerHTML = '<li>Nessun riepilogo rischi disponibile per questo comune.</li>';
+                            removeComuneMarkers(); // Nessun dato, rimuovi i marker
                         }
                     })
                     .catch(error => {
@@ -576,19 +611,11 @@
                         infoMessage.textContent = 'Errore nel caricamento dettagli rischi. Riprova.';
                     });
 
-                // Aggiungi i marker dei punti mappa se presenti per il comune trovato
-                if (comunePuntiMappa[searchTerm]) {
-                    addComuneMarkers(searchTerm);
-                } else {
-                    removeComuneMarkers(); // Assicurati che non ci siano marker di altri comuni
-                }
-
             } else {
                 infoMessage.textContent = 'Comune non trovato o non rientra nell\'area mappata.';
                 comuneNameDisplay.textContent = '';
                 comuneCriticityDisplay.textContent = '';
-                removePolicoroMarkers(); // Assicurati di rimuovere i marker di Policoro se un altro comune non è trovato
-                removeComuneMarkers(); // Rimuovi eventuali marker di altri comuni
+                removeComuneMarkers(); // Assicurati di rimuovere i marker se il comune non è trovato
                 comuneRisksDisplay.innerHTML = '<p>Seleziona un comune per visualizzare i rischi e le allerte.</p>';
                 riskSummaryList.innerHTML = '<li>Seleziona un comune per visualizzare il riepilogo dei rischi.</li>';
             }
@@ -605,7 +632,14 @@
             // Trova il rischio originale confrontando la versione normalizzata
             const foundRisk = predefinedRisks.find(risk => normalizeComuneName(risk) === normalizedRiskType);
             // Se trovato, ritorna il nome originale, altrimenti prova a "de-normalizzare" o ritorna il normalizzato
-            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1).replace(/([A-Z])/g, ' $1').trim();
+            // Questo fallback è utile se ci sono rischi non previsti o nomi leggermente diversi
+            if (foundRisk) return foundRisk;
+
+            // Tentativo di formattazione più leggibile se non trovato
+            return normalizedRiskType
+                .split('_') // Dividi per underscore
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalizza ogni parola
+                .join(' '); // Unisci con spazi
         }
 
         // Funzione per visualizzare i rischi dettagliati di un comune (aggiornata per Firebase)
@@ -614,32 +648,35 @@
 
             if (comuneData && comuneData.rischi) {
                 let hasRisksToDisplay = false;
-                for (const riskType in comuneData.rischi) {
-                    if (riskType !== 'generale' && comuneData.rischi[riskType] && typeof comuneData.rischi[riskType] === 'object') {
+                // Itera sulle chiavi dell'oggetto rischi
+                for (const riskTypeRaw in comuneData.rischi) {
+                    // Controlla che non sia la chiave 'generale' e che il valore sia un oggetto valido
+                    if (riskTypeRaw !== 'generale' && typeof comuneData.rischi[riskTypeRaw] === 'object' && comuneData.rischi[riskTypeRaw] !== null) {
                         hasRisksToDisplay = true;
-                        const risk = comuneData.rischi[riskType];
+                        const risk = comuneData.rischi[riskTypeRaw]; // Ottieni l'oggetto rischio
                         const riskSection = document.createElement('div');
                         riskSection.classList.add('risk-section');
 
-                        const displayName = getRiskDisplayNameFromNormalized(riskType);
+                        // Utilizza getRiskDisplayNameFromNormalized per un nome leggibile
+                        const displayName = getRiskDisplayNameFromNormalized(riskTypeRaw);
                         const alertStatusClass = `alert-${(risk.alertStatus || 'green').toLowerCase()}`; // Assicurati che sia lowercase
 
                         riskSection.innerHTML = `
-                            <h3><span class="math-inline">\{displayName\}</h3\>
-<p class\="risk\-alert\-status"\>Stato Allerta\: <span class\="</span>{alertStatusClass}"><span class="math-inline">\{risk\.alertStatus \|\| 'N/D'\}</span\></p\>
-<p class\="alert\-message"\></span>{risk.alertMessage || 'Nessuna allerta specifica per questo rischio.'}</p>
+                            <h3>${displayName}</h3>
+                            <p class="risk-alert-status">Stato Allerta: <span class="${alertStatusClass}">${risk.alertStatus || 'N/D'}</span></p>
+                            <p class="alert-message">${risk.alertMessage || 'Nessuna allerta specifica per questo rischio.'}</p>
                             <div class="preparedness-actions">
-                                ${risk.guidelines && risk.guidelines.before && risk.guidelines.before.length > 0 ? `
+                                ${risk.guidelines && risk.guidelines.before && Object.values(risk.guidelines.before).length > 0 ? `
                                     <h4>Prima:</h4>
-                                    <ul>${risk.guidelines.before.map(item => `<li>${item}</li>`).join('')}</ul>
+                                    <ul>${Object.values(risk.guidelines.before).map(item => `<li>${item}</li>`).join('')}</ul>
                                 ` : ''}
-                                ${risk.guidelines && risk.guidelines.during && risk.guidelines.during.length > 0 ? `
+                                ${risk.guidelines && risk.guidelines.during && Object.values(risk.guidelines.during).length > 0 ? `
                                     <h4>Durante:</h4>
-                                    <ul>${risk.guidelines.during.map(item => `<li>${item}</li>`).join('')}</ul>
+                                    <ul>${Object.values(risk.guidelines.during).map(item => `<li>${item}</li>`).join('')}</ul>
                                 ` : ''}
-                                ${risk.guidelines && risk.guidelines.after && risk.guidelines.after.length > 0 ? `
+                                ${risk.guidelines && risk.guidelines.after && Object.values(risk.guidelines.after).length > 0 ? `
                                     <h4>Dopo:</h4>
-                                    <ul>${risk.guidelines.after.map(item => `<li>${item}</li>`).join('')}</ul>
+                                    <ul>${Object.values(risk.guidelines.after).map(item => `<li>${item}</li>`).join('')}</ul>
                                 ` : ''}
                             </div>
                         `;
@@ -661,18 +698,18 @@
 
             if (comuneData && comuneData.rischi) {
                 let hasSummaryToDisplay = false;
-                for (const riskType in comuneData.rischi) {
-                    if (riskType !== 'generale' && comuneData.rischi[riskType] && typeof comuneData.rischi[riskType] === 'object') {
+                for (const riskTypeRaw in comuneData.rischi) {
+                     if (riskTypeRaw !== 'generale' && typeof comuneData.rischi[riskTypeRaw] === 'object' && comuneData.rischi[riskTypeRaw] !== null) {
                         hasSummaryToDisplay = true;
-                        const risk = comuneData.rischi[riskType];
+                        const risk = comuneData.rischi[riskTypeRaw];
                         const riskSummaryItem = document.createElement('li');
                         riskSummaryItem.classList.add('risk-summary-item');
-                        const displayName = getRiskDisplayNameFromNormalized(riskType);
+                        const displayName = getRiskDisplayNameFromNormalized(riskTypeRaw);
                         const alertStatusClass = `alert-${(risk.alertStatus || 'green').toLowerCase()}`;
 
                         riskSummaryItem.innerHTML = `
                             <h4>${displayName}</h4>
-                            <p class="alert-status-small <span class="math-inline">\{alertStatusClass\}"\></span>{risk.alertStatus || 'N/D'}</p>
+                            <p class="alert-status-small ${alertStatusClass}">${risk.alertStatus || 'N/D'}</p>
                         `;
                         riskSummaryList.appendChild(riskSummaryItem);
                     }
@@ -685,15 +722,17 @@
             }
         }
 
-        // Layer Group per i marker dinamici del comune
-        let comuneMarkers = new L.LayerGroup().addTo(leafletMap);
+        // Event listener per il pulsante di ricerca
+        searchButton.addEventListener('click', filterMap);
 
-        // Funzione per aggiungere i marker del comune corrente
-        function addComuneMarkers(normalizedComuneName) {
-            comuneMarkers.clearLayers(); // Pulisci i marker precedenti
-            const punti = comunePuntiMappa[normalizedComuneName];
+        // Event listener per il tasto Invio nell'input di ricerca
+        comuneSearchInput.addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                filterMap();
+            }
+        });
 
-            if (punti && punti.length > 0) {
-                punti.forEach(punto => {
-                    if (punto.lat && punto.lon && !isNaN(punto.lat) && !isNaN(punto.lon)) {
-                        const latLng = [punto.lat, punto.lon
+    </script>
+</body>
+
+</html>
