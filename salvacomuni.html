@@ -111,6 +111,7 @@
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+            box-sizing: border-box; /* Aggiunto per evitare overflow */
         }
 
         #comune-list {
@@ -119,8 +120,8 @@
             margin-top: 20px;
             border-top: 1px solid #eee;
             padding-top: 20px;
-            max-height: 300px; /* Limita altezza */
-            overflow-y: auto; /* Aggiunge scroll */
+            max-height: 300px;
+            overflow-y: auto;
             border: 1px solid #eee;
             border-radius: 5px;
         }
@@ -188,6 +189,75 @@
             transform: scale(1.1);
         }
 
+        /* Stili per le descrizioni dei rischi specifici */
+        .risk-details-section {
+            border: 1px solid #e0e0e0;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .risk-details-section h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .risk-details-section .form-group {
+            margin-bottom: 10px;
+        }
+
+        .risk-details-section label {
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .risk-details-section input,
+        .risk-details-section textarea,
+        .risk-details-section select {
+            width: calc(100% - 18px);
+            padding: 8px;
+            font-size: 0.9em;
+        }
+        
+        .guidelines-group {
+            margin-top: 15px;
+            border-top: 1px dashed #eee;
+            padding-top: 15px;
+        }
+
+        .guidelines-group label {
+            margin-top: 10px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .guidelines-group .guideline-input {
+            display: flex;
+            margin-bottom: 5px;
+        }
+
+        .guidelines-group .guideline-input input {
+            flex-grow: 1;
+            margin-right: 5px;
+        }
+
+        .guidelines-group .guideline-input button {
+            background-color: #ffc107;
+            color: #333;
+            padding: 5px 8px;
+            font-size: 0.8em;
+            width: auto;
+            border-radius: 4px;
+        }
+
+        .guidelines-group .guideline-input button:hover {
+            background-color: #e0a800;
+        }
+        
         /* Stili per la sezione dei punti mappa */
         .punti-mappa-container {
             border: 1px solid #ddd;
@@ -245,7 +315,7 @@
         .add-punto-btn {
             background-color: #28a745;
             margin-top: 15px;
-            display: block; /* For full width button */
+            display: block;
             width: 100%;
         }
 
@@ -260,7 +330,7 @@
             font-size: 0.9em;
             vertical-align: middle;
             display: inline-block;
-            width: auto; /* Allow button to size naturally */
+            width: auto;
         }
         .geocode-btn:hover {
             background-color: #138496;
@@ -268,7 +338,7 @@
 
         .lat-lon-group {
             display: flex;
-            align-items: flex-end; /* Align inputs and button at the bottom */
+            align-items: flex-end;
             gap: 10px;
         }
         .lat-lon-group > div {
@@ -279,7 +349,7 @@
         }
         .lat-lon-group button {
             flex-shrink: 0;
-            margin-bottom: 1px; /* Visual alignment */
+            margin-bottom: 1px;
         }
     </style>
 </head>
@@ -292,7 +362,7 @@
             <label for="comune-select">Seleziona Comune:</label>
             <input type="text" id="search-input" placeholder="Cerca comune...">
             <ul id="comune-list">
-                </ul>
+            </ul>
         </div>
 
         <div id="comune-details-form" style="display: none;">
@@ -318,15 +388,15 @@
                     <textarea id="rischio-generale-input" placeholder="Descrizione generale dei rischi o note particolari per questo comune"></textarea>
                 </div>
                 <div class="checkbox-group" id="risk-checkboxes">
-                    </div>
+                </div>
                 <div id="risk-descriptions-container">
-                    </div>
+                </div>
             </div>
 
             <div class="punti-mappa-container">
                 <h3>Aree di Emergenza / Punti di Raccolta</h3>
                 <div id="punti-mappa-list">
-                    </div>
+                </div>
                 <button type="button" class="add-punto-btn" id="add-punto-button"><i class="fas fa-plus-circle"></i> Aggiungi Punto Mappa</button>
             </div>
 
@@ -361,8 +431,6 @@
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
         const comuniRef = database.ref('comuni_data');
-        // coloriRef non è più necessario qui, ma lo lascio commentato per chiarezza se dovesse servire per un'altra pagina
-        // const coloriRef = database.ref('colori'); 
 
         // Elementi HTML
         const searchInput = document.getElementById('search-input');
@@ -376,10 +444,6 @@
         const saveButton = document.getElementById('save-button');
         const deleteButton = document.getElementById('delete-button');
         const responseMessage = document.getElementById('response-message');
-        // saveColorsButton e updateTimestampButton non sono più necessari qui
-        // const saveColorsButton = document.getElementById('save-colors-button');
-        // const updateTimestampButton = document.getElementById('update-timestamp-button');
-        // const colorsResponseMessage = document.getElementById('colors-response-message');
         const puntiMappaList = document.getElementById('punti-mappa-list');
         const addPuntoButton = document.getElementById('add-punto-button');
 
@@ -408,11 +472,25 @@
             "Edifici strategici",
             "Punti critici"
         ];
+        
+        // Stati di allerta predefiniti
+        const alertStatuses = ["N/D", "Verde", "Giallo", "Arancione", "Rosso"];
 
         // Funzione di normalizzazione (identica a quella usata nella pagina di visualizzazione)
         function normalizeComuneName(nome) {
             if (!nome) return "";
             return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        // Funzione per normalizzare i tipi di rischio per le chiavi di Firebase
+        function normalizeRiskType(riskName) {
+            return riskName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        }
+
+        // Funzione per ottenere il nome visualizzabile del rischio
+        function getRiskDisplayName(normalizedRiskType) {
+            const foundRisk = predefinedRisks.find(risk => normalizeRiskType(risk) === normalizedRiskType);
+            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1);
         }
 
         // Funzione per mostrare messaggi
@@ -430,17 +508,15 @@
         // Carica la lista dei comuni dal GeoJSON e i dati da Firebase all'avvio
         async function loadInitialData() {
             try {
-                // Carica il GeoJSON
                 const response = await fetch('limits_R_17_municipalities.geojson');
                 const geojsonData = await response.json();
                 allComuni = geojsonData.features.map(feature => ({
                     originalName: feature.properties.name,
                     normalizedName: normalizeComuneName(feature.properties.name)
-                })).sort((a, b) => a.originalName.localeCompare(b.originalName)); // Ordina alfabeticamente
+                })).sort((a, b) => a.originalName.localeCompare(b.originalName));
 
                 populateComuneList(allComuni);
-                loadPredefinedRisksCheckboxes(); // Carica le checkbox dei rischi (una volta)
-                // loadColorSettings(); // Rimosso, non più necessario qui
+                loadPredefinedRisksCheckboxes();
             } catch (error) {
                 console.error("Errore nel caricamento dati iniziali:", error);
                 showMessage(responseMessage, "Errore nel caricamento dei dati iniziali.", "error");
@@ -484,9 +560,8 @@
 
             currentComuneName.textContent = selectedComune.originalName;
             comuneDetailsForm.style.display = 'block';
-            responseMessage.textContent = ''; // Pulisci i messaggi precedenti
+            responseMessage.textContent = '';
 
-            // Carica i dati del comune selezionato da Firebase
             try {
                 const snapshot = await comuniRef.child(selectedComune.normalizedName).once('value');
                 const data = snapshot.val();
@@ -495,15 +570,15 @@
             } catch (error) {
                 console.error("Errore nel caricamento dati del comune:", error);
                 showMessage(responseMessage, "Errore nel caricamento dei dati del comune.", "error");
-                loadComuneDataIntoForm(null); // Pulisci il form se c'è un errore
+                loadComuneDataIntoForm(null);
             }
         }
 
         function loadComuneDataIntoForm(data) {
             // Reset di tutti i campi
-            criticitySelect.value = 'A1'; // Default
+            criticitySelect.value = 'A1';
             rischioGeneraleInput.value = '';
-            puntiMappaList.innerHTML = ''; // Pulisci i punti mappa esistenti
+            puntiMappaList.innerHTML = '';
 
             // Deseleziona tutte le checkbox dei rischi e nascondi le descrizioni
             document.querySelectorAll('#risk-checkboxes input[type="checkbox"]').forEach(checkbox => {
@@ -523,7 +598,8 @@
                             const checkbox = document.getElementById(`risk-checkbox-${riskType}`);
                             if (checkbox) {
                                 checkbox.checked = true;
-                                addRiskDescriptionField(riskType, data.rischi[riskType]);
+                                // Passa l'intero oggetto rischio
+                                addRiskDescriptionField(riskType, data.rischi[riskType]); 
                             }
                         }
                     }
@@ -552,9 +628,33 @@
             const rischiSpecifici = { generale: rischioGenerale };
             document.querySelectorAll('#risk-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
                 const riskType = checkbox.dataset.riskType;
-                const riskDescriptionInput = document.getElementById(`risk-description-input-${riskType}`);
-                if (riskDescriptionInput) {
-                    rischiSpecifici[riskType] = riskDescriptionInput.value.trim();
+                const riskSection = document.getElementById(`risk-description-group-${riskType}`);
+                
+                if (riskSection) {
+                    const alertStatus = riskSection.querySelector('[name="alert-status"]').value;
+                    const alertMessage = riskSection.querySelector('[name="alert-message"]').value.trim();
+
+                    const guidelines = {
+                        before: [],
+                        during: [],
+                        after: []
+                    };
+
+                    riskSection.querySelectorAll('.guidelines-group[data-period="before"] .guideline-input input').forEach(input => {
+                        if (input.value.trim()) guidelines.before.push(input.value.trim());
+                    });
+                    riskSection.querySelectorAll('.guidelines-group[data-period="during"] .guideline-input input').forEach(input => {
+                        if (input.value.trim()) guidelines.during.push(input.value.trim());
+                    });
+                    riskSection.querySelectorAll('.guidelines-group[data-period="after"] .guideline-input input').forEach(input => {
+                        if (input.value.trim()) guidelines.after.push(input.value.trim());
+                    });
+
+                    rischiSpecifici[riskType] = {
+                        alertStatus: alertStatus,
+                        alertMessage: alertMessage,
+                        guidelines: guidelines
+                    };
                 }
             });
 
@@ -575,8 +675,8 @@
             const comuneData = {
                 criticitàBase: criticitàBase,
                 rischi: rischiSpecifici,
-                puntiMappa: puntiMappa, // Aggiunto il campo puntiMappa
-                lastUpdated: firebase.database.ServerValue.TIMESTAMP // Aggiungi timestamp
+                puntiMappa: puntiMappa,
+                lastUpdated: firebase.database.ServerValue.TIMESTAMP
             };
 
             try {
@@ -600,10 +700,9 @@
                 try {
                     await comuniRef.child(selectedComune.normalizedName).remove();
                     showMessage(responseMessage, `Dati per ${selectedComune.originalName} eliminati con successo!`, "success");
-                    loadComuneDataIntoForm(null); // Pulisci il form
+                    loadComuneDataIntoForm(null);
                     selectedComune = null;
-                    comuneDetailsForm.style.display = 'none'; // Nascondi il form
-                    // Rimuovi la classe 'selected' dalla lista
+                    comuneDetailsForm.style.display = 'none';
                     document.querySelectorAll('#comune-list li').forEach(li => li.classList.remove('selected'));
 
                 } catch (error) {
@@ -613,10 +712,10 @@
             }
         });
 
-        // --- Gestione Rischi Specifici (Checkbox e Testarea) ---
+        // --- Gestione Rischi Specifici (Checkbox e Dettagli) ---
 
         function loadPredefinedRisksCheckboxes() {
-            riskCheckboxesContainer.innerHTML = ''; // Pulisci prima di aggiungere
+            riskCheckboxesContainer.innerHTML = '';
             predefinedRisks.forEach(risk => {
                 const normalizedRiskType = normalizeRiskType(risk);
                 const checkboxDiv = document.createElement('div');
@@ -639,28 +738,136 @@
             });
         }
 
-        function normalizeRiskType(riskName) {
-            // Converti in minuscolo, rimuovi spazi e caratteri speciali, mantieni solo lettere/numeri
-            return riskName.toLowerCase().replace(/[^a-z0-9]/g, '');
-        }
+        // MODIFICA: Aggiunta di campi per alertStatus e guidelines
+        function addRiskDescriptionField(riskType, initialData = {}) {
+            // initialData può essere un oggetto { alertStatus: "...", alertMessage: "...", guidelines: {...} }
+            // Oppure solo una stringa se è il vecchio formato (solo alertMessage)
+            let initialAlertStatus = 'N/D';
+            let initialAlertMessage = '';
+            let initialGuidelines = { before: [], during: [], after: [] };
 
-        function addRiskDescriptionField(riskType, initialValue = '') {
+            if (typeof initialData === 'string') { // Vecchio formato, solo il messaggio
+                initialAlertMessage = initialData;
+            } else if (typeof initialData === 'object' && initialData !== null) {
+                initialAlertStatus = initialData.alertStatus || 'N/D';
+                initialAlertMessage = initialData.alertMessage || '';
+                initialGuidelines = initialData.guidelines || { before: [], during: [], after: [] };
+            }
+
             // Controlla se il campo esiste già per evitare duplicati
             if (document.getElementById(`risk-description-group-${riskType}`)) {
-                if (initialValue) { // Aggiorna il valore se già esiste e c'è un valore iniziale
-                    document.getElementById(`risk-description-input-${riskType}`).value = initialValue;
-                }
-                return;
+                // Se esiste, aggiorna i valori
+                const section = document.getElementById(`risk-description-group-${riskType}`);
+                section.querySelector('[name="alert-status"]').value = initialAlertStatus;
+                section.querySelector('[name="alert-message"]').value = initialAlertMessage;
+
+                // Aggiorna le linee guida
+                ['before', 'during', 'after'].forEach(period => {
+                    const guidelineContainer = section.querySelector(`.guidelines-group[data-period="${period}"] .guideline-inputs-container`);
+                    if (guidelineContainer) {
+                         guidelineContainer.innerHTML = ''; // Pulisci prima
+                         (initialGuidelines[period] || []).forEach(item => {
+                            addGuidelineInput(guidelineContainer, item);
+                         });
+                         // Assicurati che ci sia almeno un input vuoto per aggiungere
+                         if (guidelineContainer.children.length === 0 || guidelineContainer.lastElementChild.querySelector('input').value !== '') {
+                            addGuidelineInput(guidelineContainer);
+                         }
+                    }
+                });
+
+                return; // Esce dalla funzione dopo l'aggiornamento
             }
 
             const div = document.createElement('div');
-            div.classList.add('form-group');
+            div.classList.add('risk-details-section'); // Classe per stile specifico
             div.id = `risk-description-group-${riskType}`;
             div.innerHTML = `
-                <label for="risk-description-input-${riskType}">Note per ${getRiskDisplayName(riskType)}:</label>
-                <textarea id="risk-description-input-${riskType}" placeholder="Note specifiche per ${getRiskDisplayName(riskType)}">${initialValue}</textarea>
+                <h4>Dettagli per ${getRiskDisplayName(riskType)}</h4>
+                <div class="form-group">
+                    <label for="alert-status-${riskType}">Stato Allerta:</label>
+                    <select id="alert-status-${riskType}" name="alert-status">
+                        ${alertStatuses.map(status => `<option value="${status}" ${initialAlertStatus === status ? 'selected' : ''}>${status}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="alert-message-${riskType}">Messaggio di Allerta:</label>
+                    <textarea id="alert-message-${riskType}" name="alert-message" placeholder="Messaggio di allerta specifico per questo rischio">${initialAlertMessage}</textarea>
+                </div>
+
+                <div class="guidelines-group" data-period="before">
+                    <label>Linee guida (Prima):</label>
+                    <div class="guideline-inputs-container">
+                        ${(initialGuidelines.before || []).map(item => `
+                            <div class="guideline-input">
+                                <input type="text" value="${item}" placeholder="Azione prima dell'evento">
+                                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button type="button" class="add-guideline-btn" data-period="before"><i class="fas fa-plus-circle"></i> Aggiungi Azione</button>
+                </div>
+                <div class="guidelines-group" data-period="during">
+                    <label>Linee guida (Durante):</label>
+                    <div class="guideline-inputs-container">
+                        ${(initialGuidelines.during || []).map(item => `
+                            <div class="guideline-input">
+                                <input type="text" value="${item}" placeholder="Azione durante l'evento">
+                                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button type="button" class="add-guideline-btn" data-period="during"><i class="fas fa-plus-circle"></i> Aggiungi Azione</button>
+                </div>
+                <div class="guidelines-group" data-period="after">
+                    <label>Linee guida (Dopo):</label>
+                    <div class="guideline-inputs-container">
+                        ${(initialGuidelines.after || []).map(item => `
+                            <div class="guideline-input">
+                                <input type="text" value="${item}" placeholder="Azione dopo l'evento">
+                                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button type="button" class="add-guideline-btn" data-period="after"><i class="fas fa-plus-circle"></i> Aggiungi Azione</button>
+                </div>
             `;
             riskDescriptionsContainer.appendChild(div);
+
+            // Aggiungi event listener per l'aggiunta di linee guida
+            div.querySelectorAll('.add-guideline-btn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const container = button.previousElementSibling; // .guideline-inputs-container
+                    addGuidelineInput(container);
+                });
+            });
+
+            // Aggiungi event listener per la rimozione di linee guida (delegazione)
+            div.addEventListener('click', (event) => {
+                if (event.target.classList.contains('remove-guideline-btn') || event.target.closest('.remove-guideline-btn')) {
+                    const button = event.target.closest('.remove-guideline-btn');
+                    button.parentElement.remove();
+                }
+            });
+            
+            // Assicurati che ci sia almeno un input vuoto per ogni sezione guidelines, se inizialmente vuote
+            ['before', 'during', 'after'].forEach(period => {
+                const container = div.querySelector(`.guidelines-group[data-period="${period}"] .guideline-inputs-container`);
+                if (container && container.children.length === 0) {
+                    addGuidelineInput(container);
+                }
+            });
+        }
+
+        // Funzione per aggiungere un singolo input di linea guida
+        function addGuidelineInput(container, initialValue = '') {
+            const guidelineDiv = document.createElement('div');
+            guidelineDiv.classList.add('guideline-input');
+            guidelineDiv.innerHTML = `
+                <input type="text" value="${initialValue}" placeholder="Azione...">
+                <button type="button" class="remove-guideline-btn"><i class="fas fa-minus-circle"></i></button>
+            `;
+            container.appendChild(guidelineDiv);
         }
 
         function removeRiskDescriptionField(riskType) {
@@ -668,12 +875,6 @@
             if (divToRemove) {
                 riskDescriptionsContainer.removeChild(divToRemove);
             }
-        }
-
-        function getRiskDisplayName(normalizedRiskType) {
-            // Mappa il nome normalizzato al nome visualizzato
-            const foundRisk = predefinedRisks.find(risk => normalizeRiskType(risk) === normalizedRiskType);
-            return foundRisk || normalizedRiskType.charAt(0).toUpperCase() + normalizedRiskType.slice(1);
         }
 
         // --- Gestione Punti Mappa Dinamici ---
@@ -729,8 +930,6 @@
                     event.target.textContent = 'Cercando...';
                     event.target.disabled = true;
                     try {
-                        // Utilizza l'API OpenStreetMap Nominatim per il geocoding
-                        // Aggiungi una regione o città per migliorare la precisione della ricerca
                         const searchContext = selectedComune ? `, ${selectedComune.originalName}, Basilicata, Italia` : ', Italia';
                         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address + searchContext)}`);
                         const data = await response.json();
