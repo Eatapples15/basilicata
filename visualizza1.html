@@ -261,21 +261,28 @@
                     }
                 });
 
-                // Recupera i colori dei rischi da Firebase
+                // Recupera i colori dei rischi da Firebase dal nodo 'colori'
                 const snapshot = await database.ref('colori').once('value');
 
                 if (snapshot.exists()) {
                     const datiColori = snapshot.val();
-                    // MODIFICA QUI: Punta al nodo 'coloriPerRischio' invece di 'rischi'
-                    riskColorsData = datiColori.coloriPerRischio || {};
+                    
+                    // MODIFICA QUI: Ora riskColorsData prende i dati dal nodo 'rischi'
+                    riskColorsData = datiColori.rischi || {}; 
 
-                    // MODIFICA QUI: Recupera il timestamp dal nodo 'coloriPerRischio'
-                    const timestamp = new Date(datiColori.coloriPerRischio.dataUltimoAggiornamento);
-                    const formattedDate = timestamp.toLocaleString();
-                    lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
+                    // MODIFICA QUI: Recupera il timestamp dal nodo 'dataCreazione' (direttamente sotto 'colori')
+                    const timestampString = datiColori.dataCreazione;
+                    if (timestampString) {
+                        const timestamp = new Date(timestampString);
+                        const formattedDate = timestamp.toLocaleString();
+                        lastUpdatedElement.textContent = `Aggiornato il: ${formattedDate}`;
+                    } else {
+                        lastUpdatedElement.textContent = 'Data di aggiornamento non disponibile.';
+                    }
 
                     // Popola il menu a discesa dei rischi
-                    const riskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataUltimoAggiornamento'); // Filtra il timestamp
+                    // Filtra solo le chiavi che non sono il timestamp
+                    const riskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione'); 
                     riskSelector.innerHTML = ''; // Pulisci le opzioni esistenti
 
                     if (riskTypes.length === 0) {
@@ -285,15 +292,37 @@
                         riskSelector.appendChild(option);
                         riskSelector.disabled = true; // Disabilita il selettore se non ci sono rischi
                     } else {
-                        riskTypes.forEach(riskKey => {
-                            const option = document.createElement('option');
-                            option.value = riskKey;
-                            option.textContent = riskDisplayName[riskKey] || riskKey; // Usa il nome visualizzato se disponibile
-                            riskSelector.appendChild(option);
+                        // Ordina i tipi di rischio per visualizzarli in un ordine consistente
+                        const orderedRiskTypes = ['Idrogeologico', 'IdrogeologicoTemporali', 'Idraulico', 'Incendio'];
+                        riskTypes.sort((a, b) => {
+                            const indexA = orderedRiskTypes.indexOf(a);
+                            const indexB = orderedRiskTypes.indexOf(b);
+                            if (indexA === -1 && indexB === -1) return 0; // Entrambi non nell'ordine predefinito
+                            if (indexA === -1) return 1; // a non nell'ordine, b lo è (a va dopo)
+                            if (indexB === -1) return -1; // b non nell'ordine, a lo è (b va dopo)
+                            return indexA - indexB;
                         });
+
+                        orderedRiskTypes.forEach(riskKey => {
+                            if (riskTypes.includes(riskKey)) { // Aggiungi solo se il rischio esiste in Firebase
+                                const option = document.createElement('option');
+                                option.value = riskKey;
+                                option.textContent = riskDisplayName[riskKey] || riskKey; // Usa il nome visualizzato se disponibile
+                                riskSelector.appendChild(option);
+                            }
+                        });
+                        
                         riskSelector.disabled = false;
-                        // Imposta la prima opzione come selezionata di default
-                        riskSelector.value = riskTypes[0];
+                        
+                        // Cerca il parametro 'risk' nell'URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const initialRisk = urlParams.get('risk');
+                        if (initialRisk && riskTypes.includes(initialRisk)) {
+                            riskSelector.value = initialRisk; // Seleziona il rischio dall'URL
+                        } else {
+                            // Se non c'è un parametro o è invalido, imposta la prima opzione come selezionata di default
+                            riskSelector.value = riskTypes[0]; 
+                        }
                     }
 
                     // Imposta la visualizzazione iniziale della mappa e della legenda
@@ -320,7 +349,7 @@
         function updateMapAndLegend() {
             const selectedRisk = riskSelector.value;
             // Assicurati che l'oggetto dei colori per il rischio selezionato esista
-            const currentRiskBaseColors = riskColorsData[selectedRisk] || {}; 
+            const currentRiskBaseColors = riskColorsData[selectedRisk] || {};
 
             // Rimuovi il layer GeoJSON esistente dalla mappa
             if (geoJsonLayer) {
@@ -445,6 +474,7 @@
                 return {
                     fillColor: fillColor,
                     weight: 1,
+                    opacity: 1,
                     color: '#333',
                     fillOpacity: 1 // Opacità piena per la cattura del PDF
                 };
@@ -512,8 +542,8 @@
 
                     // Ottieni le basi ordinate che hanno colori per il rischio corrente
                     const sortedBasesForLegend = Object.keys(configurazioneCriticità).filter(base => currentRiskBaseColors[base]).sort((a, b) => {
-                         const order = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'];
-                         return order.indexOf(a) - order.indexOf(b);
+                           const order = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'];
+                           return order.indexOf(a) - order.indexOf(b);
                     });
 
                     sortedBasesForLegend.forEach((base) => {
