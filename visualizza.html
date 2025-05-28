@@ -356,7 +356,7 @@
 
                 if (snapshot.exists()) {
                     const datiColori = snapshot.val();
-                    riskColorsData = datiColori.rischi || {};
+                    riskColorsData = datiColori.coloriPerRischio || {}; // Cambiato da 'rischi' a 'coloriPerRischio'
 
                     const timestampString = datiColori.dataCreazione;
                     if (timestampString) {
