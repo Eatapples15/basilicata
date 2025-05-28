@@ -20,26 +20,64 @@
             text-align: center;
         }
 
-        form {
+        #color-selection-container {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex-wrap: wrap; /* Allows sections to wrap on smaller screens */
+            gap: 20px;
+            justify-content: center;
             margin-bottom: 20px;
+            width: 100%;
+            max-width: 900px; /* Adjust as needed */
+        }
+
+        .risk-day-section {
+            flex: 1; /* Distribute space equally */
+            min-width: 350px; /* Minimum width for each section */
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             background-color: #fff;
-            width: 100%;
-            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
-        label {
+        .risk-day-section h3 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 15px;
+        }
+
+        .risk-type-group {
+            border: 1px dashed #eee;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #fcfcfc;
+        }
+
+        .risk-type-group label {
             font-weight: bold;
             color: #555;
+            margin-bottom: 5px;
+            display: block;
         }
 
-        select {
+        .base-color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .base-color-picker label {
+            flex-shrink: 0;
+            width: 30px;
+            font-weight: normal; /* Override group label bold */
+        }
+
+        .base-color-picker select {
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -56,6 +94,8 @@
             cursor: pointer;
             font-size: 1em;
             transition: background-color 0.3s ease;
+            width: 100%; /* Make button full width */
+            margin-top: 20px;
         }
 
         button:hover {
@@ -68,22 +108,6 @@
             cursor: pointer;
             color: green;
             text-align: center;
-        }
-
-        .base-color-picker {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            justify-content: space-between;
-        }
-
-        .base-color-picker label {
-            flex-shrink: 0;
-            width: 30px;
-        }
-
-        .base-color-picker select {
-            flex-grow: 1;
         }
 
         #logo-container {
@@ -132,6 +156,7 @@
             border-radius: 6px;
             transition: background-color 0.3s ease, transform 0.2s ease;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            width: auto; /* Override full width for navigation buttons */
         }
 
         .navigation-buttons button:hover {
@@ -147,87 +172,558 @@
         <img src="Logo regione.png" alt="Logo Regione Basilicata">
     </div>
 
-    <h2>Seleziona Colori Criticità</h2>
+    <h2>Seleziona Colori Criticità per Oggi e Domani</h2>
 
     <form id="color-form">
-        <div style="margin-bottom: 15px;">
-            <label for="risk-type-select">Seleziona Tipo di Rischio:</label>
-            <select id="risk-type-select" name="risk-type">
-                <option value="Idrogeologico">Idrogeologico</option>
-                <option value="IdrogeologicoTemporali">Idrogeologico (da Temporali)</option>
-                <option value="Idraulico">Idraulico</option>
-                <option value="Incendio">Incendio</option>
-            </select>
+        <div id="color-selection-container">
+            <div class="risk-day-section">
+                <h3>Colori per Oggi</h3>
+                <div id="today-colors">
+                    <div class="risk-type-group">
+                        <label>Rischio Idrogeologico:</label>
+                        <div class="base-color-picker">
+                            <label for="today-Idrogeologico-A1">A1:</label>
+                            <select id="today-Idrogeologico-A1" name="today-Idrogeologico-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idrogeologico-A2">A2:</label>
+                            <select id="today-Idrogeologico-A2" name="today-Idrogeologico-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idrogeologico-B">B:</label>
+                            <select id="today-Idrogeologico-B" name="today-Idrogeologico-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idrogeologico-C">C:</label>
+                            <select id="today-Idrogeologico-C" name="today-Idrogeologico-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idrogeologico-D">D:</label>
+                            <select id="today-Idrogeologico-D" name="today-Idrogeologico-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idrogeologico-E1">E1:</label>
+                            <select id="today-Idrogeologico-E1" name="today-Idrogeologico-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idrogeologico-E2">E2:</label>
+                            <select id="today-Idrogeologico-E2" name="today-Idrogeologico-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="risk-type-group">
+                        <label>Rischio Idrogeologico (da Temporali):</label>
+                        <div class="base-color-picker">
+                            <label for="today-IdrogeologicoTemporali-A1">A1:</label>
+                            <select id="today-IdrogeologicoTemporali-A1" name="today-IdrogeologicoTemporali-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-IdrogeologicoTemporali-A2">A2:</label>
+                            <select id="today-IdrogeologicoTemporali-A2" name="today-IdrogeologicoTemporali-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-IdrogeologicoTemporali-B">B:</label>
+                            <select id="today-IdrogeologicoTemporali-B" name="today-IdrogeologicoTemporali-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-IdrogeologicoTemporali-C">C:</label>
+                            <select id="today-IdrogeologicoTemporali-C" name="today-IdrogeologicoTemporali-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-IdrogeologicoTemporali-D">D:</label>
+                            <select id="today-IdrogeologicoTemporali-D" name="today-IdrogeologicoTemporali-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-IdrogeologicoTemporali-E1">E1:</label>
+                            <select id="today-IdrogeologicoTemporali-E1" name="today-IdrogeologicoTemporali-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-IdrogeologicoTemporali-E2">E2:</label>
+                            <select id="today-IdrogeologicoTemporali-E2" name="today-IdrogeologicoTemporali-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="risk-type-group">
+                        <label>Rischio Idraulico:</label>
+                        <div class="base-color-picker">
+                            <label for="today-Idraulico-A1">A1:</label>
+                            <select id="today-Idraulico-A1" name="today-Idraulico-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idraulico-A2">A2:</label>
+                            <select id="today-Idraulico-A2" name="today-Idraulico-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idraulico-B">B:</label>
+                            <select id="today-Idraulico-B" name="today-Idraulico-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idraulico-C">C:</label>
+                            <select id="today-Idraulico-C" name="today-Idraulico-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idraulico-D">D:</label>
+                            <select id="today-Idraulico-D" name="today-Idraulico-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idraulico-E1">E1:</label>
+                            <select id="today-Idraulico-E1" name="today-Idraulico-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Idraulico-E2">E2:</label>
+                            <select id="today-Idraulico-E2" name="today-Idraulico-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="risk-type-group">
+                        <label>Rischio Incendio:</label>
+                        <div class="base-color-picker">
+                            <label for="today-Incendio-A1">A1:</label>
+                            <select id="today-Incendio-A1" name="today-Incendio-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Incendio-A2">A2:</label>
+                            <select id="today-Incendio-A2" name="today-Incendio-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Incendio-B">B:</label>
+                            <select id="today-Incendio-B" name="today-Incendio-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Incendio-C">C:</label>
+                            <select id="today-Incendio-C" name="today-Incendio-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Incendio-D">D:</label>
+                            <select id="today-Incendio-D" name="today-Incendio-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Incendio-E1">E1:</label>
+                            <select id="today-Incendio-E1" name="today-Incendio-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="today-Incendio-E2">E2:</label>
+                            <select id="today-Incendio-E2" name="today-Incendio-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="risk-day-section">
+                <h3>Colori per Domani</h3>
+                <div id="tomorrow-colors">
+                    <div class="risk-type-group">
+                        <label>Rischio Idrogeologico:</label>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idrogeologico-A1">A1:</label>
+                            <select id="tomorrow-Idrogeologico-A1" name="tomorrow-Idrogeologico-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idrogeologico-A2">A2:</label>
+                            <select id="tomorrow-Idrogeologico-A2" name="tomorrow-Idrogeologico-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idrogeologico-B">B:</label>
+                            <select id="tomorrow-Idrogeologico-B" name="tomorrow-Idrogeologico-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idrogeologico-C">C:</label>
+                            <select id="tomorrow-Idrogeologico-C" name="tomorrow-Idrogeologico-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idrogeologico-D">D:</label>
+                            <select id="tomorrow-Idrogeologico-D" name="tomorrow-Idrogeologico-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idrogeologico-E1">E1:</label>
+                            <select id="tomorrow-Idrogeologico-E1" name="tomorrow-Idrogeologico-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idrogeologico-E2">E2:</label>
+                            <select id="tomorrow-Idrogeologico-E2" name="tomorrow-Idrogeologico-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="risk-type-group">
+                        <label>Rischio Idrogeologico (da Temporali):</label>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-IdrogeologicoTemporali-A1">A1:</label>
+                            <select id="tomorrow-IdrogeologicoTemporali-A1" name="tomorrow-IdrogeologicoTemporali-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-IdrogeologicoTemporali-A2">A2:</label>
+                            <select id="tomorrow-IdrogeologicoTemporali-A2" name="tomorrow-IdrogeologicoTemporali-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-IdrogeologicoTemporali-B">B:</label>
+                            <select id="tomorrow-IdrogeologicoTemporali-B" name="tomorrow-IdrogeologicoTemporali-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-IdrogeologicoTemporali-C">C:</label>
+                            <select id="tomorrow-IdrogeologicoTemporali-C" name="tomorrow-IdrogeologicoTemporali-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-IdrogeologicoTemporali-D">D:</label>
+                            <select id="tomorrow-IdrogeologicoTemporali-D" name="tomorrow-IdrogeologicoTemporali-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-IdrogeologicoTemporali-E1">E1:</label>
+                            <select id="tomorrow-IdrogeologicoTemporali-E1" name="tomorrow-IdrogeologicoTemporali-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-IdrogeologicoTemporali-E2">E2:</label>
+                            <select id="tomorrow-IdrogeologicoTemporali-E2" name="tomorrow-IdrogeologicoTemporali-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="risk-type-group">
+                        <label>Rischio Idraulico:</label>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idraulico-A1">A1:</label>
+                            <select id="tomorrow-Idraulico-A1" name="tomorrow-Idraulico-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idraulico-A2">A2:</label>
+                            <select id="tomorrow-Idraulico-A2" name="tomorrow-Idraulico-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idraulico-B">B:</label>
+                            <select id="tomorrow-Idraulico-B" name="tomorrow-Idraulico-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idraulico-C">C:</label>
+                            <select id="tomorrow-Idraulico-C" name="tomorrow-Idraulico-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idraulico-D">D:</label>
+                            <select id="tomorrow-Idraulico-D" name="tomorrow-Idraulico-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idraulico-E1">E1:</label>
+                            <select id="tomorrow-Idraulico-E1" name="tomorrow-Idraulico-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Idraulico-E2">E2:</label>
+                            <select id="tomorrow-Idraulico-E2" name="tomorrow-Idraulico-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="risk-type-group">
+                        <label>Rischio Incendio:</label>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Incendio-A1">A1:</label>
+                            <select id="tomorrow-Incendio-A1" name="tomorrow-Incendio-A1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Incendio-A2">A2:</label>
+                            <select id="tomorrow-Incendio-A2" name="tomorrow-Incendio-A2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Incendio-B">B:</label>
+                            <select id="tomorrow-Incendio-B" name="tomorrow-Incendio-B" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Incendio-C">C:</label>
+                            <select id="tomorrow-Incendio-C" name="tomorrow-Incendio-C" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Incendio-D">D:</label>
+                            <select id="tomorrow-Incendio-D" name="tomorrow-Incendio-D" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Incendio-E1">E1:</label>
+                            <select id="tomorrow-Incendio-E1" name="tomorrow-Incendio-E1" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                        <div class="base-color-picker">
+                            <label for="tomorrow-Incendio-E2">E2:</label>
+                            <select id="tomorrow-Incendio-E2" name="tomorrow-Incendio-E2" class="color-select">
+                                <option value="green">Verde</option>
+                                <option value="yellow">Giallo</option>
+                                <option value="orange">Arancione</option>
+                                <option value="red">Rosso</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div id="base-color-pickers">
-            <label>Colori per Base:</label>
-            <div class="base-color-picker">
-                <label for="color-A1">A1:</label>
-                <select id="color-A1" name="color-A1">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-A2">A2:</label>
-                <select id="color-A2" name="color-A2">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-B">B:</label>
-                <select id="color-B" name="color-B">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-C">C:</label>
-                <select id="color-C" name="color-C">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-D">D:</label>
-                <select id="color-D" name="color-D">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-E1">E1:</label>
-                <select id="color-E1" name="color-E1">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-            <div class="base-color-picker">
-                <label for="color-E2">E2:</label>
-                <select id="color-E2" name="color-E2">
-                    <option value="green">Verde</option>
-                    <option value="yellow">Giallo</option>
-                    <option value="orange">Arancione</option>
-                    <option value="red">Rosso</option>
-                </select>
-            </div>
-        </div>
-
-        <button type="submit">Salva Colori</button>
+        <button type="submit">Salva Tutti i Colori</button>
     </form>
 
     <div id="message"></div>
@@ -238,10 +734,14 @@
         <h3>Navigazione rapida (per test)</h3>
         <p>Questa sezione è temporanea e serve per facilitare la navigazione tra le diverse visualizzazioni della piattaforma durante la fase di test.</p>
         <div class="navigation-buttons">
-            <a href="visualizza.html?risk=Idrogeologico"><button>Visualizza Regione - Idrogeologico</button></a>
-            <a href="visualizza.html?risk=IdrogeologicoTemporali"><button>Visualizza Regione - Temporali</button></a>
-            <a href="visualizza.html?risk=Idraulico"><button>Visualizza Regione - Idraulico</button></a>
-            <a href="visualizza.html?risk=Incendio"><button>Visualizza Regione - Incendio</button></a>
+            <a href="visualizza.html?day=oggi&risk=Idrogeologico"><button>Visualizza Oggi - Idrogeologico</button></a>
+            <a href="visualizza.html?day=oggi&risk=IdrogeologicoTemporali"><button>Visualizza Oggi - Temporali</button></a>
+            <a href="visualizza.html?day=oggi&risk=Idraulico"><button>Visualizza Oggi - Idraulico</button></a>
+            <a href="visualizza.html?day=oggi&risk=Incendio"><button>Visualizza Oggi - Incendio</button></a>
+            <a href="visualizza.html?day=domani&risk=Idrogeologico"><button>Visualizza Domani - Idrogeologico</button></a>
+            <a href="visualizza.html?day=domani&risk=IdrogeologicoTemporali"><button>Visualizza Domani - Temporali</button></a>
+            <a href="visualizza.html?day=domani&risk=Idraulico"><button>Visualizza Domani - Idraulico</button></a>
+            <a href="visualizza.html?day=domani&risk=Incendio"><button>Visualizza Domani - Incendio</button></a>
             <a href="consultazione_cittadino.html"><button>Ricerca Comune</button></a>
             <a href="consultazione_operatori.html"><button>AREA RISERVATA ENTI</button></a>
             <a href="https://simonpc.regione.basilicata.it/home"><button>SIMONPC</button></a>
@@ -257,7 +757,6 @@
             projectId: "bollettinoregionale",
             databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
             storageBucket: "bollettinoregionale.appspot.com",
-            messagingSenderId: "765538370497",
             appId: "1:765538370497:web:9c4f569754c0df01cc2540",
         };
 
@@ -266,44 +765,49 @@
 
         const colorForm = document.getElementById('color-form');
         const messageDiv = document.getElementById('message');
-        const baseColorPickers = document.querySelectorAll('.base-color-picker');
-        const riskTypeSelect = document.getElementById('risk-type-select');
-        const titleElement = document.querySelector('h2'); // Per aggiornare il titolo
 
-        // Funzione per caricare i colori del rischio selezionato
-        function loadColorsForSelectedRisk() {
-            const selectedRisk = riskTypeSelect.value;
-            titleElement.textContent = `Seleziona Colori Criticità per Rischio: ${selectedRisk}`;
+        const riskTypes = ["Idrogeologico", "IdrogeologicoTemporali", "Idraulico", "Incendio"];
+        const bases = ["A1", "A2", "B", "C", "D", "E1", "E2"];
 
-            // Ora cerchiamo i colori sotto `colori/rischi/`
-            database.ref(`colori/rischi/${selectedRisk}`).once('value')
+        // Function to load all colors for Today and Tomorrow
+        function loadAllColors() {
+            messageDiv.textContent = 'Caricamento colori in corso...';
+            messageDiv.style.color = 'gray';
+
+            database.ref('colori').once('value')
                 .then(snapshot => {
-                    const coloriBase = snapshot.val();
-                    if (coloriBase) {
-                        baseColorPickers.forEach(picker => {
-                            const base = picker.querySelector('label').textContent.slice(0, -1);
-                            const selectElement = picker.querySelector('select');
-                            if (coloriBase[base]) {
-                                selectElement.value = coloriBase[base];
-                            } else {
-                                // Reset a un valore di default se non trovato
-                                selectElement.value = 'green';
+                    const allColors = snapshot.val() || {}; // Get all data under 'colori'
+                    const todayColors = allColors.oggi || {};
+                    const tomorrowColors = allColors.domani || {};
+
+                    // Populate Today's colors
+                    riskTypes.forEach(riskType => {
+                        bases.forEach(base => {
+                            const selectId = `today-${riskType}-${base}`;
+                            const selectElement = document.getElementById(selectId);
+                            if (selectElement) {
+                                const savedColor = todayColors[riskType] ? todayColors[riskType][base] : null;
+                                selectElement.value = savedColor || 'green'; // Default to green if not found
                             }
                         });
-                        messageDiv.textContent = `Colori per ${selectedRisk} caricati.`;
-                        messageDiv.style.color = 'gray'; // Messaggio informativo
-                        messageDiv.onclick = null;
-                        messageDiv.style.cursor = 'default';
-                    } else {
-                        // Se non ci sono colori salvati per questo rischio, resetta i selettori
-                        baseColorPickers.forEach(picker => {
-                            picker.querySelector('select').value = 'green'; // Default a verde
+                    });
+
+                    // Populate Tomorrow's colors
+                    riskTypes.forEach(riskType => {
+                        bases.forEach(base => {
+                            const selectId = `tomorrow-${riskType}-${base}`;
+                            const selectElement = document.getElementById(selectId);
+                            if (selectElement) {
+                                const savedColor = tomorrowColors[riskType] ? tomorrowColors[riskType][base] : null;
+                                selectElement.value = savedColor || 'green'; // Default to green if not found
+                            }
                         });
-                        messageDiv.textContent = `Nessun colore salvato per ${selectedRisk}. Imposta i colori predefiniti.`;
-                        messageDiv.style.color = 'orange';
-                        messageDiv.onclick = null;
-                        messageDiv.style.cursor = 'default';
-                    }
+                    });
+
+                    messageDiv.textContent = 'Colori caricati con successo.';
+                    messageDiv.style.color = 'green';
+                    messageDiv.onclick = null;
+                    messageDiv.style.cursor = 'default';
                 })
                 .catch(error => {
                     console.error("Errore nel caricamento dei colori:", error);
@@ -314,44 +818,61 @@
                 });
         }
 
-        // Carica i colori all'avvio della pagina (per il rischio predefinito)
-        window.addEventListener('load', loadColorsForSelectedRisk);
-
-        // Aggiungi un listener per il cambio del tipo di rischio
-        riskTypeSelect.addEventListener('change', loadColorsForSelectedRisk);
+        // Load colors when the page loads
+        window.addEventListener('load', loadAllColors);
 
         colorForm.addEventListener('submit', function (e) {
             e.preventDefault();
 
-            const selectedRisk = riskTypeSelect.value;
-            const coloriBase = {};
-            baseColorPickers.forEach(picker => {
-                const base = picker.querySelector('label').textContent.slice(0, -1);
-                const color = picker.querySelector('select').value;
-                coloriBase[base] = color;
+            const updateData = {};
+            const todayData = {};
+            const tomorrowData = {};
+
+            // Collect Today's colors
+            riskTypes.forEach(riskType => {
+                const colorsForRisk = {};
+                bases.forEach(base => {
+                    const selectId = `today-${riskType}-${base}`;
+                    const selectElement = document.getElementById(selectId);
+                    if (selectElement) {
+                        colorsForRisk[base] = selectElement.value;
+                    }
+                });
+                todayData[riskType] = colorsForRisk;
             });
 
-            // Oggetto da salvare sotto il nodo `/colori/`
-            const updateData = {};
-            // Salva i colori per il rischio selezionato sotto `colori/rischi/<tipoRischio>`
-            updateData[`rischi/${selectedRisk}`] = coloriBase;
-            // Salva il timestamp di creazione/aggiornamento sotto `colori/dataCreazione`
-            updateData['dataCreazione'] = new Date().toISOString();
+            // Collect Tomorrow's colors
+            riskTypes.forEach(riskType => {
+                const colorsForRisk = {};
+                bases.forEach(base => {
+                    const selectId = `tomorrow-${riskType}-${base}`;
+                    const selectElement = document.getElementById(selectId);
+                    if (selectElement) {
+                        colorsForRisk[base] = selectElement.value;
+                    }
+                });
+                tomorrowData[riskType] = colorsForRisk;
+            });
 
-            // Effettua l'aggiornamento a livello del nodo `/colori/`
-            database.ref('colori').update(updateData)
+            // Prepare the update object
+            updateData['oggi'] = todayData;
+            updateData['domani'] = tomorrowData;
+            updateData['dataUltimoAggiornamento'] = new Date().toISOString(); // Renamed for clarity
+
+            // Perform the update at the root of 'colori'
+            database.ref('colori').set(updateData) // Use .set() to completely replace or create
                 .then(() => {
-                    messageDiv.textContent = `Colori per ${selectedRisk} salvati con successo! Clicca per visualizzare la mappa.`;
+                    messageDiv.textContent = `Colori per Oggi e Domani salvati con successo!`;
                     messageDiv.style.cursor = 'pointer';
                     messageDiv.style.color = 'green';
                     messageDiv.onclick = function () {
-                        // Reindirizza alla pagina di visualizzazione con il rischio selezionato
-                        window.location.href = `visualizza.html?risk=${selectedRisk}`;
+                        // Example: Redirect to a default view, or offer options
+                        alert("Colori salvati. Potresti voler visualizzare una delle mappe di test dalla sezione 'Navigazione rapida'.");
                     };
                 })
                 .catch(error => {
                     console.error("Errore nel salvataggio dei colori:", error);
-                    messageDiv.textContent = `Errore nel salvataggio dei colori per ${selectedRisk}.`;
+                    messageDiv.textContent = `Errore nel salvataggio dei colori. Riprova.`;
                     messageDiv.style.cursor = 'default';
                     messageDiv.style.color = 'red';
                     messageDiv.onclick = null;
