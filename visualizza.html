@@ -140,14 +140,23 @@
 
     <div id="info-container">
         <div class="form-group">
+            <label for="day-selector">Seleziona Giorno:</label>
+            <select id="day-selector">
+                <option value="oggi">Oggi</option>
+                <option value="domani">Domani</option>
+                <option value="riassunto">Riassunto</option>
+            </select>
+        </div>
+
+        <div class="form-group">
             <label for="risk-selector">Seleziona Rischio:</label>
             <select id="risk-selector">
-                </select>
+            </select>
         </div>
 
         <div id="current-risk-legend">
             <h4>Legenda Rischio Corrente:</h4>
-            </div>
+        </div>
 
         <h3>Ultimo Aggiornamento</h3>
         <p id="last-updated"></p>
@@ -188,10 +197,11 @@
         const lastUpdatedElement = document.getElementById('last-updated');
         const savePdfButton = document.getElementById('save-pdf-button');
         const riskSelector = document.getElementById('risk-selector');
+        const daySelector = document.getElementById('day-selector'); // Nuovo selettore per il giorno
         const currentRiskLegend = document.getElementById('current-risk-legend');
 
         let criticitàMap = {}; // Mappa: nome comune normalizzato -> sua 'Base' (es. "potenza" -> "B")
-        let riskColorsData = {}; // Memorizza i colori per ogni base, per tipo di rischio (es. {'IdrogeologicoTemporali': {'A1': 'red', ...}})
+        let riskColorsData = {}; // Memorizza i colori per ogni base, per tipo di rischio e per giorno (es. {'IdrogeologicoTemporali': {'oggi': {'A1': 'red'}, 'domani': {'A1': 'yellow'}}})
         let geoJsonLayer = null; // Memorizza il layer Leaflet GeoJSON
         let loadedGeojsonData = null; // Cache per i dati GeoJSON
 
@@ -222,6 +232,20 @@
             }
         }
 
+        // Funzione per confrontare i colori e determinare il "peggiore"
+        function getWorseColor(color1, color2) {
+            const riskOrder = { 'green': 0, 'yellow': 1, 'orange': 2, 'red': 3 };
+            const r1 = riskOrder[color1.toLowerCase()] !== undefined ? riskOrder[color1.toLowerCase()] : -1;
+            const r2 = riskOrder[color2.toLowerCase()] !== undefined ? riskOrder[color2.toLowerCase()] : -1;
+
+            if (r1 === -1 && r2 === -1) return 'green'; // Se entrambi non mappati, considera verde (nessun rischio)
+            if (r1 === -1) return color2; // Se color1 non mappato, color2 è il peggiore
+            if (r2 === -1) return color1; // Se color2 non mappato, color1 è il peggiore
+
+            return r1 > r2 ? color1 : color2;
+        }
+
+
         // Configurazione delle basi di criticità e dei loro comuni (identica a prima)
         const configurazioneCriticità = {
             'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
@@ -247,7 +271,7 @@
             return criticitàMap[comuneNome];
         }
 
-        // Funzione principale per inizializzare la mappa: recupera i dati, popola il selettore e mostra la mappa
+        // Funzione principale per inizializzare la mappa: recupera i dati, popola i selettori e mostra la mappa
         async function initializeMap() {
             try {
                 // Carica il file GeoJSON una sola volta
@@ -266,11 +290,11 @@
 
                 if (snapshot.exists()) {
                     const datiColori = snapshot.val();
-                    
-                    // MODIFICA QUI: Ora riskColorsData prende i dati dal nodo 'rischi'
-                    riskColorsData = datiColori.rischi || {}; 
 
-                    // MODIFICA QUI: Recupera il timestamp dal nodo 'dataCreazione' (direttamente sotto 'colori')
+                    // Ora riskColorsData prende i dati dal nodo 'rischi'
+                    riskColorsData = datiColori.rischi || {};
+
+                    // Recupera il timestamp dal nodo 'dataCreazione' (direttamente sotto 'colori')
                     const timestampString = datiColori.dataCreazione;
                     if (timestampString) {
                         const timestamp = new Date(timestampString);
@@ -281,8 +305,7 @@
                     }
 
                     // Popola il menu a discesa dei rischi
-                    // Filtra solo le chiavi che non sono il timestamp
-                    const riskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione'); 
+                    const riskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
                     riskSelector.innerHTML = ''; // Pulisci le opzioni esistenti
 
                     if (riskTypes.length === 0) {
@@ -311,9 +334,9 @@
                                 riskSelector.appendChild(option);
                             }
                         });
-                        
+
                         riskSelector.disabled = false;
-                        
+
                         // Cerca il parametro 'risk' nell'URL
                         const urlParams = new URLSearchParams(window.location.search);
                         const initialRisk = urlParams.get('risk');
@@ -321,15 +344,16 @@
                             riskSelector.value = initialRisk; // Seleziona il rischio dall'URL
                         } else {
                             // Se non c'è un parametro o è invalido, imposta la prima opzione come selezionata di default
-                            riskSelector.value = riskTypes[0]; 
+                            riskSelector.value = riskTypes[0];
                         }
                     }
 
                     // Imposta la visualizzazione iniziale della mappa e della legenda
                     updateMapAndLegend();
 
-                    // Aggiungi il listener per il cambio di selezione nel menu
+                    // Aggiungi i listener per il cambio di selezione nei menu
                     riskSelector.addEventListener('change', updateMapAndLegend);
+                    daySelector.addEventListener('change', updateMapAndLegend);
 
                 } else {
                     lastUpdatedElement.textContent = 'Nessun dato colore disponibile su Firebase.';
@@ -345,11 +369,50 @@
             }
         }
 
-        // Funzione per aggiornare la mappa e la legenda in base al rischio selezionato
-        function updateMapAndLegend() {
+        // Funzione per ottenere i colori per il giorno e il rischio selezionati
+        function getColorsForCurrentSelection() {
             const selectedRisk = riskSelector.value;
-            // Assicurati che l'oggetto dei colori per il rischio selezionato esista
-            const currentRiskBaseColors = riskColorsData[selectedRisk] || {};
+            const selectedDay = daySelector.value;
+
+            if (selectedDay === 'riassunto') {
+                const summaryColors = {};
+                const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
+
+                // Itera su tutte le basi
+                for (const base in configurazioneCriticità) {
+                    let worstColorForBase = 'green'; // Partiamo dal verde (nessun rischio)
+
+                    // Per ogni base, considera tutti i rischi per oggi e domani
+                    allRiskTypes.forEach(riskType => {
+                        const colorsForRiskToday = riskColorsData[riskType] ? (riskColorsData[riskType]['oggi'] || {}) : {};
+                        const colorsForRiskTomorrow = riskColorsData[riskType] ? (riskColorsData[riskType]['domani'] || {}) : {};
+
+                        const colorToday = colorsForRiskToday[base] || 'green';
+                        const colorTomorrow = colorsForRiskTomorrow[base] || 'green';
+
+                        // Confronta i colori di oggi e domani per il rischio corrente
+                        const worseOfDay = getWorseColor(colorToday, colorTomorrow);
+                        // Confronta il peggiore dei due giorni con il peggiore trovato finora per questa base
+                        worstColorForBase = getWorseColor(worstColorForBase, worseOfDay);
+                    });
+                    summaryColors[base] = worstColorForBase;
+                }
+                return summaryColors;
+            } else {
+                return riskColorsData[selectedRisk] ? (riskColorsData[selectedRisk][selectedDay] || {}) : {};
+            }
+        }
+
+
+        // Funzione per aggiornare la mappa e la legenda in base al rischio e al giorno selezionati
+        function updateMapAndLegend() {
+            const selectedDay = daySelector.value;
+            const selectedRisk = riskSelector.value;
+
+            // Abilita/disabilita il selettore rischio in base al giorno selezionato
+            riskSelector.disabled = (selectedDay === 'riassunto');
+
+            const currentColors = getColorsForCurrentSelection();
 
             // Rimuovi il layer GeoJSON esistente dalla mappa
             if (geoJsonLayer) {
@@ -359,25 +422,26 @@
             // Aggiungi un nuovo layer GeoJSON con gli stili aggiornati
             geoJsonLayer = L.geoJSON(loadedGeojsonData, {
                 style: function (feature) {
-                    return styleComune(feature, currentRiskBaseColors);
+                    return styleComune(feature, currentColors);
                 },
                 onEachFeature: onEachFeature
             }).addTo(leafletMap);
 
-            updateLegend(currentRiskBaseColors); // Aggiorna la legenda
+            updateLegend(currentColors); // Aggiorna la legenda
         }
 
+
         // Funzione per determinare lo stile del comune (colore e opacità)
-        function styleComune(feature, currentRiskBaseColors) {
+        function styleComune(feature, currentColors) {
             const normalizedComuneNome = feature.properties.normalizedName;
             const base = getBaseForComune(normalizedComuneNome); // Ottieni la base geografica (A1, B, ecc.)
 
             let fillColor = '#ccc'; // Colore di default per comuni non mappati o senza colore per il rischio selezionato
             const fillOpacity = 0.7;
 
-            // Se la base esiste e c'è un colore definito per quel rischio
-            if (base && currentRiskBaseColors[base]) {
-                fillColor = getHexColor(currentRiskBaseColors[base]);
+            // Se la base esiste e c'è un colore definito per quella base nella selezione corrente
+            if (base && currentColors[base]) {
+                fillColor = getHexColor(currentColors[base]);
             }
 
             return {
@@ -394,21 +458,41 @@
             if (feature.properties && feature.properties.name) {
                 const normalizedComuneNome = feature.properties.normalizedName;
                 const base = getBaseForComune(normalizedComuneNome) || 'Non assegnata';
+                const selectedDay = daySelector.value;
                 const selectedRisk = riskSelector.value;
-                // Assicurati di accedere correttamente al colore per la base
-                const riskColorName = riskColorsData[selectedRisk] ? (riskColorsData[selectedRisk][base] || 'N/A') : 'N/A';
-                const riskDisplayNameText = riskDisplayName[selectedRisk] || selectedRisk;
 
-                layer.bindPopup(`
-                    <b>Comune: ${feature.properties.name}</b><br>
-                    Base di Appartenenza: ${base}<br>
-                    Rischio "${riskDisplayNameText}": ${riskColorName.charAt(0).toUpperCase() + riskColorName.slice(1)}
-                `);
+                let popupContent = `<b>Comune: ${feature.properties.name}</b><br>Base di Appartenenza: ${base}<br>`;
+
+                if (selectedDay === 'riassunto') {
+                    const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
+                    popupContent += `Criticità (Oggi/Domani):<br>`;
+                    allRiskTypes.forEach(riskType => {
+                        const colorToday = riskColorsData[riskType] && riskColorsData[riskType]['oggi'] ? (riskColorsData[riskType]['oggi'][base] || 'green') : 'green';
+                        const colorTomorrow = riskColorsData[riskType] && riskColorsData[riskType]['domani'] ? (riskColorsData[riskType]['domani'][base] || 'green') : 'green';
+
+                        // Mostra solo i rischi che non sono verdi (quindi che hanno una criticità)
+                        if (colorToday.toLowerCase() !== 'green' || colorTomorrow.toLowerCase() !== 'green') {
+                            popupContent += `- ${riskDisplayName[riskType] || riskType}: Oggi <span style="color:${getHexColor(colorToday)}">${colorToday.charAt(0).toUpperCase() + colorToday.slice(1)}</span>, Domani <span style="color:${getHexColor(colorTomorrow)}">${colorTomorrow.charAt(0).toUpperCase() + colorTomorrow.slice(1)}</span><br>`;
+                        }
+                    });
+                     // Se non ci sono criticità da mostrare
+                    if (popupContent.endsWith('Criticità (Oggi/Domani):<br>')) {
+                        popupContent += `Nessuna criticità rilevante per Oggi/Domani.`;
+                    }
+
+                } else {
+                    const currentColors = getColorsForCurrentSelection();
+                    const riskColorName = currentColors[base] || 'N/A';
+                    const riskDisplayNameText = riskDisplayName[selectedRisk] || selectedRisk;
+                    popupContent += `Rischio "${riskDisplayNameText}": ${riskColorName.charAt(0).toUpperCase() + riskColorName.slice(1)}`;
+                }
+                layer.bindPopup(popupContent);
             }
         }
 
+
         // Funzione per aggiornare la legenda dinamica
-        function updateLegend(colorsForSelectedRisk) {
+        function updateLegend(colorsForSelectedView) {
             currentRiskLegend.innerHTML = '<h4>Legenda Rischio Corrente:</h4>';
 
             // Ordina le basi per un ordine consistente nella legenda
@@ -418,10 +502,10 @@
                 return order.indexOf(a) - order.indexOf(b);
             });
 
-            // Aggiungi gli elementi della legenda per le basi che hanno un colore per il rischio selezionato
+            // Aggiungi gli elementi della legenda per le basi che hanno un colore per la vista selezionata
             sortedBases.forEach(base => {
-                const colorName = colorsForSelectedRisk[base];
-                if (colorName) { // Mostra solo le basi che hanno un colore definito per il rischio corrente
+                const colorName = colorsForSelectedView[base];
+                if (colorName) { // Mostra solo le bases che hanno un colore definito
                     const hexColor = getHexColor(colorName);
 
                     const legendItem = document.createElement('div');
@@ -457,9 +541,10 @@
         savePdfButton.addEventListener('click', function () {
             console.log("Inizio generazione PDF...");
 
+            const selectedDay = daySelector.value;
             const selectedRisk = riskSelector.value;
-            const currentRiskBaseColors = riskColorsData[selectedRisk] || {};
             const pdfSelectedRiskDisplayName = riskDisplayName[selectedRisk] || selectedRisk;
+            const currentColors = getColorsForCurrentSelection();
 
             // Definisci gli stili specifici per il PDF (opacità piena)
             const pdfStyleComune = (feature) => {
@@ -467,8 +552,8 @@
                 const base = getBaseForComune(normalizedComuneNome);
                 let fillColor = '#ccc'; // Default per il PDF
 
-                if (base && currentRiskBaseColors[base]) {
-                    fillColor = getHexColor(currentRiskBaseColors[base]);
+                if (base && currentColors[base]) {
+                    fillColor = getHexColor(currentColors[base]);
                 }
 
                 return {
@@ -509,8 +594,12 @@
                     let currentY = 10; // Posizione Y iniziale per gli elementi
 
                     // Aggiungi Titolo
+                    let titleText = `Bollettino Criticità - Giorno: ${daySelector.options[daySelector.selectedIndex].text}`;
+                    if (selectedDay !== 'riassunto') {
+                        titleText += ` - Rischio: ${pdfSelectedRiskDisplayName}`;
+                    }
                     pdf.setFontSize(20);
-                    pdf.text(`Bollettino Criticità - Rischio: ${pdfSelectedRiskDisplayName}`, 10, currentY);
+                    pdf.text(titleText, 10, currentY);
                     currentY += 15;
 
                     // Aggiungi l'immagine della mappa
@@ -540,14 +629,14 @@
                     pdf.text('Legenda:', legendStartX, legendY);
                     legendY += 5;
 
-                    // Ottieni le basi ordinate che hanno colori per il rischio corrente
-                    const sortedBasesForLegend = Object.keys(configurazioneCriticità).filter(base => currentRiskBaseColors[base]).sort((a, b) => {
-                           const order = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'];
-                           return order.indexOf(a) - order.indexOf(b);
+                    // Ottieni le basi ordinate che hanno colori per la vista corrente
+                    const sortedBasesForLegend = Object.keys(configurazioneCriticità).filter(base => currentColors[base]).sort((a, b) => {
+                        const order = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'];
+                        return order.indexOf(a) - order.indexOf(b);
                     });
 
                     sortedBasesForLegend.forEach((base) => {
-                        const colorName = currentRiskBaseColors[base];
+                        const colorName = currentColors[base];
                         const hexColor = getHexColor(colorName);
                         pdf.setFillColor(hexColor);
                         pdf.rect(legendStartX, legendY + 2, 5, 5, 'F'); // Quadro colore
@@ -555,21 +644,21 @@
                         pdf.text(`Base ${base}: ${colorName.charAt(0).toUpperCase() + colorName.slice(1)}`, legendStartX + 8, legendY + 6);
                         legendY += 8;
                     });
-                     // Aggiungi una voce di default per le aree non colorate
+                    // Aggiungi una voce di default per le aree non colorate
                     pdf.setFillColor('#ccc');
                     pdf.rect(legendStartX, legendY + 2, 5, 5, 'F');
                     pdf.setFontSize(10);
                     pdf.text('Base Non Mappata / Nessun Rischio', legendStartX + 8, legendY + 6);
 
 
-                    pdf.save(`bollettino_criticità_${pdfSelectedRiskDisplayName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+                    pdf.save(`bollettino_criticità_${selectedDay}_${selectedDay !== 'riassunto' ? pdfSelectedRiskDisplayName.replace(/\s+/g, '_') + '_' : ''}${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
 
                     console.log("PDF generato e salvato.");
 
                     // Ripristina gli stili originali della mappa (per la visualizzazione a schermo)
                     if (geoJsonLayer) {
                         geoJsonLayer.setStyle(function (feature) {
-                            return styleComune(feature, currentRiskBaseColors);
+                            return styleComune(feature, currentColors);
                         });
                     }
                 });
