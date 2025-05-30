@@ -11,8 +11,8 @@
         body {
             font-family: sans-serif;
             display: flex;
-            flex-direction: column; /* Cambiato a colonna per disporre mappa e riassunto */
-            align-items: center; /* Centra gli elementi */
+            flex-direction: column;
+            align-items: center;
             gap: 20px;
             padding: 20px;
             background-color: #f4f7f6;
@@ -23,7 +23,7 @@
             flex-wrap: wrap;
             gap: 20px;
             width: 100%;
-            max-width: 1200px; /* Limita la larghezza massima per una migliore leggibilità */
+            max-width: 1200px;
             justify-content: center;
         }
 
@@ -33,11 +33,11 @@
             height: 500px;
             border: 1px solid #ddd;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Ombra più pronunciata per la mappa */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             background-color: white;
         }
 
-        #info-sidebar { /* Rinominato per chiarezza, prima era info-container */
+        #info-sidebar {
             flex: 1;
             min-width: 200px;
             display: flex;
@@ -50,7 +50,7 @@
             background-color: #f9f9f9;
         }
 
-        #summary-box { /* Nuovo box per il riassunto sotto la mappa */
+        #summary-box {
             width: 100%;
             max-width: 1200px;
             padding: 20px;
@@ -73,8 +73,8 @@
             border-bottom: 1px dashed #eee;
             display: flex;
             flex-wrap: wrap;
-            align-items: flex-start; /* Allinea in alto gli elementi */
-            gap: 15px; /* Spazio tra gli elementi interni */
+            align-items: flex-start;
+            gap: 15px;
         }
 
         .base-summary:last-child {
@@ -85,7 +85,7 @@
             font-weight: bold;
             font-size: 1.1em;
             color: #555;
-            flex-basis: 100px; /* Larghezza fissa per l'etichetta della base */
+            flex-basis: 100px;
             flex-shrink: 0;
         }
 
@@ -168,7 +168,7 @@
             font-size: 16px;
             margin-top: 20px;
             transition: background-color 0.3s ease;
-            width: 100%; /* Bottone a tutta larghezza */
+            width: 100%;
         }
 
         #save-pdf-button:hover {
@@ -244,7 +244,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
-        // La configurazione di Firebase è identica a `index.html`
         const firebaseConfig = {
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
             authDomain: "bollettinoregionale.firebaseapp.com",
@@ -253,10 +252,8 @@
             storageBucket: "bollettinoregionale.appspot.com",
             messagingSenderId: "765538370497",
             appId: "1:765538370497:web:9c4f569754c0df01cc2540",
-            // measurementId: "G-0BCQ0VRNXF" // measurementId è opzionale
         };
 
-        // Inizializza Firebase
         const app = firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
@@ -268,14 +265,13 @@
         const lastUpdatedElement = document.getElementById('last-updated');
         const savePdfButton = document.getElementById('save-pdf-button');
         const currentRiskLegend = document.getElementById('current-risk-legend');
-        const detailedSummaryContent = document.getElementById('detailed-summary-content'); // Nuovo elemento per il riassunto dettagliato
+        const detailedSummaryContent = document.getElementById('detailed-summary-content');
 
-        let criticitàMap = {}; // Mappa: nome comune normalizzato -> sua 'Base' (es. "potenza" -> "B")
-        let riskColorsData = {}; // Memorizza i colori per ogni base, per tipo di rischio e per giorno
-        let geoJsonLayer = null; // Memorizza il layer Leaflet GeoJSON
-        let loadedGeojsonData = null; // Cache per i dati GeoJSON
+        let criticitàMap = {};
+        let riskColorsData = {};
+        let geoJsonLayer = null;
+        let loadedGeojsonData = null;
 
-        // Mappa i nomi delle chiavi dei rischi ai nomi da visualizzare.
         const riskDisplayName = {
             'IdrogeologicoTemporali': 'Idrogeologico (Temporali)',
             'Idrogeologico': 'Idrogeologico',
@@ -283,24 +279,21 @@
             'Incendio': 'Incendio'
         };
 
-        // Normalizzazione dei nomi dei comuni
         function normalizeComuneName(nome) {
             if (!nome) return "";
             return nome.toLowerCase().trim().replace(/\s+/g, ' ').normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
-        // Funzione per ottenere il codice esadecimale da un nome di colore
         function getHexColor(colorName) {
             switch (colorName.toLowerCase()) {
                 case 'green': return '#008000';
                 case 'yellow': return '#FFFF00';
                 case 'orange': return '#FFA500';
                 case 'red': return '#FF0000';
-                default: return '#ccc'; // Grigio di default
+                default: return '#ccc';
             }
         }
 
-        // Funzione per confrontare i colori e determinare il "peggiore" (più critico)
         function getWorseColor(color1, color2) {
             const riskOrder = { 'green': 0, 'yellow': 1, 'orange': 2, 'red': 3 };
             const r1 = riskOrder[color1.toLowerCase()] !== undefined ? riskOrder[color1.toLowerCase()] : -1;
@@ -313,7 +306,6 @@
             return r1 > r2 ? color1 : color2;
         }
 
-        // Configurazione delle basi di criticità e dei loro comuni
         const configurazioneCriticità = {
             'A1': ["Montemilone", "Atella", "Palazzo San Gervasio", "Pescopagano", "Rapolla", "Rapone", "Rionero in Vulture", "Ripacandida", "Ruvo del Monte", "San Fele", "Filiano", "Forenza", "Lavello", "Barile", "Maschito", "Melfi", "Venosa", "Ginestra"],
             'A2': ["Muro Lucano", "Balvano", "Baragiano", "Bella", "Brienza", "Castelgrande", "Picerno", "Ruoti", "Sant'Angelo Le Fratte", "Sasso di Castalda", "Satriano di Lucania", "Savoia di Lucania", "Tito", "Vietri di Potenza"],
@@ -324,7 +316,6 @@
             'E2': ["Montescaglioso", "Bernalda", "Pisticci", "Pomarico", "Ferrandina"]
         };
 
-        // Costruisci la mappa di criticità (nome comune normalizzato -> base) una volta sola all'avvio
         for (const base in configurazioneCriticità) {
             const comuni = configurazioneCriticità[base];
             comuni.forEach(comune => {
@@ -333,31 +324,26 @@
             });
         }
 
-        // Funzione per ottenere la base geografica per un dato comune normalizzato
         function getBaseForComune(comuneNome) {
             return criticitàMap[comuneNome];
         }
 
-        // Funzione principale per inizializzare la mappa e i dati
         async function initializeMap() {
             try {
-                // Carica il file GeoJSON una sola volta
                 const response = await fetch('limits_R_17_municipalities.geojson');
                 loadedGeojsonData = await response.json();
 
-                // Pre-processa loadedGeojsonData per aggiungere i nomi normalizzati
                 loadedGeojsonData.features.forEach(feature => {
                     if (feature.properties && feature.properties.name) {
                         feature.properties.normalizedName = normalizeComuneName(feature.properties.name);
                     }
                 });
 
-                // Recupera i colori dei rischi da Firebase dal nodo 'colori'
                 const snapshot = await database.ref('colori').once('value');
 
                 if (snapshot.exists()) {
                     const datiColori = snapshot.val();
-                    riskColorsData = datiColori.coloriPerRischio || {}; // Cambiato da 'rischi' a 'coloriPerRischio'
+                    riskColorsData = datiColori.coloriPerRischio || {};
 
                     const timestampString = datiColori.dataCreazione;
                     if (timestampString) {
@@ -368,7 +354,7 @@
                         lastUpdatedElement.textContent = 'Data di aggiornamento non disponibile.';
                     }
 
-                    updateMapAndSummary(); // Aggiorna la mappa e il riassunto
+                    updateMapAndSummary();
                 } else {
                     lastUpdatedElement.textContent = 'Nessun dato colore disponibile su Firebase.';
                 }
@@ -378,16 +364,13 @@
             }
         }
 
-        // Funzione per calcolare i colori per la mappa riassuntiva (peggiore criticità)
         function getSummaryColorsForMap() {
             const summaryColors = {};
             const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
 
-            // Itera su tutte le basi definite nella configurazione
             for (const base of Object.keys(configurazioneCriticità)) {
-                let worstColorForBase = 'green'; // Partiamo dal verde (nessun rischio)
+                let worstColorForBase = 'green';
 
-                // Per ogni base, considera tutti i rischi per oggi e domani
                 allRiskTypes.forEach(riskType => {
                     const colorsForRiskToday = riskColorsData[riskType] ? (riskColorsData[riskType]['oggi'] || {}) : {};
                     const colorsForRiskTomorrow = riskColorsData[riskType] ? (riskColorsData[riskType]['domani'] || {}) : {};
@@ -395,9 +378,7 @@
                     const colorToday = colorsForRiskToday[base] || 'green';
                     const colorTomorrow = colorsForRiskTomorrow[base] || 'green';
 
-                    // Confronta i colori di oggi e domani per il rischio corrente
                     const worseOfDay = getWorseColor(colorToday, colorTomorrow);
-                    // Confronta il peggiore dei due giorni con il peggiore trovato finora per questa base
                     worstColorForBase = getWorseColor(worstColorForBase, worseOfDay);
                 });
                 summaryColors[base] = worstColorForBase;
@@ -405,16 +386,13 @@
             return summaryColors;
         }
 
-        // Funzione per aggiornare la mappa e il riassunto dettagliato
         function updateMapAndSummary() {
             const currentSummaryColors = getSummaryColorsForMap();
 
-            // Rimuovi il layer GeoJSON esistente dalla mappa
             if (geoJsonLayer) {
                 leafletMap.removeLayer(geoJsonLayer);
             }
 
-            // Aggiungi un nuovo layer GeoJSON con gli stili aggiornati per il riassunto
             geoJsonLayer = L.geoJSON(loadedGeojsonData, {
                 style: function (feature) {
                     return styleComune(feature, currentSummaryColors);
@@ -422,19 +400,17 @@
                 onEachFeature: onEachFeature
             }).addTo(leafletMap);
 
-            updateLegend(currentSummaryColors); // Aggiorna la legenda
-            generateDetailedSummary(currentSummaryColors); // Genera il box riassuntivo dettagliato
+            updateLegend(currentSummaryColors);
+            generateDetailedSummary();
         }
 
-        // Funzione per determinare lo stile del comune (colore e opacità)
         function styleComune(feature, colorsForMap) {
             const normalizedComuneNome = feature.properties.normalizedName;
             const base = getBaseForComune(normalizedComuneNome);
 
-            let fillColor = '#ccc'; // Colore di default per comuni non mappati o senza colore
+            let fillColor = '#ccc';
             const fillOpacity = 0.7;
 
-            // Se la base esiste e c'è un colore definito per quella base nella vista riassuntiva
             if (base && colorsForMap[base]) {
                 fillColor = getHexColor(colorsForMap[base]);
             }
@@ -448,7 +424,6 @@
             };
         }
 
-        // Funzione per creare il contenuto del popup quando si clicca su un comune
         function onEachFeature(feature, layer) {
             if (feature.properties && feature.properties.name) {
                 const normalizedComuneNome = feature.properties.normalizedName;
@@ -467,14 +442,12 @@
                     const colorToday = colorsForRiskToday[base] || 'green';
                     const colorTomorrow = colorsForRiskTomorrow[base] || 'green';
 
-                    // Mostra solo i rischi che non sono verdi (quindi che hanno una criticità)
                     if (colorToday.toLowerCase() !== 'green' || colorTomorrow.toLowerCase() !== 'green') {
                         hasCriticality = true;
                         popupContent += `- ${riskDisplayName[riskType] || riskType}: Oggi <span style="color:${getHexColor(colorToday)}"><b>${colorToday.charAt(0).toUpperCase() + colorToday.slice(1)}</b></span>, Domani <span style="color:${getHexColor(colorTomorrow)}"><b>${colorTomorrow.charAt(0).toUpperCase() + colorTomorrow.slice(1)}</b></span><br>`;
                     }
                 });
 
-                // Se non ci sono criticità da mostrare per oggi/domani
                 if (!hasCriticality) {
                     popupContent += `Nessuna criticità rilevante prevista per Oggi/Domani.`;
                 }
@@ -483,27 +456,22 @@
             }
         }
 
-        // Funzione per aggiornare la legenda dinamica
         function updateLegend(colorsForSelectedView) {
             currentRiskLegend.innerHTML = '<h4>Legenda Criticità:</h4>';
             const riskOrder = { 'green': 0, 'yellow': 1, 'orange': 2, 'red': 3 };
 
-            // Ottieni tutti i nomi dei colori presenti nelle basi (solo per i colori peggiori)
             const uniqueColors = new Set();
             for (const base in colorsForSelectedView) {
-                if (colorsForSelectedView[base] && colorsForSelectedView[base] !== 'green') { // Includi solo i non verdi nella legenda esplicita
+                if (colorsForSelectedView[base] && colorsForSelectedView[base] !== 'green') {
                     uniqueColors.add(colorsForSelectedView[base].toLowerCase());
                 }
             }
 
-            // Ordina i colori per visualizzarli dal meno critico al più critico
             const sortedColors = Array.from(uniqueColors).sort((a, b) => riskOrder[a] - riskOrder[b]);
 
-            // Aggiungi il verde per primo, se non già incluso come "nessun rischio"
             if (!sortedColors.includes('green')) {
                 sortedColors.unshift('green');
             }
-
 
             sortedColors.forEach(colorName => {
                 const hexColor = getHexColor(colorName);
@@ -523,8 +491,6 @@
                 currentRiskLegend.appendChild(legendItem);
             });
 
-
-            // Aggiungi una voce di default per le aree non colorate/non mappate (se necessario)
             const defaultItem = document.createElement('div');
             defaultItem.className = 'legend-item';
             const defaultColorBox = document.createElement('div');
@@ -537,9 +503,8 @@
             currentRiskLegend.appendChild(defaultItem);
         }
 
-        // Funzione per generare il box riassuntivo dettagliato
         function generateDetailedSummary() {
-            detailedSummaryContent.innerHTML = ''; // Pulisci il contenuto precedente
+            detailedSummaryContent.innerHTML = '';
 
             const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
             const sortedBases = Object.keys(configurazioneCriticità).sort((a, b) => {
@@ -568,7 +533,6 @@
                     const colorToday = colorsForRiskToday[base] || 'green';
                     const colorTomorrow = colorsForRiskTomorrow[base] || 'green';
 
-                    // Mostra il dettaglio del rischio solo se c'è una criticità (non verde)
                     if (colorToday.toLowerCase() !== 'green' || colorTomorrow.toLowerCase() !== 'green') {
                         hasCriticalityForBase = true;
                         const riskItem = document.createElement('div');
@@ -592,18 +556,17 @@
             });
         }
 
-
-        // Logica di Generazione del PDF
-        savePdfButton.addEventListener('click', function () {
+        savePdfButton.addEventListener('click', async function () {
             console.log("Inizio generazione PDF...");
+            savePdfButton.disabled = true; // Disabilita il pulsante per evitare click multipli
+            savePdfButton.textContent = "Generazione PDF...";
 
             const currentSummaryColors = getSummaryColorsForMap();
 
-            // Definisci gli stili specifici per il PDF (opacità piena)
             const pdfStyleComune = (feature) => {
                 const normalizedComuneNome = feature.properties.normalizedName;
                 const base = getBaseForComune(normalizedComuneNome);
-                let fillColor = '#ccc'; // Default per il PDF
+                let fillColor = '#ccc';
 
                 if (base && currentSummaryColors[base]) {
                     fillColor = getHexColor(currentSummaryColors[base]);
@@ -614,165 +577,168 @@
                     weight: 1,
                     opacity: 1,
                     color: '#333',
-                    fillOpacity: 1 // Opacità piena per la cattura del PDF
+                    fillOpacity: 1
                 };
             };
 
-            // Applica temporaneamente gli stili PDF per la cattura dell'immagine
             if (geoJsonLayer) {
                 geoJsonLayer.setStyle(pdfStyleComune);
             }
 
-            // Aggiungi un evento 'load' ai tile layer per assicurarti che siano caricati prima di catturare
-            const tileLayer = leafletMap.getPane('tilePane').querySelector('img'); // This targets the actual image tiles
+            leafletMap.invalidateSize(true);
 
-            let tilesLoaded = false;
-            if (tileLayer) {
-                tileLayer.onload = () => {
-                    tilesLoaded = true;
-                };
-            } else {
-                // If there are no tiles, we can assume it's ready.
-                tilesLoaded = true;
+            function waitForMapTilesAndGeoJSON(mapInstance, geoJsonLayerInstance) {
+                return new Promise(resolve => {
+                    let tilesLoaded = false;
+
+                    const checkTiles = () => {
+                        const tileImages = mapInstance.getContainer().querySelectorAll('.leaflet-tile-container img');
+                        // Ensure there are tiles and all of them are complete and have a natural width
+                        if (tileImages.length > 0 && Array.from(tileImages).every(img => img.complete && img.naturalWidth > 0)) {
+                            tilesLoaded = true;
+                        }
+                    };
+
+                    const interval = setInterval(() => {
+                        checkTiles();
+                        // GeoJSON is rendered by Leaflet on 'addLayer' and 'setStyle',
+                        // a brief timeout after map tiles are loaded is usually enough for GeoJSON SVG elements to be drawn.
+                        if (tilesLoaded && geoJsonLayerInstance) { // Assuming geoJsonLayerInstance is what we want to render
+                            clearInterval(interval);
+                            console.log("Mappa e GeoJSON apparentemente carichi.");
+                            resolve();
+                        } else {
+                            console.log("In attesa che la mappa e/o GeoJSON vengano renderizzati...");
+                        }
+                    }, 200); // Controlla ogni 200ms
+                });
             }
 
-            // Wait for both GeoJSON (via setTimeout) and tile layers to be ready
-            const captureMap = () => {
-                console.log("Chiamata leafletImage...");
+            await waitForMapTilesAndGeoJSON(leafletMap, geoJsonLayer);
 
-                leafletImage(leafletMap, function (err, canvas) {
-                    console.log("Callback di leafletImage eseguito.");
+            console.log("Chiamata leafletImage...");
 
-                    if (err) {
-                        console.error("Errore in leafletImage:", err);
-                        return;
+            leafletImage(leafletMap, async function (err, canvas) {
+                console.log("Callback di leafletImage eseguito.");
+
+                if (err) {
+                    console.error("Errore in leafletImage:", err);
+                    savePdfButton.disabled = false;
+                    savePdfButton.textContent = "Scarica come PDF";
+                    return;
+                }
+
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('landscape');
+                const imgWidth = pdf.internal.pageSize.getWidth() - 20;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                let currentY = 10;
+
+                pdf.setFontSize(20);
+                pdf.text(`Bollettino Criticità - Riassunto Oggi/Domani`, 10, currentY);
+                currentY += 15;
+
+                pdf.addImage(imgData, 'PNG', 10, currentY, imgWidth, imgHeight);
+                currentY += imgHeight + 10;
+
+                pdf.setFontSize(10);
+                pdf.text(lastUpdatedElement.textContent, 10, currentY);
+                currentY += 10;
+
+                const logoImg = document.getElementById('region-logo');
+                if (logoImg) {
+                    if (!logoImg.complete) {
+                        await new Promise(resolve => {
+                            logoImg.onload = resolve;
+                            logoImg.onerror = resolve;
+                        });
                     }
+                    const logoData = logoImg.src;
+                    const logoPdfWidth = 40;
+                    const logoPdfHeight = (logoImg.naturalHeight * logoPdfWidth) / logoImg.naturalWidth;
+                    const pdfPageWidth = pdf.internal.pageSize.getWidth();
+                    pdf.addImage(logoData, 'PNG', pdfPageWidth - logoPdfWidth - 10, 10, logoPdfWidth, logoPdfHeight);
+                }
 
-                    const imgData = canvas.toDataURL('image/png');
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF('landscape'); // Formato orizzontale
-                    const imgWidth = pdf.internal.pageSize.getWidth() - 20; // Larghezza immagine (con margini)
-                    const imgHeight = (canvas.height * imgWidth) / canvas.width; // Altezza proporzionale
+                let legendStartX = pdf.internal.pageSize.getWidth() - 80;
+                let legendY = 20;
 
-                    let currentY = 10; // Posizione Y iniziale per gli elementi
+                pdf.setFontSize(12);
+                pdf.text('Legenda:', legendStartX, legendY);
+                legendY += 5;
 
-                    // Aggiungi Titolo
-                    pdf.setFontSize(20);
-                    pdf.text(`Bollettino Criticità - Riassunto Oggi/Domani`, 10, currentY);
-                    currentY += 15;
-
-                    // Aggiungi l'immagine della mappa
-                    pdf.addImage(imgData, 'PNG', 10, currentY, imgWidth, imgHeight);
-                    currentY += imgHeight + 10;
-
-                    // Aggiungi il testo "Ultimo Aggiornamento"
-                    pdf.setFontSize(10);
-                    pdf.text(lastUpdatedElement.textContent, 10, currentY);
-                    currentY += 10;
-
-                    // Aggiungi Logo (in alto a destra)
-                    const logoImg = document.getElementById('region-logo');
-                    if (logoImg) {
-                        const logoData = logoImg.src;
-                        const logoPdfWidth = 40;
-                        const logoPdfHeight = (logoImg.naturalHeight * logoPdfWidth) / logoImg.naturalWidth;
-                        const pdfPageWidth = pdf.internal.pageSize.getWidth();
-                        pdf.addImage(logoData, 'PNG', pdfPageWidth - logoPdfWidth - 10, 10, logoPdfWidth, logoPdfHeight);
+                const riskOrder = { 'green': 0, 'yellow': 1, 'orange': 2, 'red': 3 };
+                const uniqueColorsInMap = new Set();
+                for (const base in currentSummaryColors) {
+                    if (currentSummaryColors[base]) {
+                        uniqueColorsInMap.add(currentSummaryColors[base].toLowerCase());
                     }
+                }
+                const sortedColorsForLegend = Array.from(uniqueColorsInMap).sort((a, b) => riskOrder[a] - riskOrder[b]);
 
-                    // Aggiungi Legenda (a destra, sotto il logo)
-                    let legendStartX = pdf.internal.pageSize.getWidth() - 80;
-                    let legendY = 20;
-
-                    pdf.setFontSize(12);
-                    pdf.text('Legenda:', legendStartX, legendY);
-                    legendY += 5;
-
-                    const riskOrder = { 'green': 0, 'yellow': 1, 'orange': 2, 'red': 3 };
-                    const uniqueColorsInMap = new Set();
-                    for (const base in currentSummaryColors) {
-                        if (currentSummaryColors[base]) {
-                            uniqueColorsInMap.add(currentSummaryColors[base].toLowerCase());
-                        }
-                    }
-                    const sortedColorsForLegend = Array.from(uniqueColorsInMap).sort((a, b) => riskOrder[a] - riskOrder[b]);
-
-                    sortedColorsForLegend.forEach((colorName) => {
-                        const hexColor = getHexColor(colorName);
-                        pdf.setFillColor(hexColor);
-                        pdf.rect(legendStartX, legendY + 2, 5, 5, 'F'); // Quadro colore
-                        pdf.setFontSize(10);
-                        pdf.text(`${colorName.charAt(0).toUpperCase() + colorName.slice(1)}`, legendStartX + 8, legendY + 6);
-                        legendY += 8;
-                    });
-
-                    pdf.setFillColor('#ccc');
+                sortedColorsForLegend.forEach((colorName) => {
+                    const hexColor = getHexColor(colorName);
+                    pdf.setFillColor(hexColor);
                     pdf.rect(legendStartX, legendY + 2, 5, 5, 'F');
                     pdf.setFontSize(10);
-                    pdf.text('Base Non Mappata', legendStartX + 8, legendY + 6);
-
-
-                    // Aggiungi il riepilogo dettagliato (sotto la mappa)
-                    // Creiamo un canvas temporaneo per renderizzare il contenuto HTML del riepilogo
-                    const summaryHtml = document.getElementById('detailed-summary-content').innerHTML;
-                    const tempDiv = document.createElement('div');
-                    tempDiv.style.width = (pdf.internal.pageSize.getWidth() - 20) + 'px'; // Larghezza del PDF
-                    tempDiv.innerHTML = summaryHtml;
-                    document.body.appendChild(tempDiv); // Aggiungi al DOM per il rendering
-
-                    html2canvas(tempDiv, { scale: 2 }).then(summaryCanvas => { // Usa html2canvas per il riassunto
-                        const summaryImgWidth = pdf.internal.pageSize.getWidth() - 20;
-                        const summaryImgHeight = (summaryCanvas.height * summaryImgWidth) / summaryCanvas.width;
-
-                        // Se non c'è spazio sufficiente, aggiungi una nuova pagina
-                        if (currentY + summaryImgHeight > pdf.internal.pageSize.getHeight() - 10) {
-                            pdf.addPage();
-                            currentY = 10;
-                        }
-
-                        pdf.addImage(summaryImgData, 'PNG', 10, currentY, summaryImgWidth, summaryImgHeight);
-                        currentY += summaryImgHeight + 10;
-
-                        pdf.save(`bollettino_criticità_riassunto_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
-                        console.log("PDF generato e salvato.");
-                        document.body.removeChild(tempDiv); // Rimuovi il div temporaneo
-
-                        // Ripristina gli stili originali della mappa (per la visualizzazione a schermo)
-                        if (geoJsonLayer) {
-                            geoJsonLayer.setStyle(function (feature) {
-                                return styleComune(feature, currentSummaryColors);
-                            });
-                        }
-                    }).catch(error => {
-                        console.error("Errore durante la cattura del riepilogo con html2canvas:", error);
-                        document.body.removeChild(tempDiv); // Ensure tempDiv is removed even on error
-                        // Still try to save the PDF if map capture was successful
-                        pdf.save(`bollettino_criticità_riassunto_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
-                    });
+                    pdf.text(`${colorName.charAt(0).toUpperCase() + colorName.slice(1)}`, legendStartX + 8, legendY + 6);
+                    legendY += 8;
                 });
-            };
 
-            // Use a combination of a minimum timeout and checking map loading state
-            const checkMapReadyAndCapture = () => {
-                // `leafletMap.loaded()` might not be reliable for all layers,
-                // so we also check for tile layer image completion.
-                const mapTilesAreLoaded = Array.from(leafletMap.getContainer().querySelectorAll('.leaflet-tile-container img'))
-                                              .every(img => img.complete);
+                pdf.setFillColor('#ccc');
+                pdf.rect(legendStartX, legendY + 2, 5, 5, 'F');
+                pdf.setFontSize(10);
+                pdf.text('Base Non Mappata', legendStartX + 8, legendY + 6);
 
-                if (mapTilesAreLoaded && geoJsonLayer) { // Ensure geoJsonLayer is also present
-                    captureMap();
-                } else {
-                    console.log("Map not fully loaded, retrying in 500ms...");
-                    setTimeout(checkMapReadyAndCapture, 500);
-                }
-            };
 
-            // Initial call to start checking for map readiness
-            checkMapReadyAndCapture();
+                const summaryHtml = document.getElementById('detailed-summary-content').innerHTML;
+                const tempDiv = document.createElement('div');
+                tempDiv.style.width = (pdf.internal.pageSize.getWidth() - 20) + 'px';
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                tempDiv.innerHTML = summaryHtml;
+                document.body.appendChild(tempDiv);
+
+                await new Promise(r => setTimeout(r, 100));
+
+                html2canvas(tempDiv, {
+                    scale: 3,
+                    useCORS: true
+                }).then(summaryCanvas => {
+                    const summaryImgData = summaryCanvas.toDataURL('image/png'); // Get image data from summary canvas
+                    const summaryImgWidth = pdf.internal.pageSize.getWidth() - 20;
+                    const summaryImgHeight = (summaryCanvas.height * summaryImgWidth) / summaryCanvas.width;
+
+                    if (currentY + summaryImgHeight > pdf.internal.pageSize.getHeight() - 10) {
+                        pdf.addPage();
+                        currentY = 10;
+                    }
+
+                    pdf.addImage(summaryImgData, 'PNG', 10, currentY, summaryImgWidth, summaryImgHeight);
+                    currentY += summaryImgHeight + 10;
+
+                    pdf.save(`bollettino_criticità_riassunto_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
+                    console.log("PDF generato e salvato.");
+
+                }).catch(error => {
+                    console.error("Errore durante la cattura del riepilogo con html2canvas:", error);
+                    pdf.save(`bollettino_criticità_riassunto_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}_ERRORE_RIEPILOGO.pdf`);
+                }).finally(() => {
+                    document.body.removeChild(tempDiv);
+                    if (geoJsonLayer) {
+                        geoJsonLayer.setStyle(function (feature) {
+                            return styleComune(feature, currentSummaryColors);
+                        });
+                        leafletMap.invalidateSize(true);
+                    }
+                    savePdfButton.disabled = false;
+                    savePdfButton.textContent = "Scarica come PDF";
+                });
+            });
         });
 
-
-        // Inizializza la mappa e i dati all'apertura della pagina
         initializeMap();
 
     </script>
