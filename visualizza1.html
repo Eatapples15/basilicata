@@ -18,23 +18,26 @@
             background-color: #f4f7f6;
         }
 
-        /* Nuovo contenitore per la cattura del PDF */
         #pdf-capture-content {
+            /* Questo div conterrà gli elementi da catturare nel PDF */
             width: 100%;
-            max-width: 1200px; /* Mantieni la larghezza massima per coerenza */
+            max-width: 1200px;
             display: flex;
-            flex-direction: column; /* Imposta come colonna per impilare mappa e tabella */
+            flex-direction: column;
             gap: 20px;
-            background-color: white; /* Per avere uno sfondo bianco quando catturato */
-            padding: 20px; /* Aggiungi un po' di padding per i margini dell'immagine catturata */
-            box-sizing: border-box; /* Include padding nel width */
+            background-color: white;
+            padding: 20px;
+            box-sizing: border-box;
+            /* Per la cattura PDF: Aumenta temporaneamente z-index se ci sono problemi di sovrapposizione */
+            /* position: relative; */
+            /* z-index: 100; */
         }
 
         #main-content {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
-            width: 100%; /* Occupa il 100% di #pdf-capture-content */
+            width: 100%;
             justify-content: center;
         }
 
@@ -46,6 +49,9 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             background-color: white;
+            /* Aumenta z-index per assicurarti che i tile e i poligoni siano sopra il contenitore in html2canvas */
+            position: relative;
+            z-index: 1; 
         }
 
         #info-sidebar {
@@ -62,12 +68,8 @@
         }
 
         #summary-box {
-            width: 100%; /* Occupa il 100% di #pdf-capture-content */
+            width: 100%;
             padding: 20px;
-            /* Rimuovi border-radius e box-shadow se vuoi che siano catturati solo dal genitore */
-            /* border: 1px solid #ddd; */
-            /* border-radius: 8px; */
-            /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); */
             background-color: white;
         }
 
@@ -227,11 +229,9 @@
 
             <div id="info-sidebar">
                 <h3>Bollettino Riassuntivo</h3>
-
                 <div id="current-risk-legend">
                     <h4>Legenda Criticità:</h4>
                 </div>
-
                 <p id="last-updated"></p>
                 <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
             </div>
@@ -258,7 +258,8 @@
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
             authDomain: "bollettinoregionale.firebaseapp.com",
             projectId: "bollettinoregionale",
-            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebaserul.com/",
+            // Ho corretto qui: databaseURL deve finire con .com, non .rul.com
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/", 
             storageBucket: "bollettinoregionale.appspot.com",
             messagingSenderId: "765538370497",
             appId: "1:765538370497:web:9c4f569754c0df01cc2540",
@@ -276,7 +277,6 @@
         const savePdfButton = document.getElementById('save-pdf-button');
         const currentRiskLegend = document.getElementById('current-risk-legend');
         const detailedSummaryContent = document.getElementById('detailed-summary-content');
-        // Nuovo elemento da catturare
         const pdfCaptureContent = document.getElementById('pdf-capture-content');
 
         let criticitàMap = {};
@@ -342,8 +342,13 @@
 
         async function initializeMap() {
             try {
+                console.log("Inizio inizializzazione mappa e dati...");
                 const response = await fetch('limits_R_17_municipalities.geojson');
+                if (!response.ok) {
+                    throw new Error(`Errore caricamento GeoJSON: ${response.statusText}`);
+                }
                 loadedGeojsonData = await response.json();
+                console.log("GeoJSON caricato con successo.");
 
                 loadedGeojsonData.features.forEach(feature => {
                     if (feature.properties && feature.properties.name) {
@@ -356,6 +361,7 @@
                 if (snapshot.exists()) {
                     const datiColori = snapshot.val();
                     riskColorsData = datiColori.coloriPerRischio || {};
+                    console.log("Dati Firebase caricati con successo.");
 
                     const timestampString = datiColori.dataCreazione;
                     if (timestampString) {
@@ -369,21 +375,24 @@
                     updateMapAndSummary();
                 } else {
                     lastUpdatedElement.textContent = 'Nessun dato colore disponibile su Firebase.';
+                    console.warn("Nessun dato colore trovato su Firebase.");
                 }
             } catch (error) {
-                console.error("Errore durante l'inizializzazione della mappa:", error);
-                lastUpdatedElement.textContent = 'Errore nel caricamento dei dati.';
+                console.error("Errore critico durante l'inizializzazione della mappa/dati:", error);
+                lastUpdatedElement.textContent = `Errore: ${error.message}`;
             }
         }
 
         function getSummaryColorsForMap() {
             const summaryColors = {};
+            // Filtra solo le chiavi che non sono 'dataCreazione'
             const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
 
             for (const base of Object.keys(configurazioneCriticità)) {
-                let worstColorForBase = 'green';
+                let worstColorForBase = 'green'; // Partiamo dal verde
 
                 allRiskTypes.forEach(riskType => {
+                    // Assicurati che riskColorsData[riskType] esista prima di accedere a 'oggi' o 'domani'
                     const colorsForRiskToday = riskColorsData[riskType] ? (riskColorsData[riskType]['oggi'] || {}) : {};
                     const colorsForRiskTomorrow = riskColorsData[riskType] ? (riskColorsData[riskType]['domani'] || {}) : {};
 
@@ -399,6 +408,7 @@
         }
 
         function updateMapAndSummary() {
+            console.log("Aggiornamento mappa e riepilogo...");
             const currentSummaryColors = getSummaryColorsForMap();
 
             if (geoJsonLayer) {
@@ -414,6 +424,7 @@
 
             updateLegend(currentSummaryColors);
             generateDetailedSummary();
+            console.log("Mappa e riepilogo aggiornati nella pagina.");
         }
 
         function styleComune(feature, colorsForMap) {
@@ -421,8 +432,7 @@
             const base = getBaseForComune(normalizedComuneNome);
 
             let fillColor = '#ccc';
-            // Usa 1 per la cattura (ma 0.7 per la visualizzazione normale)
-            const fillOpacity = 0.7; 
+            const fillOpacity = 0.7; // Per la visualizzazione a schermo
 
             if (base && colorsForMap[base]) {
                 fillColor = getHexColor(colorsForMap[base]);
@@ -433,7 +443,7 @@
                 weight: 1,
                 opacity: 1,
                 color: '#333',
-                fillOpacity: fillOpacity // Sarà 0.7 per la visualizzazione normale
+                fillOpacity: fillOpacity
             };
         }
 
@@ -462,7 +472,8 @@
                         riskItem.innerHTML = `
                                 ${riskDisplayName[riskType] || riskType}: Oggi <span style="color:${getHexColor(colorToday)}"><b>${colorToday.charAt(0).toUpperCase() + colorToday.slice(1)}</b></span>, Domani <span style="color:${getHexColor(colorTomorrow)}"><b>${colorTomorrow.charAt(0).toUpperCase() + colorTomorrow.slice(1)}</b></span>
                             `;
-                        riskDetailsDiv.appendChild(riskItem);
+                        // Aggiungi solo il contenuto innerHTML
+                        popupContent += riskItem.innerHTML + '<br>';
                     }
                 });
 
@@ -546,7 +557,7 @@
 
                 allRiskTypes.forEach(riskType => {
                     const colorsForRiskToday = riskColorsData[riskType] ? (riskColorsData[riskType]['oggi'] || {}) : {};
-                    const colorsForRiskTomorrow = riskColorsData[riskType] ? (riskColorsData[riskType]['domani'] || {}) : {};
+                    const colorsForRiskTomorrow = riskColorsData[riskType] ? (colorsForRiskTomorrow[base] || {}) : {};
 
                     const colorToday = colorsForRiskToday[base] || 'green';
                     const colorTomorrow = colorsForRiskTomorrow[base] || 'green';
@@ -575,26 +586,28 @@
         }
 
         // Funzione per attendere che Leaflet abbia caricato i suoi tile e disegnato il GeoJSON
-        // Questa è ancora utile per assicurarsi che la mappa sia pronta prima dello screenshot
+        // Questa è cruciale per la cattura PDF
         function waitForLeafletMapReady(mapInstance, geoJsonLayerInstance) {
             return new Promise(resolve => {
                 let tilesLoaded = false;
                 let geoJsonRendered = false;
 
                 const checkReady = () => {
-                    // Check if map tiles are loaded (at least some img elements are complete)
+                    // Check if map tiles are loaded (at least some img elements are complete and visible)
                     const tileImages = mapInstance.getContainer().querySelectorAll('.leaflet-tile-container img');
-                    if (tileImages.length > 0 && Array.from(tileImages).every(img => img.complete && img.naturalWidth > 0)) {
+                    if (tileImages.length > 0 && Array.from(tileImages).every(img => img.complete && img.naturalWidth > 0 && img.offsetHeight > 0)) {
                         tilesLoaded = true;
+                        console.log("Tiles di Leaflet carichi.");
                     }
 
-                    // Check if GeoJSON SVG paths are present (basic check)
-                    // This assumes your GeoJSON renders as SVG paths
+                    // Check if GeoJSON SVG paths are present and visible
                     const svgPaths = mapInstance.getContainer().querySelectorAll('.leaflet-overlay-pane svg path');
-                    if (geoJsonLayerInstance && geoJsonLayerInstance._layers && Object.keys(geoJsonLayerInstance._layers).length > 0 && svgPaths.length > 0) {
+                    if (geoJsonLayerInstance && svgPaths.length > 0) { // check for actual SVG paths
                         geoJsonRendered = true;
-                    } else if (!geoJsonLayerInstance) { // If no geoJsonLayer is expected, consider it rendered
+                        console.log(`GeoJSON Layer (${svgPaths.length} paths) apparentemente renderizzato.`);
+                    } else if (!geoJsonLayerInstance) { // If no geoJsonLayer is expected or present (e.g., in initial load), consider it rendered for map ready state
                         geoJsonRendered = true;
+                        console.log("Nessun GeoJSONLayer da attendere.");
                     }
                 };
 
@@ -602,12 +615,12 @@
                     checkReady();
                     if (tilesLoaded && geoJsonRendered) {
                         clearInterval(interval);
-                        console.log("Leaflet Map e GeoJSON visivamente pronti.");
+                        console.log("Leaflet Map e GeoJSON visivamente pronti per la cattura.");
                         resolve();
                     } else {
-                        console.log("Attesa che Leaflet Map e GeoJSON siano pronti...");
+                        console.log("Attesa che Leaflet Map e GeoJSON siano pronti per la cattura...");
                     }
-                }, 200); // Check every 200ms
+                }, 300); // Controlla ogni 300ms
             });
         }
 
@@ -618,8 +631,8 @@
 
             const currentSummaryColors = getSummaryColorsForMap();
 
-            // Applica stili con opacità piena solo per la cattura del PDF
-            // Rimuovi o imposta fillOpacity a 1 qui per la cattura
+            // Applica stili con opacità piena (fillOpacity: 1) solo per la cattura del PDF
+            // e forza un redraw della mappa.
             if (geoJsonLayer) {
                 geoJsonLayer.setStyle(function (feature) {
                     const normalizedComuneNome = feature.properties.normalizedName;
@@ -640,35 +653,38 @@
             leafletMap.invalidateSize(true); // Forza un redraw per assicurarsi che i nuovi stili siano applicati
 
             // Attendi che la mappa sia pronta prima di catturare l'intero contenitore
+            console.log("In attesa che la mappa Leaflet sia pronta per lo screenshot...");
             await waitForLeafletMapReady(leafletMap, geoJsonLayer);
             // Aggiungi un piccolo ritardo extra per assicurarti che tutto si sia "stabilizzato"
-            await new Promise(r => setTimeout(r, 300)); 
+            await new Promise(r => setTimeout(r, 500)); 
+            console.log("Mappa e GeoJSON stabili, procedo con html2canvas.");
 
 
-            // Ora cattura l'intero div che contiene mappa e riassunto
             const HTML2CANVAS_SCALE = 2; // Puoi provare 2 o 3 per una buona qualità
 
             html2canvas(pdfCaptureContent, {
                 scale: HTML2CANVAS_SCALE,
                 useCORS: true,
-                logging: true, // Abilita il logging per debug
-                allowTaint: true, // Permetti l'uso di immagini cross-origin (potrebbe essere necessario se i tile di OSM sono considerati "tainted")
-                // Se la mappa non appare, prova a commentare o a rimuovere backgroundColor
-                // backgroundColor: '#ffffff', // Assicurati che lo sfondo sia bianco per la cattura
+                logging: true,
+                allowTaint: true,
+                backgroundColor: '#ffffff', // Assicurati che lo sfondo sia bianco per la cattura
+                ignoreElements: (element) => {
+                    // Ignora il pulsante se fosse ancora dentro pdfCaptureContent per errore
+                    return element.id === 'save-pdf-button';
+                }
             }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
                 const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('landscape'); // Formato orizzontale
+                const pdf = new jsPDF('landscape');
 
                 // Calcola le dimensioni dell'immagine nel PDF
-                // Dividi le dimensioni del canvas per la scala per mantenere la dimensione fisica corretta
                 const canvasWidthInPx = canvas.width / HTML2CANVAS_SCALE;
                 const canvasHeightInPx = canvas.height / HTML2CANVAS_SCALE;
 
                 const pdfPageWidth = pdf.internal.pageSize.getWidth();
                 const pdfPageHeight = pdf.internal.pageSize.getHeight();
 
-                const margin = 10;
+                const margin = 10; // Margine fisso per il PDF
                 let contentWidth = pdfPageWidth - (2 * margin);
                 let contentHeight = (canvasHeightInPx * contentWidth) / canvasWidthInPx;
 
@@ -679,9 +695,8 @@
                 }
 
                 const xPosition = margin + (pdfPageWidth - contentWidth - (2 * margin)) / 2; // Centra orizzontalmente
-                const yPosition = margin; // Inizia dall'alto
+                const yPosition = margin;
 
-                // Aggiungi l'immagine catturata al PDF
                 pdf.addImage(imgData, 'PNG', xPosition, yPosition, contentWidth, contentHeight);
 
                 pdf.save(`bollettino_criticità_screenshot_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
@@ -695,13 +710,14 @@
                     geoJsonLayer.setStyle(function (feature) {
                         return styleComune(feature, currentSummaryColors); // Usa l'opacità normale (0.7)
                     });
-                    leafletMap.invalidateSize(true);
+                    leafletMap.invalidateSize(true); // Assicurati che la mappa si ridisegni correttamente
                 }
                 savePdfButton.disabled = false;
                 savePdfButton.textContent = "Scarica come PDF";
             });
         });
 
+        // Esegui l'inizializzazione della mappa e dei dati all'avvio
         initializeMap();
 
     </script>
