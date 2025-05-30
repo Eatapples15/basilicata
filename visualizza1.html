@@ -112,7 +112,6 @@
             flex-shrink: 0;
         }
 
-        /* Stili esistenti */
         .form-group {
             margin-bottom: 15px;
         }
@@ -184,7 +183,6 @@
             padding-top: 20px;
         }
 
-        /* Leaflet popup styles */
         .leaflet-popup-content-wrapper {
             background-color: white;
             color: #333;
@@ -558,7 +556,7 @@
 
         savePdfButton.addEventListener('click', async function () {
             console.log("Inizio generazione PDF...");
-            savePdfButton.disabled = true; // Disabilita il pulsante per evitare click multipli
+            savePdfButton.disabled = true;
             savePdfButton.textContent = "Generazione PDF...";
 
             const currentSummaryColors = getSummaryColorsForMap();
@@ -590,10 +588,8 @@
             function waitForMapTilesAndGeoJSON(mapInstance, geoJsonLayerInstance) {
                 return new Promise(resolve => {
                     let tilesLoaded = false;
-
                     const checkTiles = () => {
                         const tileImages = mapInstance.getContainer().querySelectorAll('.leaflet-tile-container img');
-                        // Ensure there are tiles and all of them are complete and have a natural width
                         if (tileImages.length > 0 && Array.from(tileImages).every(img => img.complete && img.naturalWidth > 0)) {
                             tilesLoaded = true;
                         }
@@ -601,9 +597,7 @@
 
                     const interval = setInterval(() => {
                         checkTiles();
-                        // GeoJSON is rendered by Leaflet on 'addLayer' and 'setStyle',
-                        // a brief timeout after map tiles are loaded is usually enough for GeoJSON SVG elements to be drawn.
-                        if (tilesLoaded && geoJsonLayerInstance) { // Assuming geoJsonLayerInstance is what we want to render
+                        if (tilesLoaded && geoJsonLayerInstance) {
                             clearInterval(interval);
                             console.log("Mappa e GeoJSON apparentemente carichi.");
                             resolve();
@@ -614,7 +608,9 @@
                 });
             }
 
+            // Aggiungi un'attesa dopo il caricamento della mappa, prima di leafletImage
             await waitForMapTilesAndGeoJSON(leafletMap, geoJsonLayer);
+            await new Promise(r => setTimeout(r, 500)); // Attesa extra per il rendering completo della mappa
 
             console.log("Chiamata leafletImage...");
 
@@ -701,23 +697,27 @@
                 tempDiv.innerHTML = summaryHtml;
                 document.body.appendChild(tempDiv);
 
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(r => setTimeout(r, 100)); // Breve attesa per il reflow del DOM
+
+                // Aumenta la scala per html2canvas per una migliore qualità
+                const HTML2CANVAS_SCALE = 3; 
 
                 html2canvas(tempDiv, {
-                    scale: 3,
+                    scale: HTML2CANVAS_SCALE,
                     useCORS: true
                 }).then(summaryCanvas => {
-                    const summaryImgData = summaryCanvas.toDataURL('image/png'); // Get image data from summary canvas
-                    const summaryImgWidth = pdf.internal.pageSize.getWidth() - 20;
-                    const summaryImgHeight = (summaryCanvas.height * summaryImgWidth) / summaryCanvas.width;
+                    const summaryImgData = summaryCanvas.toDataURL('image/png');
+                    const summaryImgWidthPdf = pdf.internal.pageSize.getWidth() - 20;
+                    // Calcola l'altezza proporzionale DIVIDENDO per la scala
+                    const summaryImgHeightPdf = (summaryCanvas.height / HTML2CANVAS_SCALE * summaryImgWidthPdf) / (summaryCanvas.width / HTML2CANVAS_SCALE);
 
-                    if (currentY + summaryImgHeight > pdf.internal.pageSize.getHeight() - 10) {
+                    if (currentY + summaryImgHeightPdf > pdf.internal.pageSize.getHeight() - 10) {
                         pdf.addPage();
                         currentY = 10;
                     }
 
-                    pdf.addImage(summaryImgData, 'PNG', 10, currentY, summaryImgWidth, summaryImgHeight);
-                    currentY += summaryImgHeight + 10;
+                    pdf.addImage(summaryImgData, 'PNG', 10, currentY, summaryImgWidthPdf, summaryImgHeightPdf);
+                    currentY += summaryImgHeightPdf + 10;
 
                     pdf.save(`bollettino_criticità_riassunto_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.pdf`);
                     console.log("PDF generato e salvato.");
