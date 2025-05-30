@@ -258,7 +258,7 @@
             apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
             authDomain: "bollettinoregionale.firebaseapp.com",
             projectId: "bollettinoregionale",
-            // Ho corretto qui: databaseURL deve finire con .com, non .rul.com
+            // Ho corretto qui: databaseURL deve finire con .com
             databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/", 
             storageBucket: "bollettinoregionale.appspot.com",
             messagingSenderId: "765538370497",
@@ -280,10 +280,11 @@
         const pdfCaptureContent = document.getElementById('pdf-capture-content');
 
         let criticitàMap = {};
-        let riskColorsData = {};
+        let riskColorsData = {}; // Questa variabile verrà popolata con la struttura corretta
         let geoJsonLayer = null;
         let loadedGeojsonData = null;
 
+        // Mappa i nomi dei rischi dalla nomenclatura di Firebase a quella display
         const riskDisplayName = {
             'IdrogeologicoTemporali': 'Idrogeologico (Temporali)',
             'Idrogeologico': 'Idrogeologico',
@@ -359,14 +360,41 @@
                 const snapshot = await database.ref('colori').once('value');
 
                 if (snapshot.exists()) {
-                    const datiColori = snapshot.val();
-                    riskColorsData = datiColori.coloriPerRischio || {};
-                    console.log("Dati Firebase caricati con successo.");
+                    const datiCriticità = snapshot.val();
+                    
+                    // --- MODIFICA QUI: Adattiamo la struttura dei dati letti da Firebase ---
+                    const rawRiskData = datiCriticità.rischi || {}; 
+                    riskColorsData = {}; // Resetta la variabile
 
-                    const timestampString = datiColori.dataCreazione;
+                    // Trasformiamo la struttura dei dati letti in quella attesa
+                    // da getSummaryColorsForMap (aggiungendo 'oggi' e 'domani' per consistenza)
+                    for (const riskType in rawRiskData) {
+                        if (rawRiskData.hasOwnProperty(riskType)) {
+                            // Assumiamo che i colori salvati siano validi sia per "oggi" che per "domani"
+                            riskColorsData[riskType] = {
+                                'oggi': rawRiskData[riskType],
+                                'domani': rawRiskData[riskType] 
+                            };
+                        }
+                    }
+                    // --- FINE MODIFICA ---
+
+                    console.log("Dati Firebase caricati con successo.");
+                    console.log("Struttura riskColorsData dopo la trasformazione:", riskColorsData);
+
+
+                    const timestampString = datiCriticità.dataCreazione;
                     if (timestampString) {
                         const timestamp = new Date(timestampString);
-                        const formattedDate = timestamp.toLocaleString();
+                        // Formatta la data e l'ora per una migliore leggibilità
+                        const formattedDate = timestamp.toLocaleString('it-IT', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit', 
+                            second: '2-digit' 
+                        });
                         lastUpdatedElement.textContent = `Ultimo Aggiornamento: ${formattedDate}`;
                     } else {
                         lastUpdatedElement.textContent = 'Data di aggiornamento non disponibile.';
@@ -385,14 +413,14 @@
 
         function getSummaryColorsForMap() {
             const summaryColors = {};
-            // Filtra solo le chiavi che non sono 'dataCreazione'
-            const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
+            // Ora `riskColorsData` ha già la struttura con 'oggi' e 'domani'
+            const allRiskTypes = Object.keys(riskColorsData); 
 
             for (const base of Object.keys(configurazioneCriticità)) {
                 let worstColorForBase = 'green'; // Partiamo dal verde
 
                 allRiskTypes.forEach(riskType => {
-                    // Assicurati che riskColorsData[riskType] esista prima di accedere a 'oggi' o 'domani'
+                    // Accediamo direttamente a 'oggi' e 'domani'
                     const colorsForRiskToday = riskColorsData[riskType] ? (riskColorsData[riskType]['oggi'] || {}) : {};
                     const colorsForRiskTomorrow = riskColorsData[riskType] ? (riskColorsData[riskType]['domani'] || {}) : {};
 
@@ -432,7 +460,7 @@
             const base = getBaseForComune(normalizedComuneNome);
 
             let fillColor = '#ccc';
-            const fillOpacity = 0.7; // Per la visualizzazione a schermo
+            const fillOpacity = 0.7; // Opacità per la visualizzazione a schermo
 
             if (base && colorsForMap[base]) {
                 fillColor = getHexColor(colorsForMap[base]);
@@ -455,10 +483,12 @@
                 let popupContent = `<b>Comune: ${feature.properties.name}</b><br>Base di Appartenenza: ${base}<br>`;
                 popupContent += `<hr>Criticità (Oggi/Domani):<br>`;
 
-                const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
+                // Ora allRiskTypes include solo le chiavi di rischio direttamente
+                const allRiskTypes = Object.keys(riskColorsData); 
                 let hasCriticality = false;
 
                 allRiskTypes.forEach(riskType => {
+                    // Accediamo direttamente a 'oggi' e 'domani' da riskColorsData[riskType]
                     const colorsForRiskToday = riskColorsData[riskType] ? (riskColorsData[riskType]['oggi'] || {}) : {};
                     const colorsForRiskTomorrow = riskColorsData[riskType] ? (riskColorsData[riskType]['domani'] || {}) : {};
 
@@ -472,7 +502,6 @@
                         riskItem.innerHTML = `
                                 ${riskDisplayName[riskType] || riskType}: Oggi <span style="color:${getHexColor(colorToday)}"><b>${colorToday.charAt(0).toUpperCase() + colorToday.slice(1)}</b></span>, Domani <span style="color:${getHexColor(colorTomorrow)}"><b>${colorTomorrow.charAt(0).toUpperCase() + colorTomorrow.slice(1)}</b></span>
                             `;
-                        // Aggiungi solo il contenuto innerHTML
                         popupContent += riskItem.innerHTML + '<br>';
                     }
                 });
@@ -498,6 +527,7 @@
 
             const sortedColors = Array.from(uniqueColors).sort((a, b) => riskOrder[a] - riskOrder[b]);
 
+            // Assicurati che "Verde" sia sempre presente se non ci sono altre criticità
             if (!sortedColors.includes('green')) {
                 sortedColors.unshift('green');
             }
@@ -535,7 +565,8 @@
         function generateDetailedSummary() {
             detailedSummaryContent.innerHTML = '';
 
-            const allRiskTypes = Object.keys(riskColorsData).filter(key => key !== 'dataCreazione');
+            // Ora `allRiskTypes` include solo le chiavi di rischio direttamente
+            const allRiskTypes = Object.keys(riskColorsData);
             const sortedBases = Object.keys(configurazioneCriticità).sort((a, b) => {
                 const order = ['A1', 'A2', 'B', 'C', 'D', 'E1', 'E2'];
                 return order.indexOf(a) - order.indexOf(b);
@@ -556,8 +587,9 @@
                 let hasCriticalityForBase = false;
 
                 allRiskTypes.forEach(riskType => {
+                    // Accediamo direttamente a 'oggi' e 'domani' da riskColorsData[riskType]
                     const colorsForRiskToday = riskColorsData[riskType] ? (riskColorsData[riskType]['oggi'] || {}) : {};
-                    const colorsForRiskTomorrow = riskColorsData[riskType] ? (colorsForRiskTomorrow[base] || {}) : {};
+                    const colorsForRiskTomorrow = riskColorsData[riskType] ? (riskColorsData[riskType]['domani'] || {}) : {};
 
                     const colorToday = colorsForRiskToday[base] || 'green';
                     const colorTomorrow = colorsForRiskTomorrow[base] || 'green';
@@ -585,27 +617,30 @@
             });
         }
 
-        // Funzione per attendere che Leaflet abbia caricato i suoi tile e disegnato il GeoJSON
-        // Questa è cruciale per la cattura PDF
+        /**
+         * Funzione per attendere che Leaflet abbia caricato i suoi tile e disegnato il GeoJSON.
+         * Cruciale per assicurarsi che html2canvas catturi una mappa completa e non vuota.
+         * @param {L.Map} mapInstance - L'istanza della mappa Leaflet.
+         * @param {L.GeoJSON} geoJsonLayerInstance - L'istanza del layer GeoJSON aggiunto alla mappa. Può essere null/undefined.
+         * @returns {Promise<void>} Una Promise che si risolve quando la mappa è considerata pronta.
+         */
         function waitForLeafletMapReady(mapInstance, geoJsonLayerInstance) {
             return new Promise(resolve => {
                 let tilesLoaded = false;
                 let geoJsonRendered = false;
 
                 const checkReady = () => {
-                    // Check if map tiles are loaded (at least some img elements are complete and visible)
                     const tileImages = mapInstance.getContainer().querySelectorAll('.leaflet-tile-container img');
                     if (tileImages.length > 0 && Array.from(tileImages).every(img => img.complete && img.naturalWidth > 0 && img.offsetHeight > 0)) {
                         tilesLoaded = true;
                         console.log("Tiles di Leaflet carichi.");
                     }
 
-                    // Check if GeoJSON SVG paths are present and visible
                     const svgPaths = mapInstance.getContainer().querySelectorAll('.leaflet-overlay-pane svg path');
-                    if (geoJsonLayerInstance && svgPaths.length > 0) { // check for actual SVG paths
+                    if (geoJsonLayerInstance && svgPaths.length > 0) { 
                         geoJsonRendered = true;
                         console.log(`GeoJSON Layer (${svgPaths.length} paths) apparentemente renderizzato.`);
-                    } else if (!geoJsonLayerInstance) { // If no geoJsonLayer is expected or present (e.g., in initial load), consider it rendered for map ready state
+                    } else if (!geoJsonLayerInstance) { 
                         geoJsonRendered = true;
                         console.log("Nessun GeoJSONLayer da attendere.");
                     }
@@ -629,6 +664,7 @@
             savePdfButton.disabled = true;
             savePdfButton.textContent = "Generazione PDF...";
 
+            // Dobbiamo ottenere i colori correnti riassuntivi della mappa
             const currentSummaryColors = getSummaryColorsForMap();
 
             // Applica stili con opacità piena (fillOpacity: 1) solo per la cattura del PDF
