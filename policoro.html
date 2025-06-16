@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultazione Operatori - Basilicata</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            background-color: #f0f2f5;
+        }
+
+        #controls-container,
+        #operator-procedures-container,
+        #risk-selection-container {
+            flex: 1;
+            min-width: 300px;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+        }
+
+        #leaflet-map {
+            flex: 2;
+            min-width: 500px;
+            height: 600px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="text"],
+        select,
+        button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #current-comune-info {
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #comune-name-display {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        #comune-criticity-display {
+            font-size: 1.2em;
+            color: #555;
+        }
+
+        #info-message {
+            margin-top: 10px;
+            color: red;
+            font-weight: bold;
+        }
+
+        #last-updated {
+            font-style: italic;
+            color: #777;
+            margin-top: 20px;
+        }
+
+        #region-logo {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            margin-top: 20px;
+            align-self: center;
+        }
+
+        /* Stili per la selezione dei rischi */
+        #risk-selection-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 10px;
+        }
+
+        #risk-selection-list li {
+            margin-bottom: 8px;
+        }
+
+        .risk-button {
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            transition: background-color 0.3s ease;
+        }
+
+        .risk-button:hover {
+            background-color: #5a6268;
+        }
+
+        /* Stili per le procedure operatore */
+        #operator-procedures-container {
+            margin-top: 20px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        #entity-select-wrapper {
+            margin-top: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            display: none;
+            /* Inizialmente nascosto */
+        }
+
+        #entity-select-wrapper label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #procedures-display {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+
+        #procedures-display h4 {
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        #procedures-display ul {
+            list-style-type: decimal;
+            /* Numerato per le procedure */
+            margin-left: 20px;
+            padding-left: 0;
+        }
+
+        #procedures-display li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        /* Stili per i popup di Leaflet */
+        .leaflet-popup-content-wrapper {
+            background-color: white;
+            color: #333;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+        }
+
+        .leaflet-popup-tip-container {
+            width: 20px;
+            height: 10px;
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+            border: 1px solid #aaa;
+            border-top-color: transparent;
+            border-left-color: transparent;
+        }
+
+        /* Stili per la tabella dei contatti di emergenza */
+        #emergency-contacts-container {
+            flex-basis: 100%;
+            /* Occupa tutta la larghezza disponibile */
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            /* Inizialmente nascosto */
+            display: none;
+        }
+
+        #emergency-contacts-container h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        #emergency-contacts-container p {
+            text-align: center;
+            font-style: italic;
+            color: #777;
+            margin-bottom: 20px;
+        }
+
+        #emergency-contacts-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        #emergency-contacts-table th,
+        #emergency-contacts-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        #emergency-contacts-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        #emergency-contacts-table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #emergency-contacts-table tr:hover {
+            background-color: #ddd;
+        }
+
+        /* Stile specifico per le aree di emergenza sulla mappa */
+        .emergency-area-style {
+            fillColor: '#800080';
+            /* Viola */
+            color: '#4B0082';
+            /* Indaco */
+            weight: 3;
+            opacity: 0.7;
+            fillOpacity: 0.3;
+        }
+
+        /* Stile specifico per i cancelli sulla mappa */
+        .gate-point-style {
+            fillColor: '#FF4500';
+            /* Arancione scuro */
+            color: '#B22222';
+            /* Rosso mattone */
+            weight: 1;
+            opacity: 1;
+            fillOpacity: 0.8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="controls-container">
+        <h2>Cerca Comune (Operatore)</h2>
+        <input type="text" id="comune-search-input" placeholder="Es: Policoro">
+        <button id="search-button">Cerca</button>
+
+        <div id="current-comune-info">
+            <p><span id="comune-name-display"></span></p>
+            <p><span id="comune-criticity-display"></span></p>
+            <p id="info-message" style="color: red;"></p>
+        </div>
+
+        <p id="last-updated"></p>
+
+        <img src="Logo regione.png" alt="Logo Regione Basilicata" id="region-logo">
+    </div>
+
+    <div id="leaflet-map"></div>
+
+    <div id="risk-selection-container">
+        <h2>Rischi Rilevati</h2>
+        <div id="risks-list-display">
+            <p>Seleziona un comune per visualizzare i rischi.</p>
+        </div>
+        <div id="entity-select-wrapper">
+            <label for="operator-entity-select">Seleziona il tuo ente:</label>
+            <select id="operator-entity-select">
+                <option value="">-- Seleziona un ente --</option>
+                <option value="carabinieri">Carabinieri</option>
+                <option value="vigili del fuoco">Vigili del Fuoco</option>
+                <option value="ufficio protezione civile">Ufficio Protezione Civile</option>
+                <option value="prefettura">Prefettura</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="operator-procedures-container">
+        <h2>Procedure Operative</h2>
+        <div id="procedures-display">
+            <p>Seleziona un rischio e un ente per visualizzare le procedure.</p>
+        </div>
+    </div>
+
+    <div id="emergency-contacts-container">
+        <h2>Figure di Riferimento in Caso di Emergenza (Policoro)</h2>
+        <p>I dati di contatto sono a scopo esemplificativo.</p>
+        <table id="emergency-contacts-table">
+            <thead>
+                <tr>
+                    <th>Ruolo</th>
+                    <th>Nome Cognome</th>
+                    <th>Contatto Principale</th>
+                    <th>Contatto Alternativo</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Sindaco</td>
+                    <td>Mario Rossi</td>
+                    <td>333 1234567</td>
+                    <td>0835 123456</td>
+                </tr>
+                <tr>
+                    <td>Responsabile Ufficio Protezione Civile Comunale</td>
+                    <td>Anna Bianchi</td>
+                    <td>333 9876543</td>
+                    <td>0835 987654</td>
+                </tr>
+                <tr>
+                    <td>Comandante Polizia Locale</td>
+                    <td>Marco Verdi</td>
+                    <td>333 4567890</td>
+                    <td>0835 456789</td>
+                </tr>
+                <tr>
+                    <td>Dirigente Ufficio Tecnico Comunale</td>
+                    <td>Luca Neri</td>
+                    <td>333 1122334</td>
+                    <td>0835 112233</td>
+                </tr>
+                <tr>
+                    <td>Direttore Ospedale di Riferimento</td>
+                    <td>Dott.ssa Laura Gialli</td>
+                    <td>0835 789012</td>
+                    <td>333 7890123</td>
+                </tr>
+                <tr>
+                    <td>Comandante Stazione Carabinieri</td>
+                    <td>Cap. Paolo Marroni</td>
+                    <td>0835 234567</td>
+                    <td>333 2345678</td>
+                </tr>
+                <tr>
+                    <td>Responsabile Distaccamento Vigili del Fuoco</td>
+                    <td>Capo Rep. Enzo Bruno</td>
+                    <td>0835 345678</td>
+                    <td>333 3456789</td>
+                </tr>
+                <tr>
+                    <td>Dirigente Prefettura di Matera (Area Protezione Civile)</td>
+                    <td>Dott. Antonio Grigio</td>
+                    <td>0835 876543</td>
+                    <td>333 8765432</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database-compat.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD1ABRI99tMtvFbbvjqyjbLImfgNMdRR28",
+            authDomain: "bollettinoregionale.firebaseapp.com",
+            projectId: "bollettinoregionale",
+            databaseURL: "https://bollettinoregionale-default-rtdb.europe-west1.firebasedatabase.app/",
+            storageBucket: "bollettinoregionale.appspot.com",
+            messagingSenderId: "765538370497",
+            appId: "1:765538370497:web:9c4f569754c0df01cc2540",
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        const leafletMap = L.map('leaflet-map').setView([40.6393, 15.8054], 8); // Vista iniziale sulla Basilicata
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(leafletMap);
+
+        // Elementi HTML
+        const comuneSearchInput = document.getElementById('comune-search-input');
+        const searchButton = document.getElementById('search-button');
+        const comuneNameDisplay = document.getElementById('comune-name-display');
+        const comuneCriticityDisplay = document.getElementById('comune-criticity-display');
+        const infoMessage = document.getElementById('info-message');
+        const lastUpdatedElement = document.getElementById('last-updated');
+        const risksListDisplay = document.getElementById('risks-list-display');
+        const entitySelectWrapper = document.getElementById('entity-select-wrapper');
+        const operatorEntitySelect = document.getElementById('operator-entity-select');
+        const proceduresDisplay = document.getElementById('procedures-display');
+        const emergencyContactsContainer = document.getElementById('emergency-contacts-container'); // Nuovo riferimento all'elemento
+
+
+        let geojsonDataGlobal = null;
+        let criticitàMap = {};
+        let coloriBase = {};
+        let geoJsonLayerGroup = new L.LayerGroup().addTo(leafletMap);
+        // Nuovo layer group per le aree di emergenza
+        let emergencyAreasLayerGroup = new L.LayerGroup().addTo(leafletMap);
+        // NUOVO: Layer group per i cancelli
+        let gatePointsLayerGroup = new L.LayerGroup().addTo(leafletMap);
+
+
+        // Stato corrente della selezione operatore
+        let currentSelectedComune = null;
+        let currentSelectedRiskType = null;
+
+
+        // --- NUOVA STRUTTURA DATI PER LE PROCEDURE OPERATIVE ---
+        const operatorProcedures = {
+            "policoro": {
+                "rischio idrogeologico": {
+                    "carabinieri": [
+                        "Pattugliare le zone a rischio allagamento e frane, verificando la presenza di persone in pericolo.",
+                        "Assistere nelle operazioni di evacuazione della popolazione, garantendo la sicurezza e l'ordine pubblico.",
+                        "Controllare l'accesso alle aree intercluse o allagate, prevenendo saccheggi e ingressi non autorizzati.",
+                        "Supportare le altre forze dell'ordine e i soccorritori nelle attività di emergenza e nella gestione della viabilità."
