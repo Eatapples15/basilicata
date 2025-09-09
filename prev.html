@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Previsione Incendi Basilicata (Gioco)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #d9534f;
+            text-align: center;
+        }
+        .warning {
+            color: #a94442;
+            background-color: #f2dede;
+            border: 1px solid #ebccd1;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #5cb85c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        #results {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+        }
+        #results span {
+            color: #d9534f;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Simulatore di Previsione Incendi</h1>
+        <div class="warning">
+            <p><strong>ATTENZIONE:</strong> Questo strumento è un gioco e non ha alcuna validità scientifica. Non deve essere usato per prendere decisioni o per diffondere informazioni a carattere ufficiale.</p>
+        </div>
+        
+        <h2>Inserisci le condizioni meteo</h2>
+        <div class="input-group">
+            <label for="temperatura">Temperatura (°C):</label>
+            <input type="number" id="temperatura" value="30">
+        </div>
+        <div class="input-group">
+            <label for="vento">Velocità del vento (km/h):</label>
+            <input type="number" id="vento" value="15">
+        </div>
+        <div class="input-group">
+            <label for="umidita">Umidità (%):</label>
+            <input type="number" id="umidita" value="40">
+        </div>
+
+        <button onclick="calcolaRischio()">Prevedi Incendio</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const datiStorici = {
+            "Grottole": 1, "Tito": 2, "Pisticci": 2, "San Severino Lucano": 1, "Rionero in Vulture": 2, 
+            "Melfi": 2, "Pietragalla": 2, "Montalbano Jonico": 1, "Moliterno": 1, "Latronico": 1, 
+            "Genzano di Lucania": 1, "Irsina": 1, "Foresta": 1, "Policoro": 1, "Tursi": 1, 
+            "Valsinni": 1, "Canzano": 1, "Castelsaraceno": 1, "Maratea": 1, "Muro Lucano": 1,
+            "Noepoli": 1, "Oppido Lucano": 1, "Atella": 1, "Brindisi Montagna": 1, "Ferrandina": 1,
+            "Ginestra": 1, "Lauria": 1, "Matera": 1, "Vaglio di Basilicata": 1, "Filiano": 1,
+            "Lagonegro": 1, "Montescaglioso": 1, "Rotonda": 1, "San Fele": 1, "Viggiano": 1,
+            "Barile": 1, "Bernalda": 1, "Marsico Nuovo": 1, "Ruoti": 1, "Rapone": 1,
+            "Matera": 1, "Policoro": 1, "Tricarico": 1, "Bernalda": 1, "Brindisi Montagna": 1,
+            "Canzano": 1, "Ferrandina": 1, "Irsina": 1, "Lagonegro": 1, "Latronico": 1, 
+            "Lauria": 1, "Matera": 1, "Moliterno": 1, "Montescaglioso": 1, "Muro Lucano": 1,
+            "Oppido Lucano": 1, "Pietragalla": 1, "Policoro": 1, "Rionero in Vulture": 1, "Rotonda": 1,
+            "Ruoti": 1, "San Fele": 1, "Senise": 1, "Tito": 1, "Tricarico": 1,
+            "Tursi": 1, "Valsinni": 1, "Viggiano": 1
+        };
+
+        function calcolaRischio() {
+            const temp = document.getElementById('temperatura').value;
+            const vento = document.getElementById('vento').value;
+            const umidita = document.getElementById('umidita').value;
+            const resultsDiv = document.getElementById('results');
+
+            if (!temp || !vento || !umidita) {
+                resultsDiv.innerHTML = "Per favore, inserisci tutti i valori.";
+                return;
+            }
+            
+            let maxRischio = -1;
+            let comunePiuAmmaccato = "";
+
+            for (const comune in datiStorici) {
+                const incidenzaStorica = datiStorici[comune];
+                const rischioCorrente = (incidenzaStorica * 10) + (temp * 0.5) + (vento * 0.8) - (umidita * 0.3);
+
+                if (rischioCorrente > maxRischio) {
+                    maxRischio = rischioCorrente;
+                    comunePiuAmmaccato = comune;
+                }
+            }
+
+            resultsDiv.innerHTML = `Il prossimo incendio "potrebbe" verificarsi a: <span>${comunePiuAmmaccato}</span>`;
+        }
+    </script>
+</body>
+</html>
