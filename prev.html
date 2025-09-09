@@ -81,7 +81,7 @@
     <div class="container">
         <h1>Portale di Allerta Incendi (Simulazione)</h1>
         <div class="warning">
-            <p><strong>ATTENZIONE:</strong> Questo strumento è una simulazione puramente didattica. I dati sono generati casualmente e non hanno alcuna corrispondenza con la realtà. Non utilizzarlo per fini ufficiali.</p>
+            <p><strong>ATTENZIONE:</strong> Questo strumento è una simulazione puramente didattica. Non è connesso a dati reali e non deve essere utilizzato per fini ufficiali.</p>
         </div>
         <div class="dashboard">
             <div class="card">
@@ -101,6 +101,9 @@
     </div>
 
     <script>
+        const API_KEY = "fGXCdxRYmkOi0SVD"; // La tua chiave API
+        
+        // Dati storici (simulati) - da sostituire con i dati reali del tuo file
         const datiStorici = {
             "Grottole": 1, "Tito": 2, "Pisticci": 2, "San Severino Lucano": 1, "Rionero in Vulture": 2, 
             "Melfi": 2, "Pietragalla": 2, "Montalbano Jonico": 1, "Moliterno": 1, "Latronico": 1, 
@@ -113,16 +116,34 @@
             "Senise": 1, "Tricarico": 1
         };
 
-        function generaDatiCasuali() {
-            const temp = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
-            const vento = Math.floor(Math.random() * (30 - 5 + 1)) + 5;
-            const umidita = Math.floor(Math.random() * (70 - 20 + 1)) + 20;
-            
-            document.getElementById('temperatura-valore').textContent = `${temp} °C`;
-            document.getElementById('vento-valore').textContent = `${vento} km/h`;
-            document.getElementById('umidita-valore').textContent = `${umidita} %`;
+        async function fetchWeatherData() {
+            try {
+                // Questa è la parte da MODIFICARE per una chiamata API reale.
+                // Sostituisci questo blocco con la tua chiamata a Meteoblue.
+                // Esempio:
+                // const response = await fetch(`https://api.meteoblue.com/v1/weather/...`);
+                // const data = await response.json();
+                
+                // Dati simulati per dimostrazione
+                const data = {
+                    temperature: Math.floor(Math.random() * (40 - 20 + 1)) + 20,
+                    windSpeed: Math.floor(Math.random() * (30 - 5 + 1)) + 5,
+                    relativeHumidity: Math.floor(Math.random() * (70 - 20 + 1)) + 20
+                };
+                
+                // Aggiorna la dashboard
+                document.getElementById('temperatura-valore').textContent = `${data.temperature} °C`;
+                document.getElementById('vento-valore').textContent = `${data.windSpeed} km/h`;
+                document.getElementById('umidita-valore').textContent = `${data.relativeHumidity} %`;
 
-            calcolaProbabilita(temp, vento, umidita);
+                // Calcola il rischio
+                calcolaProbabilita(data.temperature, data.windSpeed, data.relativeHumidity);
+
+            } catch (error) {
+                console.error("Errore nel recupero dei dati meteo:", error);
+                document.getElementById('allerta-box').textContent = "Errore nel caricamento dei dati.";
+                document.getElementById('allerta-box').style.display = 'block';
+            }
         }
 
         function calcolaProbabilita(temp, vento, umidita) {
@@ -153,10 +174,10 @@
         }
 
         // Aggiorna i dati ogni 5 secondi
-        setInterval(generaDatiCasuali, 5000);
+        setInterval(fetchWeatherData, 5000);
         
         // Prima esecuzione
-        generaDatiCasuali();
+        fetchWeatherData();
     </script>
 </body>
 </html>
