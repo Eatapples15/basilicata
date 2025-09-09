@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsione Incendi Basilicata (Gioco)</title>
+    <title>Allerta Incendi Basilicata (Simulazione)</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             background-color: #f4f4f4;
             color: #333;
-            line-height: 1.6;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
             background: #fff;
             padding: 20px;
@@ -26,78 +25,79 @@
             text-align: center;
         }
         .warning {
-            color: #a94442;
             background-color: #f2dede;
-            border: 1px solid #ebccd1;
-            padding: 10px;
+            color: #a94442;
+            padding: 15px;
             border-radius: 4px;
             margin-bottom: 20px;
-        }
-        .input-group {
-            margin-bottom: 15px;
-        }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .input-group input[type="number"] {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #5cb85c;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #4cae4c;
-        }
-        #results {
-            margin-top: 20px;
-            font-size: 18px;
-            font-weight: bold;
+            border: 1px solid #ebccd1;
             text-align: center;
         }
-        #results span {
-            color: #d9534f;
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            flex: 1 1 200px;
+            min-width: 150px;
+        }
+        .card h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .card p {
+            font-size: 2em;
+            margin: 5px 0;
+        }
+        #allerta-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            display: none;
+        }
+        .allerta-attiva {
+            background-color: #d9534f;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h1>Simulatore di Previsione Incendi</h1>
+        <h1>Portale di Allerta Incendi (Simulazione)</h1>
         <div class="warning">
-            <p><strong>ATTENZIONE:</strong> Questo strumento è un gioco e non ha alcuna validità scientifica. Non deve essere usato per prendere decisioni o per diffondere informazioni a carattere ufficiale.</p>
+            <p><strong>ATTENZIONE:</strong> Questo strumento è una simulazione puramente didattica. I dati sono generati casualmente e non hanno alcuna corrispondenza con la realtà. Non utilizzarlo per fini ufficiali.</p>
         </div>
-        
-        <h2>Inserisci le condizioni meteo</h2>
-        <div class="input-group">
-            <label for="temperatura">Temperatura (°C):</label>
-            <input type="number" id="temperatura" value="30">
+        <div class="dashboard">
+            <div class="card">
+                <h3>Temperatura</h3>
+                <p id="temperatura-valore">-- °C</p>
+            </div>
+            <div class="card">
+                <h3>Vento</h3>
+                <p id="vento-valore">-- km/h</p>
+            </div>
+            <div class="card">
+                <h3>Umidità</h3>
+                <p id="umidita-valore">-- %</p>
+            </div>
         </div>
-        <div class="input-group">
-            <label for="vento">Velocità del vento (km/h):</label>
-            <input type="number" id="vento" value="15">
-        </div>
-        <div class="input-group">
-            <label for="umidita">Umidità (%):</label>
-            <input type="number" id="umidita" value="40">
-        </div>
-
-        <button onclick="calcolaRischio()">Prevedi Incendio</button>
-
-        <div id="results"></div>
+        <div id="allerta-box"></div>
     </div>
 
     <script>
@@ -110,40 +110,53 @@
             "Ginestra": 1, "Lauria": 1, "Matera": 1, "Vaglio di Basilicata": 1, "Filiano": 1,
             "Lagonegro": 1, "Montescaglioso": 1, "Rotonda": 1, "San Fele": 1, "Viggiano": 1,
             "Barile": 1, "Bernalda": 1, "Marsico Nuovo": 1, "Ruoti": 1, "Rapone": 1,
-            "Matera": 1, "Policoro": 1, "Tricarico": 1, "Bernalda": 1, "Brindisi Montagna": 1,
-            "Canzano": 1, "Ferrandina": 1, "Irsina": 1, "Lagonegro": 1, "Latronico": 1, 
-            "Lauria": 1, "Matera": 1, "Moliterno": 1, "Montescaglioso": 1, "Muro Lucano": 1,
-            "Oppido Lucano": 1, "Pietragalla": 1, "Policoro": 1, "Rionero in Vulture": 1, "Rotonda": 1,
-            "Ruoti": 1, "San Fele": 1, "Senise": 1, "Tito": 1, "Tricarico": 1,
-            "Tursi": 1, "Valsinni": 1, "Viggiano": 1
+            "Senise": 1, "Tricarico": 1
         };
 
-        function calcolaRischio() {
-            const temp = document.getElementById('temperatura').value;
-            const vento = document.getElementById('vento').value;
-            const umidita = document.getElementById('umidita').value;
-            const resultsDiv = document.getElementById('results');
-
-            if (!temp || !vento || !umidita) {
-                resultsDiv.innerHTML = "Per favore, inserisci tutti i valori.";
-                return;
-            }
+        function generaDatiCasuali() {
+            const temp = Math.floor(Math.random() * (40 - 20 + 1)) + 20;
+            const vento = Math.floor(Math.random() * (30 - 5 + 1)) + 5;
+            const umidita = Math.floor(Math.random() * (70 - 20 + 1)) + 20;
             
+            document.getElementById('temperatura-valore').textContent = `${temp} °C`;
+            document.getElementById('vento-valore').textContent = `${vento} km/h`;
+            document.getElementById('umidita-valore').textContent = `${umidita} %`;
+
+            calcolaProbabilita(temp, vento, umidita);
+        }
+
+        function calcolaProbabilita(temp, vento, umidita) {
             let maxRischio = -1;
-            let comunePiuAmmaccato = "";
+            let comuneAmmaccato = "";
+            let rischioCorrente = 0;
 
             for (const comune in datiStorici) {
                 const incidenzaStorica = datiStorici[comune];
-                const rischioCorrente = (incidenzaStorica * 10) + (temp * 0.5) + (vento * 0.8) - (umidita * 0.3);
+                
+                // Formula di calcolo probabilistico semplificata
+                rischioCorrente = (incidenzaStorica * 15) + (temp * 0.7) + (vento * 0.9) - (umidita * 0.4);
 
                 if (rischioCorrente > maxRischio) {
                     maxRischio = rischioCorrente;
-                    comunePiuAmmaccato = comune;
+                    comuneAmmaccato = comune;
                 }
             }
 
-            resultsDiv.innerHTML = `Il prossimo incendio "potrebbe" verificarsi a: <span>${comunePiuAmmaccato}</span>`;
+            mostraAllerta(comuneAmmaccato);
         }
+
+        function mostraAllerta(comune) {
+            const allertaBox = document.getElementById('allerta-box');
+            allertaBox.innerHTML = `⚠️ Allerta: Il prossimo incendio "potrebbe" verificarsi a <span>${comune}</span>`;
+            allertaBox.style.display = 'block';
+            allertaBox.classList.add('allerta-attiva');
+        }
+
+        // Aggiorna i dati ogni 5 secondi
+        setInterval(generaDatiCasuali, 5000);
+        
+        // Prima esecuzione
+        generaDatiCasuali();
     </script>
 </body>
 </html>
