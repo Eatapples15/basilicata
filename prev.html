@@ -80,6 +80,41 @@
             font-style: italic;
             color: #6c757d;
         }
+        .button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #lista-comuni {
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        #lista-comuni ol {
+            list-style-type: decimal;
+            padding-left: 20px;
+            text-align: left;
+        }
+        #lista-comuni li {
+            margin-bottom: 5px;
+        }
+        .high-risk {
+            font-weight: bold;
+            color: #d9534f;
+        }
     </style>
 </head>
 <body>
@@ -104,6 +139,13 @@
         </div>
         <div id="loading">Caricamento dati in corso...</div>
         <div id="allerta-box"></div>
+        <div class="button-container">
+            <button onclick="mostraListaComuni()">Mostra Elenco Comuni a Rischio</button>
+        </div>
+        <div id="lista-comuni">
+            <h3>Classifica di Rischio</h3>
+            <ol id="elenco-rischio"></ol>
+        </div>
     </div>
 
     <script>
@@ -121,6 +163,8 @@
             "Senise": 1, "Tricarico": 1
         };
 
+        let lastProbabilities = [];
+
         async function fetchWeatherData() {
             try {
                 const response = await fetch(API_URL);
@@ -129,7 +173,6 @@
                 const now = new Date();
                 const currentHour = now.getHours();
                 const today = now.toISOString().split('T')[0];
-
                 const timeIndex = data.hourly.time.findIndex(time => time.startsWith(today) && new Date(time).getHours() === currentHour);
 
                 if (timeIndex === -1) {
@@ -158,12 +201,13 @@
         function calcolaProbabilita(temp, vento, umidita) {
             let maxRischio = -1;
             let comuneAmmaccato = "";
-            let rischioCorrente = 0;
+            let probabilities = [];
 
             for (const comune in datiStorici) {
                 const incidenzaStorica = datiStorici[comune];
-                
-                rischioCorrente = (incidenzaStorica * 15) + (temp * 0.7) + (vento * 0.9) - (umidita * 0.4);
+                const rischioCorrente = (incidenzaStorica * 15) + (temp * 0.7) + (vento * 0.9) - (umidita * 0.4);
+
+                probabilities.push({ comune: comune, rischio: rischioCorrente });
 
                 if (rischioCorrente > maxRischio) {
                     maxRischio = rischioCorrente;
@@ -171,6 +215,8 @@
                 }
             }
 
+            probabilities.sort((a, b) => b.rischio - a.rischio);
+            lastProbabilities = probabilities; // Salva l'elenco per il pulsante
             mostraAllerta(comuneAmmaccato);
         }
 
@@ -179,6 +225,23 @@
             allertaBox.innerHTML = `⚠️ Allerta: Il prossimo incendio "potrebbe" verificarsi a <span>${comune}</span>`;
             allertaBox.style.display = 'block';
             allertaBox.classList.add('allerta-attiva');
+        }
+
+        function mostraListaComuni() {
+            const listaDiv = document.getElementById('lista-comuni');
+            const elenco = document.getElementById('elenco-rischio');
+            elenco.innerHTML = '';
+            
+            lastProbabilities.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.textContent = `${item.comune}`;
+                if (index < 5) {
+                    li.classList.add('high-risk');
+                }
+                elenco.appendChild(li);
+            });
+
+            listaDiv.style.display = 'block';
         }
 
         setInterval(fetchWeatherData, 3600000); // Aggiorna ogni ora
