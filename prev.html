@@ -205,8 +205,9 @@
 
             for (const comune in datiStorici) {
                 const incidenzaStorica = datiStorici[comune];
+                
                 const rischioCorrente = (incidenzaStorica * 15) + (temp * 0.7) + (vento * 0.9) - (umidita * 0.4);
-
+                
                 probabilities.push({ comune: comune, rischio: rischioCorrente });
 
                 if (rischioCorrente > maxRischio) {
@@ -214,8 +215,15 @@
                     comuneAmmaccato = comune;
                 }
             }
-
+            
             probabilities.sort((a, b) => b.rischio - a.rischio);
+            
+            // Calcola la percentuale di rischio per ogni comune
+            const totalRischio = probabilities.reduce((sum, item) => sum + item.rischio, 0);
+            probabilities.forEach(item => {
+                item.percentuale = (item.rischio / totalRischio) * 100;
+            });
+
             lastProbabilities = probabilities; // Salva l'elenco per il pulsante
             mostraAllerta(comuneAmmaccato);
         }
@@ -234,7 +242,8 @@
             
             lastProbabilities.forEach((item, index) => {
                 const li = document.createElement('li');
-                li.textContent = `${item.comune}`;
+                const percentuale = item.percentuale.toFixed(2);
+                li.textContent = `${item.comune}: ${percentuale}%`;
                 if (index < 5) {
                     li.classList.add('high-risk');
                 }
@@ -244,7 +253,7 @@
             listaDiv.style.display = 'block';
         }
 
-        setInterval(fetchWeatherData, 3600000); // Aggiorna ogni ora
+        setInterval(fetchWeatherData, 3600000);
         
         fetchWeatherData();
     </script>
