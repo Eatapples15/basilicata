@@ -4,210 +4,82 @@
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.853218, 40.216242] },
-      "properties": {
-        "Nome": "ANPAS COMITATO REGIONALE BASILICATA ODV",
-        "Comune": "Moliterno (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 11,
-        "Risorse": 0,
-        "Contatto_H24": "+39 338 631 7937",
-        "Email_PEC": "segreteria@anpasbasilicata.it / anpasbasilicata@pec.it"
-      }
+      "properties": { "Nome": "ANPAS BASILICATA", "Comune": "Moliterno", "Stato": "Attiva", "Volontari": 11, "Risorse": 0, "Contatto_H24": "+39 338 631 7937", "Email_PEC": "segreteria@anpasbasilicata.it" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.839393, 41.075472] },
-      "properties": {
-        "Nome": "PUBBLICA ASSISTENZA LAVELLO ODV",
-        "Comune": "Lavello (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 30,
-        "Risorse": 6,
-        "Contatto_H24": "+39 338 292 9762",
-        "Email_PEC": "pubblicaassistenzalavello@gmail.com / anpaslavello@pec.it"
-      }
+      "properties": { "Nome": "PA LAVELLO", "Comune": "Lavello", "Stato": "Attiva", "Volontari": 30, "Risorse": 6, "Contatto_H24": "+39 338 292 9762", "Email_PEC": "anpaslavello@pec.it" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.569606, 40.144247] },
-      "properties": {
-        "Nome": "Guardia Nazionale Z.e.p.a",
-        "Comune": "Nova Siri (MT)",
-        "Stato": "Attiva",
-        "Volontari": 27,
-        "Risorse": 14,
-        "Contatto_H24": "+39 0835 407431",
-        "Email_PEC": "guardianazionalezepa@libero.it / guardianazionalezepa@pec.it"
-      }
+      "properties": { "Nome": "ZEPA NOVA SIRI", "Comune": "Nova Siri", "Stato": "Attiva", "Volontari": 27, "Risorse": 14, "Contatto_H24": "+39 0835 407431", "Email_PEC": "guardianazionalezepa@pec.it" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.578674, 40.669800] },
-      "properties": {
-        "Nome": "Società Nazionale di Salvamento sez. Prov. Matera",
-        "Comune": "Matera (MT)",
-        "Stato": "Attiva",
-        "Volontari": 20,
-        "Risorse": 9,
-        "Contatto_H24": "+39 329 960 8500",
-        "Email_PEC": "giannidemola@gmail.com / salvamentomatera@pec.it"
-      }
+      "properties": { "Nome": "SALVAMENTO MATERA", "Comune": "Matera", "Stato": "Attiva", "Volontari": 20, "Risorse": 9, "Contatto_H24": "+39 329 960 8500", "Email_PEC": "salvamentomatera@pec.it" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.82281, 40.96334] },
-      "properties": {
-        "Nome": "PUBBLICA ASSISTENZA PROTEZIONE CIVILE VENOSA ODV",
-        "Comune": "Venosa (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 60,
-        "Risorse": 9,
-        "Contatto_H24": "+39 333 398 5125",
-        "Email_PEC": "segreteria@anpasvenosa.it / anpasvenosa@pec.it"
-      }
+      "properties": { "Nome": "PA VENOSA", "Comune": "Venosa", "Stato": "Attiva", "Volontari": 60, "Risorse": 9, "Contatto_H24": "+39 333 398 5125", "Email_PEC": "segreteria@anpasvenosa.it" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.728930, 40.897696] },
-      "properties": {
-        "Nome": "P.A.PROTEZIONE CIVILE RIPACANDIDA O.D.V.",
-        "Comune": "Ripacandida (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 19,
-        "Risorse": 3,
-        "Contatto_H24": "+39 347 943 7200",
-        "Email_PEC": "p.a.anpasripacandida@tiscali.it"
-      }
+      "properties": { "Nome": "PA RIPACANDIDA", "Comune": "Ripacandida", "Stato": "Attiva", "Volontari": 19, "Risorse": 3, "Contatto_H24": "+39 347 943 7200", "Email_PEC": "p.a.anpasripacandida@tiscali.it" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.310575, 40.249511] },
-      "properties": {
-        "Nome": "Pubblica Assistenza Medio Agri",
-        "Comune": "Sant'Arcangelo (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 40,
-        "Risorse": 8,
-        "Contatto_H24": "+39 349 053 2410",
-        "Email_PEC": "pamedioagri@gmail.com"
-      }
+      "properties": { "Nome": "PA MEDIO AGRI", "Comune": "Sant'Arcangelo", "Stato": "Attiva", "Volontari": 40, "Risorse": 8, "Contatto_H24": "+39 349 053 2410", "Email_PEC": "pamedioagri@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.666975, 40.507211] },
-      "properties": {
-        "Nome": "PUBBLICA ASSISTENZA PC MONTESCAGLIOSO ODV",
-        "Comune": "Montescaglioso (MT)",
-        "Stato": "Attiva",
-        "Volontari": 50,
-        "Risorse": 12,
-        "Contatto_H24": "+39 331 892 2690",
-        "Email_PEC": "panpasmontescaglioso@gmail.com"
-      }
+      "properties": { "Nome": "PA MONTESCAGLIOSO", "Comune": "Montescaglioso", "Stato": "Attiva", "Volontari": 50, "Risorse": 12, "Contatto_H24": "+39 331 892 2690", "Email_PEC": "panpasmontescaglioso@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.012162, 40.083919] },
-      "properties": {
-        "Nome": "Pubblica Assistenza PC Valle del Sinni Odv",
-        "Comune": "Latronico (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 44,
-        "Risorse": 12,
-        "Contatto_H24": "+39 334 917 2040",
-        "Email_PEC": "segreteria@anpasvalledelsinni.it"
-      }
+      "properties": { "Nome": "PA VALLE SINNI", "Comune": "Latronico", "Stato": "Attiva", "Volontari": 44, "Risorse": 12, "Contatto_H24": "+39 334 917 2040", "Email_PEC": "segreteria@anpasvalledelsinni.it" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.654337, 40.362464] },
-      "properties": {
-        "Nome": "Nucleo Operativo Volontari del Metapontino",
-        "Comune": "Pisticci (MT)",
-        "Stato": "Attiva",
-        "Volontari": 21,
-        "Risorse": 11,
-        "Contatto_H24": "+39 329 355 9404",
-        "Email_PEC": "novmetapontino@gmail.com"
-      }
+      "properties": { "Nome": "NOV METAPONTINO", "Comune": "Pisticci", "Stato": "Attiva", "Volontari": 21, "Risorse": 11, "Contatto_H24": "+39 329 355 9404", "Email_PEC": "novmetapontino@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.639020, 40.642270] },
-      "properties": {
-        "Nome": "P.A.P.C. ANGELS PICERNO ODV",
-        "Comune": "Picerno (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 50,
-        "Risorse": 5,
-        "Contatto_H24": "+39 339 826 8917",
-        "Email_PEC": "angelspicerno@gmail.com"
-      }
+      "properties": { "Nome": "ANGELS PICERNO", "Comune": "Picerno", "Stato": "Attiva", "Volontari": 50, "Risorse": 5, "Contatto_H24": "+39 339 826 8917", "Email_PEC": "angelspicerno@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.952350, 40.911620] },
-      "properties": {
-        "Nome": "P.A. Volontari Alto Bradano ODV",
-        "Comune": "Palazzo San Gervasio (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 70,
-        "Risorse": 7,
-        "Contatto_H24": "+39 320 071 3771",
-        "Email_PEC": "anpasaltobradano@gmail.com"
-      }
+      "properties": { "Nome": "VOL. ALTO BRADANO", "Comune": "Palazzo S.G.", "Stato": "Attiva", "Volontari": 70, "Risorse": 7, "Contatto_H24": "+39 320 071 3771", "Email_PEC": "anpasaltobradano@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.134109, 40.290536] },
-      "properties": {
-        "Nome": "PA PC VALLE DEL SAURO GALLICCHIO ODV",
-        "Comune": "Gallicchio (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 16,
-        "Risorse": 4,
-        "Contatto_H24": "+39 328 266 9500",
-        "Email_PEC": "pasaura@gmail.com"
-      }
+      "properties": { "Nome": "PA GALLICCHIO", "Comune": "Gallicchio", "Stato": "Attiva", "Volontari": 16, "Risorse": 4, "Contatto_H24": "+39 328 266 9500", "Email_PEC": "pasaura@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.377754, 40.632679] },
-      "properties": {
-        "Nome": "Misericordia Grottole",
-        "Comune": "Grottole (MT)",
-        "Stato": "Attiva",
-        "Volontari": 8,
-        "Risorse": 2,
-        "Contatto_H24": "+39 338 924 3583",
-        "Email_PEC": "misericordiagrottole@gmail.com"
-      }
+      "properties": { "Nome": "MISERICORDIA GROTTOLE", "Comune": "Grottole", "Stato": "Attiva", "Volontari": 8, "Risorse": 2, "Contatto_H24": "+39 338 924 3583", "Email_PEC": "misericordiagrottole@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.632940, 41.034551] },
-      "properties": {
-        "Nome": "Associazione Ronca Battista",
-        "Comune": "Melfi (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 20,
-        "Risorse": 16,
-        "Contatto_H24": "+39 349 653 7669",
-        "Email_PEC": "roncabattista@gmail.com"
-      }
+      "properties": { "Nome": "RONCA BATTISTA MELFI", "Comune": "Melfi", "Stato": "Attiva", "Volontari": 20, "Risorse": 16, "Contatto_H24": "+39 349 653 7669", "Email_PEC": "roncabattista@gmail.com" }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.528314, 40.661230] },
-      "properties": {
-        "Nome": "Associazione Protezione Civile Balvano",
-        "Comune": "Balvano (PZ)",
-        "Stato": "Attiva",
-        "Volontari": 21,
-        "Risorse": 5,
-        "Contatto_H24": "+39 348 755 7056",
-        "Email_PEC": "info@protezionecivilebalvano.org"
-      }
+      "properties": { "Nome": "PC BALVANO", "Comune": "Balvano", "Stato": "Attiva", "Volontari": 21, "Risorse": 5, "Contatto_H24": "+39 348 755 7056", "Email_PEC": "info@protezionecivilebalvano.org" }
     }
   ]
 }
