@@ -5,20 +5,20 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.88942, 40.24031] },
       "properties": {
-        "Nome": "ANPAS BASILICATA",
+        "Nome": "ANPAS COMITATO REGIONALE BASILICATA ODV",
         "Comune": "Moliterno (PZ)",
         "Stato": "Attiva",
         "Volontari": 11,
         "Risorse": 0,
         "Contatto_H24": "+39 338 631 7937",
-        "Email_PEC": "anpasbasilicata@pec.it"
+        "Email_PEC": "segreteria@anpasbasilicata.it"
       }
     },
     {
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.85964, 41.04752] },
       "properties": {
-        "Nome": "PUBBLICA ASSISTENZA LAVELLO",
+        "Nome": "PUBBLICA ASSISTENZA LAVELLO ODV",
         "Comune": "Lavello (PZ)",
         "Stato": "Attiva",
         "Volontari": 30,
@@ -31,7 +31,7 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [16.63751, 40.15402] },
       "properties": {
-        "Nome": "GUARDIA NAZIONALE ZEPA",
+        "Nome": "GUARDIA NAZIONALE Z.E.P.A",
         "Comune": "Nova Siri (MT)",
         "Stato": "Attiva",
         "Volontari": 27,
@@ -42,9 +42,9 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [16.60682, 40.66981] },
+      "geometry": { "type": "Point", "coordinates": [16.57867, 40.66980] },
       "properties": {
-        "Nome": "SNS MATERA",
+        "Nome": "SOC. NAZIONALE SALVAMENTO MATERA",
         "Comune": "Matera (MT)",
         "Stato": "Attiva",
         "Volontari": 20,
@@ -57,20 +57,20 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.82281, 40.96334] },
       "properties": {
-        "Nome": "PA VENOSA",
+        "Nome": "PUBBLICA ASSISTENZA VENOSA ODV",
         "Comune": "Venosa (PZ)",
         "Stato": "Attiva",
         "Volontari": 60,
         "Risorse": 9,
         "Contatto_H24": "+39 333 398 5125",
-        "Email_PEC": "anpasvenosa@pec.it"
+        "Email_PEC": "segreteria@anpasvenosa.it"
       }
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [15.72651, 40.91321] },
+      "geometry": { "type": "Point", "coordinates": [15.72893, 40.89769] },
       "properties": {
-        "Nome": "PA RIPACANDIDA",
+        "Nome": "P.A. PROTEZIONE CIVILE RIPACANDIDA",
         "Comune": "Ripacandida (PZ)",
         "Stato": "Attiva",
         "Volontari": 19,
@@ -81,9 +81,9 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [16.31057, 40.24951] },
+      "geometry": { "type": "Point", "coordinates": [16.45930, 40.24951] },
       "properties": {
-        "Nome": "PA TURSI",
+        "Nome": "A.P.A.T. TURSI ODV",
         "Comune": "Tursi (MT)",
         "Stato": "Attiva",
         "Volontari": 10,
@@ -96,7 +96,7 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.71350, 40.01353] },
       "properties": {
-        "Nome": "APA MARATEA",
+        "Nome": "A.P.A. MARATEA ODV",
         "Comune": "Maratea (PZ)",
         "Stato": "Attiva",
         "Volontari": 10,
@@ -109,7 +109,7 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.75998, 40.09875] },
       "properties": {
-        "Nome": "APA LAGONEGRO",
+        "Nome": "A.P.A. LAGONEGRO ODV",
         "Comune": "Lagonegro (PZ)",
         "Stato": "Attiva",
         "Volontari": 10,
@@ -122,7 +122,7 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.84329, 41.02534] },
       "properties": {
-        "Nome": "APA MASCHITO",
+        "Nome": "A.P.A. MASCHITO ODV",
         "Comune": "Maschito (PZ)",
         "Stato": "Attiva",
         "Volontari": 10,
@@ -133,9 +133,9 @@
     },
     {
       "type": "Feature",
-      "geometry": { "type": "Point", "coordinates": [15.60231, 40.05321] },
+      "geometry": { "type": "Point", "coordinates": [15.79051, 40.07684] },
       "properties": {
-        "Nome": "APA NEMOLI",
+        "Nome": "A.P.A. NEMOLI ODV",
         "Comune": "Nemoli (PZ)",
         "Stato": "Attiva",
         "Volontari": 10,
@@ -148,7 +148,7 @@
       "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.89345, 40.07542] },
       "properties": {
-        "Nome": "APA LAURIA",
+        "Nome": "A.P.A. LAURIA ODV",
         "Comune": "Lauria (PZ)",
         "Stato": "Attiva",
         "Volontari": 10,
@@ -159,9 +159,48 @@
     },
     {
       "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [16.66697, 40.55021] },
+      "properties": {
+        "Nome": "P.A. MONTESCAGLIOSO ODV",
+        "Comune": "Montescaglioso (MT)",
+        "Stato": "Attiva",
+        "Volontari": 50,
+        "Risorse": 12,
+        "Contatto_H24": "+39 331 892 2690",
+        "Email_PEC": "panpasmontescaglioso@pec.it"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [16.01216, 40.08942] },
+      "properties": {
+        "Nome": "P.A. VALLE DEL SINNI",
+        "Comune": "Latronico (PZ)",
+        "Stato": "Attiva",
+        "Volontari": 44,
+        "Risorse": 12,
+        "Contatto_H24": "+39 334 917 2040",
+        "Email_PEC": "segreteria@anpasvalledelsinni.it"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": { "type": "Point", "coordinates": [15.63902, 40.64227] },
+      "properties": {
+        "Nome": "ANGELS PICERNO ODV",
+        "Comune": "Picerno (PZ)",
+        "Stato": "Attiva",
+        "Volontari": 50,
+        "Risorse": 5,
+        "Contatto_H24": "+39 339 826 8917",
+        "Email_PEC": "angelspicerno@pec.it"
+      }
+    },
+    {
+      "type": "Feature",
       "geometry": { "type": "Point", "coordinates": [15.51352, 40.65101] },
       "properties": {
-        "Nome": "PC BALVANO",
+        "Nome": "ASSOCIAZIONE PROTEZIONE CIVILE BALVANO",
         "Comune": "Balvano (PZ)",
         "Stato": "Attiva",
         "Volontari": 21,
